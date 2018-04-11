@@ -1,6 +1,8 @@
 import json
 import requests
-import loader_tools as tools
+import os
+from WP5.KU.definitions import KU_DIR
+import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 
 url = 'http://127.0.0.1:5000/'
 
@@ -33,7 +35,7 @@ else:
 # ADD A CONFIG
 try:
     res = requests.post(url + 'add_configs', json=json.dumps(tools.load_settings(
-        '/ocean/robdupre/PYTHON_SCRIPTS/MONICA/', 'KFF_CAM_8')))
+        os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8')))
 except requests.exceptions.RequestException as e:  # This is the correct syntax
     print(e)
 else:
@@ -63,7 +65,7 @@ except requests.exceptions.RequestException as e:  # This is the correct syntax
     print(e)
 else:
     data = res.json()
-    print(res.text, res.status_code)
+    print('Returned ' + str(len(data)) + ' message(s).', res.status_code)
 
 # # GET A SPECIFIC MESSAGE
 # try:
@@ -78,11 +80,11 @@ else:
 # ADD A MESSAGE
 try:
     res = requests.post(url + 'add_message', json=json.dumps(tools.load_json_txt(
-        '/ocean/robdupre/PYTHON_SCRIPTS/MONICA/', 'KFF_CAM_8_00000')))
+        os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8_00000')))
 except requests.exceptions.RequestException as e:  # This is the correct syntax
     print(e)
 else:
-    print(res.status_code, res.headers['content-type'], res.text)
+    print(res.text, res.status_code)
 
 # GET THE MESSAGES
 try:

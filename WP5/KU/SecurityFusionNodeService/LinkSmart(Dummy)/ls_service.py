@@ -1,17 +1,18 @@
 import json
+import os
 import argparse
 from flask import Flask, request
-import loader_tools as tools
+from WP5.KU.definitions import KU_DIR
+import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 
 app = Flask(__name__)
 configs = [
-    tools.load_settings('/ocean/robdupre/PYTHON_SCRIPTS/MONICA/', 'KFF_CAM_2', True),
-    tools.load_settings('/ocean/robdupre/PYTHON_SCRIPTS/MONICA/', 'KFF_CAM_4', True),
-    tools.load_settings('/ocean/robdupre/PYTHON_SCRIPTS/MONICA/', 'KFF_CAM_8', True)
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_2', True),
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_4', True),
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8', True)
 ]
 messages = [
-    tools.load_json_txt(
-        '/ocean/robdupre/PYTHON_SCRIPTS/MONICA/', 'KFF_CAM_8_00004')
+    tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8_00004')
 ]
 
 

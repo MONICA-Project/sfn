@@ -1,17 +1,19 @@
 import argparse
 import requests
 import json
-import loader_tools as tools
 import datetime
-from SecurityFusionNode.security_fusion_node import SecurityFusionNode
+import os
 from flask import Flask, request
+from WP5.KU.definitions import KU_DIR
+import WP5.KU.SecurityFusionNodeService.loader_tools as tools
+from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
 
 app = Flask(__name__)
 sfn = SecurityFusionNode('001')
 linksmart_url = 'http://127.0.0.1:5000/'
 cam_configs = []
 recent_cam_messages = [
-    tools.load_json_txt('/ocean/robdupre/PYTHON_SCRIPTS/MONICA/', 'KFF_CAM_8_00004')]
+    tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8_00004')]
 
 
 @app.route("/")

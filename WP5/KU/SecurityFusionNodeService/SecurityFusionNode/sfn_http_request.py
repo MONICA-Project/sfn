@@ -1,10 +1,12 @@
 import json
 import requests
-import loader_tools as tools
+import os
+from WP5.KU.definitions import KU_DIR
+import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 
 url = 'http://127.0.0.2:5000/'
 linksmart_url = 'http://127.0.0.1:5000/'
-message = tools.load_json_txt('/ocean/robdupre/PYTHON_SCRIPTS/MONICA/', 'KFF_CAM_8_00006')
+message = tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8_00006')
 
 # HELLO WORLD
 try:
@@ -48,12 +50,12 @@ else:
 
 # SEND MESSAGE TO SFN
 try:
-    res = requests.post(url + 'message', json=json.dumps(tools.load_json_txt('/ocean/robdupre/PYTHON_SCRIPTS/MONICA/',
+    res = requests.post(url + 'message', json=json.dumps(tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'),
                                                                              'KFF_CAM_8_00008')))
 except requests.exceptions.RequestException as e:  # This is the correct syntax
     print(e)
 else:
-    print(res.status_code, res.headers['content-type'], res.text)
+    print(res.text, res.status_code)
 #
 # try:
 #     req = requests.delete(url)
