@@ -1,0 +1,1 @@
+"{\"module_id\": \"001\", \"state\": true, \"timestamp\": \"2018-04-09T13:15:07.683952\", \"type_module\": \"crowd_density_local\"}"
