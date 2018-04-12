@@ -1,4 +1,7 @@
 # get_incrementer.py
+"""Helper function to create counter strings with a set length throughout."""
+__version__ = '0.1'
+__author__ = 'Rob Dupre (KU)'
 
 
 def get_incrementer(num, num_digits):

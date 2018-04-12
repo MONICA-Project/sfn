@@ -1,10 +1,12 @@
 # cam_video_streamer.py
+"""Implementation of a RTSP stream reader utilising OpenCV"""
 import cv2
 import numpy as np
 from threading import Thread
 import time
 
-# TODO: REMOVE THE exit(-1) CALL AND CREATE A DEFAULT RETURN THAT KEEPS MULTI CAMERA RUNS WORKING
+__version__ = '0.1'
+__author__ = 'Rob Dupre (KU)'
 
 
 class CamVideoStreamer:
@@ -16,7 +18,6 @@ class CamVideoStreamer:
             print('CAMERA ' + str(self.id) + ' CONNECTION ESTABLISHED.')
         else:
             print('FAILED TO CONNECT TO CAMERA ' + str(self.id) + '.')
-            exit(-1)
 
         self.stopped = False
         self.current_frame = np.zeros([800, 200, 3])

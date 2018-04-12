@@ -1,10 +1,17 @@
 # camera_config.py
-from cam_video_streamer import CamVideoStreamer
-from frame_streamer import ImageSequenceStreamer
+"""The KU Camera config app. Designed to produce all the reqequired meta data and finally the registration messages to
+be sent off to the LinkSmart component
+"""
+
 import argparse
-from config_tools import ConfigTools
 from tkinter import *
 from PIL import Image, ImageTk
+from WP5.KU.SharedResources.cam_video_streamer import CamVideoStreamer
+from WP5.KU.SharedResources.frame_streamer import ImageSequenceStreamer
+from WP5.KU.KUConfigTool.config_tools import ConfigTools
+
+__version__ = '0.1'
+__author__ = 'Rob Dupre (KU)'
 
 parser = argparse.ArgumentParser(description='Config Tool to create settings files for each camera '
                                              'and the required algorithms.')

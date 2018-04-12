@@ -1,9 +1,15 @@
+# config_tools.py
+"""Support functionality for the KU Camera Config app abstracted away from the UI
+"""
 import cv2
 import numpy as np
 import pickle
 import requests
 import json
 import datetime
+
+__version__ = '0.1'
+__author__ = 'Rob Dupre (KU)'
 
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -45,6 +51,15 @@ class ConfigTools:
 
     def perspective_transform(self, image, pts2=np.float32([[2000, 2000], [2250, 2000], [2000, 2250], [2250, 2250]]),
                               new_image_size=(10000, 10000)):
+        """Takes an input image and given the self.transform matrix, warps the image.
+
+        Keyword arguments:
+            image --            MxN RGB or BW image
+            pts2 --             the arbitrary points which the self.ref_pt are mapped to
+            new_image_size --   The defined size of the newly warped image, may be too large or too small.
+        Returns:
+            warped_image --     The source image now warped and with the size new_image_size
+        """
 
         pts1 = np.float32(self.ref_pt[0:4])
         self.transform, mask = cv2.findHomography(pts1, pts2)
@@ -53,6 +68,15 @@ class ConfigTools:
         return self.warped_image
 
     def shrink_image(self, image, both=False):
+        """Takes an input image and removes any black borders (used to shrink warped images down)
+
+        Keyword arguments:
+            image --            MxN RGB or BW image.
+            both --             [OPTIONAL] when True removes borders from both left and right, top and bottom, False
+                                removes just left anf top borders.
+        Returns:
+            warped_image --     The newly shrunk image
+        """
         # SHRINK THE IMAGE TO REMOVE ANY BLACK BORDERS
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         cols = np.max(gray, axis=0)
@@ -71,6 +95,12 @@ class ConfigTools:
         return self.warped_image
 
     def transform_points(self, warped_image):
+        """Takes the warped image and draws on red circles on the now transformed ref_pt.
+
+        Keyword arguments:
+            image --            MxN RGB or BW image.
+        Returns:
+            warped_image --     image with now drawn ref_pt on"""
         pts = np.array(self.ref_pt)
         if pts.shape[1] == 2:
             q = np.dot(self.transform, np.transpose(np.hstack([pts, np.ones([len(pts), 1])])))
@@ -85,6 +115,13 @@ class ConfigTools:
             print("WRONG INPUT SIZE")
 
     def save_config(self, url=None):
+        """Takes the current defined variables for the camera config and saves them to a .pk file in the current dir. If
+        url is specified a registration message is sent containing the json payload.
+
+        Keyword arguments:
+            url --          [OPTIONAL] when speficied a requests request is sent containing a JSON payload of the
+                            current config.
+        """
         if self.check_inputs():
             fo = open((str(self.camera_id) + '.pk'), 'wb')
             data = {'camera_id': self.camera_id,
@@ -122,6 +159,13 @@ class ConfigTools:
                     print('Registration Message has been Sent')
 
     def load_config(self, cam_id):
+        """Loads the defined variables for a .pk file with name cam_id.
+
+        Keyword arguments:
+            cam_id --       String ID for the camera that the settings are to be loaded for.
+        Returns:
+            A bool --       True if load is successful
+            """
         try:
             fo = open((str(cam_id) + '.pk'), 'rb')
         except IOError:

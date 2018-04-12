@@ -1,11 +1,26 @@
 # frame_streamer.py
+""" Loads a Image sequence and returns each frame sequentially when called. Provides options for looping the stream or
+repeating the last frame"""
 import cv2
 import os
-import numpy as np
+
+__version__ = '0.1'
+__author__ = 'Rob Dupre (KU)'
 
 
 class ImageSequenceStreamer:
     def __init__(self, seq_path, start_frame=0, frame_size=[1080, 768], loop_last=True, repeat=False):
+        """ Initialisation.
+        Keyword arguments:
+            seq_path --     String identifying the folder location of the images.
+            start_frame --  [OPTIONAL] Allows for the image sequence to start at a specific point
+            frame_size --   [OPTIONAL] Allows for loaded frames to be resized
+            loop_last --    [OPTIONAL] if True last frame is repeated until stop is called
+            repeat --       [OPTIONAL] if True repeats all frames until stop is called
+        Returns:
+            message --      the JSON message produced by create_obs_message
+            density_map --  the output of the algorithm in a viewable image
+        """
         self.folder_location = seq_path
         self.file_list = []
         self.size = (frame_size[0], frame_size[1])
@@ -16,16 +31,15 @@ class ImageSequenceStreamer:
         self.working = False
         self.loop_last = loop_last
         self.repeat = repeat
-        # [Location, Start Frame]
-        # 1: [(dataset_folder + 'UCSD_Anomaly/UCSDped1/Train/Train001/'), 0],
-        # GET LIST OF JPEG's AT FILE LOCATION
+
+        # GET LIST OF IMAGES AT FILE LOCATION
         valid_images = ('.jpg', '.png', '.tga', '.tif', '.jpeg')
         for f in sorted(os.listdir(self.folder_location)):
             ext = os.path.splitext(f)[1]
             if ext.lower().endswith(valid_images):
                 self.file_list.append(os.path.join(self.folder_location, f))
-                # self.images.append(cv2.resize(cv2.imread(os.path.join(self.folder_location, f)), self.size))
 
+        # IF WORKING THE STREAMER WILL ALLOW THE RETURN OF THE NEXT IMAGE. IF NOT THE STREAM IS CONSIDERED stopped
         if len(self.file_list) > 0:
             self.working = True
             print('IMAGE SEQUENCE FOUND AND LOADED.')

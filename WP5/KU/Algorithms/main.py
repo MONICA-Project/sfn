@@ -1,14 +1,17 @@
-# frame_streamer.py
-import cv2
-import json
-import get_incrementer as inc
-from cam_video_streamer import CamVideoStreamer
-from frame_streamer import ImageSequenceStreamer
-from get_people import GetPeople
-from get_crowd import GetCrowd
-import time
+# main.py
+"""A test application design to mimic (badly) the VCA framework."""
 import datetime
-import requests
+import json
+import pickle
+import cv2
+from WP5.KU.SharedResources.cam_video_streamer import CamVideoStreamer
+from WP5.KU.SharedResources.frame_streamer import ImageSequenceStreamer
+import WP5.KU.SharedResources.get_incrementer as inc
+from WP5.KU.Algorithms.crowd_density_local.get_crowd import GetCrowd
+from WP5.KU.Algorithms.object_detection.get_people import GetPeople
+
+__version__ = '0.1'
+__author__ = 'Rob Dupre (KU)'
 
 
 def dataset(index):
@@ -40,16 +43,23 @@ def dataset(index):
     }.get(index, -1)  # -1 is default if id not found
 
 
-info = dataset(10)
-# info = dataset(0)
-print(info)
-project_folder = 'C:/Users/Rob/Desktop/Dropbox/WORK/PYTHON SCRIPTS/'
-# project_folder = '/home/robdupre/PycharmProjects/'
-settings_location = '/ocean/robdupre/PYTHON_SCRIPTS/MONICA/'
+def load_settings(location):
+    fo = open((location + '.pk'), 'rb')
+    entry = pickle.load(fo, encoding='latin1')
+    return entry
 
-analyser = GetCrowd('001', settings_location + '/' + info[2])
-# analyser = GetPeople(info[3], settings_location)
-# analyser = GetFlow(info[3], settings_location)
+# info = dataset(10)
+info = dataset(0)
+print(info)
+
+# LOAD THE SETTINGS AND PASS THEN WHEN PROCESSING A FRAME
+settings_location = '/ocean/robdupre/PYTHON_SCRIPTS/MONICA/'
+settings = load_settings(settings_location + '/' + info[2])
+
+# CREATE AN analyser OBJECT AND CREATE THE REGISTRATION MESSAGE
+analyser = GetCrowd('001')
+# analyser = GetPeople('001')
+# analyser = GetFlow('001)
 
 with open(analyser.module_id + '_reg.txt', 'w') as outfile:
     json.dump(analyser.create_reg_message(datetime.datetime.utcnow().isoformat()), outfile)
@@ -69,7 +79,7 @@ else:
         count = 0
         while cap.open():
             frame = cap.read()
-            message, frame = analyser.process_frame(frame, info[2])
+            message, frame = analyser.process_frame(frame, settings['camera_id'], settings['roi'])
             cv2.putText(frame, json.dumps(message, indent=4), (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                         (255, 255, 255), 1, cv2.LINE_AA)
             with open(info[2] + '_' + str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
@@ -92,7 +102,7 @@ else:
         count = 0
         while cam.open():
             frame = cam.read()
-            message, result = analyser.process_frame(frame, info[2])
+            message, result = analyser.process_frame(frame, settings['camera_id'], settings['roi'])
 
             # SEND A HTTP REQUEST OFF
             # try:

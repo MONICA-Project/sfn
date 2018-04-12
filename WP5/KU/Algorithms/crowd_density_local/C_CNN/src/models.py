@@ -5,7 +5,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from C_CNN.src.network import Conv2d, FC
+from WP5.KU.Algorithms.crowd_density_local.C_CNN.src.network import Conv2d, FC
 
 
 class CMTL(nn.Module):

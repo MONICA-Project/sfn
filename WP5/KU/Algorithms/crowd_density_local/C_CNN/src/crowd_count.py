@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import C_CNN.src.network as network
-from C_CNN.src.models import CMTL
+import WP5.KU.Algorithms.crowd_density_local.C_CNN.src.network as network
+from WP5.KU.Algorithms.crowd_density_local.C_CNN.src.models import CMTL
 
 
 class CrowdCounter(nn.Module):
