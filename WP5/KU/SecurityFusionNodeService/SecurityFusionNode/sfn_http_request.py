@@ -7,8 +7,7 @@ sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.definitions import KU_DIR
 import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 
-url = 'http://127.0.0.2:5000/'
-linksmart_url = 'http://127.0.0.1:5000/'
+url = 'dupre.hopto.org:1000/'
 message = tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8_00006')
 
 # HELLO WORLD
