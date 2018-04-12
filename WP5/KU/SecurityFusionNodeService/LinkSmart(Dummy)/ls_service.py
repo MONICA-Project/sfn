@@ -2,6 +2,9 @@ import json
 import os
 import argparse
 from flask import Flask, request
+from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.definitions import KU_DIR
 import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 

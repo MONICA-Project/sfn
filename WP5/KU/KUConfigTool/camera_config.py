@@ -6,6 +6,9 @@ be sent off to the LinkSmart component
 import argparse
 from tkinter import *
 from PIL import Image, ImageTk
+from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).absolute().parents[3]))
 from WP5.KU.SharedResources.cam_video_streamer import CamVideoStreamer
 from WP5.KU.SharedResources.frame_streamer import ImageSequenceStreamer
 from WP5.KU.KUConfigTool.config_tools import ConfigTools

@@ -1,6 +1,9 @@
 import json
 import requests
 import os
+from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.definitions import KU_DIR
 import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 

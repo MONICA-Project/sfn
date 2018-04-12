@@ -4,6 +4,9 @@ import json
 import datetime
 import os
 from flask import Flask, request
+from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.definitions import KU_DIR
 import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
