@@ -48,8 +48,8 @@ def load_settings(location):
     entry = pickle.load(fo, encoding='latin1')
     return entry
 
-# info = dataset(10)
-info = dataset(0)
+info = dataset(12)
+# info = dataset(0)
 print(info)
 
 # LOAD THE SETTINGS AND PASS THEN WHEN PROCESSING A FRAME

@@ -10,12 +10,12 @@ import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 
 app = Flask(__name__)
 configs = [
-    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_2', True),
-    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_4', True),
-    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8', True)
+    tools.load_settings(os.path.join(KU_DIR, 'KU_Config_Tool/'), 'KFF_CAM_2', True),
+    tools.load_settings(os.path.join(KU_DIR, 'KU_Config_Tool/'), 'KFF_CAM_4', True),
+    tools.load_settings(os.path.join(KU_DIR, 'KU_Config_Tool/'), 'KFF_CAM_8', True)
 ]
 messages = [
-    tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8_00004')
+    # tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8_00004')
 ]
 
 
@@ -41,7 +41,7 @@ def search_config():
         print('RETURN CONFIG ' + str(config_id) + '. ' + 'REQUEST IS OF TYPE: ' + str(type(config_id)))
         return json.dumps(configs[config_id])
     else:
-        return 'Aint no JSON.', 299
+        return 'No JSON.', 299
 
 
 @app.route('/add_configs', methods=['POST'])
@@ -67,11 +67,12 @@ def add_config():
             configs.append(message)
             return 'NEW CONFIG ADDED', 205
         else:
+            print('EXISTING CONFIG FOUND, REPLACING')
             configs[ind] = message
             return 'OLD CONFIG (' + str(ind) + ') REPLACED', 205
 
     else:
-        return 'Aint no JSON.', 299
+        return 'No JSON.', 299
 
 
 @app.route('/configs', methods=['DELETE'])
@@ -82,7 +83,7 @@ def del_config():
         del configs[config_id]
         return 'Deleted', 205
     else:
-        return 'Aint no JSON.', 299
+        return 'No JSON.', 299
 
 
 # MESSAGE ROUTES
@@ -100,7 +101,7 @@ def search_message():
         print('RETURN CONFIG ' + str(message_id) + '. ' + 'REQUEST IS OF TYPE: ' + str(type(message_id)))
         return json.dumps(messages[message_id])
     else:
-        return 'Aint no JSON.', 299
+        return 'No JSON.', 299
 
 
 @app.route('/add_message', methods=['POST'])
@@ -109,9 +110,10 @@ def add_message():
     if request.is_json:
         message = json.loads(request.get_json(force=True))
         messages.append(message)
+        print('HOLDING ' + str(len(messages)) + ' MESSAGES.')
         return 'Added Message.', 205
     else:
-        return 'Aint no JSON.', 299
+        return 'No JSON.', 299
 
 
 @app.route('/message', methods=['DELETE'])
@@ -122,7 +124,7 @@ def del_message():
         del messages[message_id]
         return 'Deleted Message', 205
     else:
-        return 'Aint no JSON.', 299
+        return 'No JSON.', 299
 
 
 # RUN THE SERVICE
@@ -130,9 +132,10 @@ parser = argparse.ArgumentParser(description='Development Server Help')
 parser.add_argument("-d", "--debug", action="store_true", dest="debug_mode",
                     help="run in debug mode (for use with PyCharm)", default=False)
 parser.add_argument("-p", "--port", dest="port",
-                    help="port of server (default:%(default)s)", type=int, default=5000)
+                    help="port of server (default:%(default)s)", type=int, default=3389)
 parser.add_argument("-a", "--address", dest="host",
-                    help="host address of server (default:%(default)s)", type=str, default="127.0.0.1")
+                    # help="host address of server (default:%(default)s)", type=str, default="0.0.0.0")
+                    help="host address of server (default:%(default)s)", type=str, default="127.0.0.2")
 
 cmd_args = parser.parse_args()
 app_options = {"port": cmd_args.port,

@@ -81,6 +81,7 @@ class GetCrowd(FrameAnalyser):
 
         # CREATE THE MESSAGE
         self.cam_id = camera_id
+        # message = self.create_obs_message(count, density_map, datetime.datetime.utcnow().isoformat(), frame=None)
         message = self.create_obs_message(count, density_map, datetime.datetime.utcnow().isoformat(), frame=frame)
 
         # CONVERT TO IMAGE THAT CAN BE DISPLAYED
@@ -104,9 +105,8 @@ class GetCrowd(FrameAnalyser):
                 'camera_ids': [self.cam_id],
                 'density_count': int(count),
                 'density_map': density_map.tolist(),
-                # ENCODE THE IMAGE INTO A STRING ARRAY
                 'frame_byte_array': '',
-                'image_dims': frame.shape,
+                'image_dims': '',
                 'timestamp_1': timestamp,
                 'timestamp_2': timestamp,
         }
@@ -114,6 +114,7 @@ class GetCrowd(FrameAnalyser):
             # RESIZE THE IMAGE AND MAKE IT BLACK AND WHITE
             frame = cv2.cvtColor(cv2.resize(frame, (0, 0), fx=0.25, fy=0.25), cv2.COLOR_RGB2GRAY)
             data['frame_byte_array'] = base64.b64encode(frame.copy(order='C')).decode('utf-8')
+            data['image_dims'] = frame.shape
 
         message = json.dumps(data)
         # CODE TO REBUILD AND SHOW THE IMAGE FORM THE JSON MESSAGE

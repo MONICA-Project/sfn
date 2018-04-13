@@ -1,1 +1,1 @@
-"{\"state\": \"inactive\", \"timestamp\": \"2018-04-12T13:56:06.711340\", \"type_module\": \"crowd_density_local\", \"module_id\": \"001\"}"
+"{\"module_id\": \"001\", \"state\": \"inactive\", \"timestamp\": \"2018-04-13T13:37:56.675174\", \"type_module\": \"crowd_density_local\"}"

@@ -23,36 +23,23 @@ class SecurityFusionNode:
         # message = json.loads(message)
         return message
 
-    def create_obs_message(self, camera_ids, count, heat_map, timestamp_oldest, timestamp_newest, frame):
-        # RESIZE THE IMAGE AND MAKE IT BLACK AND WHITE IF REQUIRED
-        if np.ndim(frame) > 2:
-            frame = cv2.cvtColor(cv2.resize(frame, (0, 0), fx=0.25, fy=0.25), cv2.COLOR_RGB2GRAY)
-        else:
-            frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-
+    def create_obs_message(self, camera_ids, count, heat_map, timestamp_oldest, timestamp_newest):
         data = {
                 'module_id': self.module_id,
                 'type_module': self.module_type,
                 'camera_ids': camera_ids,
                 'density_count': int(count),
                 'density_map': heat_map.tolist(),
-                # ENCODE frame INTO A STRING ARRAY
-                'frame_byte_array': base64.b64encode(frame.copy(order='C')).decode('utf-8'),
-                'image_dims': frame.shape,
+                'frame_byte_array': '',
+                'image_dims': '',
                 'timestamp_1': timestamp_oldest,
                 'timestamp_2': timestamp_newest,
         }
         message = json.dumps(data)
-        # CODE TO REBUILD AND SHOW THE IMAGE FORM THE JSON MESSAGE
-        # rebuilt_data = json.loads(message)
-        # d = base64.b64decode(rebuilt_data['frame_byte_array'])
-        # rebuilt_frame = np.frombuffer(d, dtype=np.uint8)
-        # rebuilt_frame = np.reshape(rebuilt_frame, (rebuilt_data['image_dims'][0], rebuilt_data['image_dims'][1]))
-        # cv2.imshow('c', rebuilt_frame); cv2.waitKey(0)
         return message
 
     @staticmethod
-    def generate_heat_map(detections, transform, gp_roi, ground_plane_size, frame=None):
+    def generate_heat_map(detections, transform, gp_roi, ground_plane_size, frame=None, timestamp=None):
         detections = np.array(detections)
         # detections IS EITHER AN (MxN) IMAGE OR A (Mx2) LIST OF X Y COORDINATES
         if detections.shape[1] > 2:
@@ -106,7 +93,8 @@ class SecurityFusionNode:
             # SCALE UP THE heat_map TO ENCOMPASS THE WHOLE WARPED roi
             heat_image = cv2.resize(heat_map, (gp_roi[2] - gp_roi[0], gp_roi[3] - gp_roi[1]))
             heat_image = ((warped_image / 255) / 3) + heat_image
-            cv2.imshow('frame', heat_image)
-            cv2.waitKey(0)
-
-        return heat_map, heat_image
+            cv2.imwrite('Detections_' + str(timestamp) + '.jpeg', heat_image)
+            # cv2.imshow('frame', heat_image)
+            # cv2.waitKey(0)
+        # TODO: THIS WILL LIKELY NEED CHANGING IN ORDER TO COMPRESS THESE IMAGES
+        return heat_map.tolist(), heat_image

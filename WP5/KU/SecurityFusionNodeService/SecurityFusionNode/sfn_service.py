@@ -13,7 +13,7 @@ from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node im
 
 app = Flask(__name__)
 sfn = SecurityFusionNode('001')
-linksmart_url = 'http://127.0.0.1:5000/'
+linksmart_url = 'http://127.0.0.2:3389/'
 cam_configs = []
 recent_cam_messages = [
     tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8_00004')]
@@ -35,7 +35,20 @@ def hello_linksmart():
         return e, 299
     else:
         print(resp.text, resp.status_code)
-        return resp.text + ' VIA SECURITY FUSION NODE', 205
+        return resp.text + ' VIA SECURITY FUSION NODE', 205\
+
+
+
+@app.route("/linksmart", methods=['POST'])
+def set_linksmart_url():
+    print('REQUEST: SET LINKSMART URL')
+    if request.is_json:
+        global linksmart_url
+        linksmart_url = request.get_json(force=True)
+
+        return 'Linksmart url UPDATED', 205
+    else:
+        return 'Aint no JSON.', 299
 
 
 @app.route("/linksmart/get_configs")
@@ -49,7 +62,7 @@ def get_configs_linksmart():
     else:
         global cam_configs
         cam_configs = resp.json()
-        print(cam_configs, resp.status_code)
+        print('NUMBER OF CONFIGS RETURNED = ' + str(len(cam_configs)), resp.status_code)
         return 'OBTAINED CONFIGS VIA SECURITY FUSION NODE: ' + str(cam_configs), 205
 
 
@@ -71,45 +84,80 @@ def register_sfn():
 def add_message():
     print('REQUEST: MESSAGE')
     if request.is_json:
-
+        log_text = ''
         message = json.loads(request.get_json(force=True))
         # FILTER CODE HERE: FIND THE CAMERA ID AND MODULE AND UPDATE recent_cam_messages
         # TODO: DATABASE HERE?
         camera_id = message['camera_ids'][0]
-        module = message['type_module']
+        wp_module = message['type_module']
+        global cam_configs
+        config = next((item for item in cam_configs if item['camera_id'] == camera_id))
+
+        if wp_module == 'crowd_density_local':
+            # CONVERT TO TOP DOWN, GET THE CONFIG FOR THIS CAMERA
+            # TODO: SORT OUT THE IMAGE SIZES
+            message['density_map'], heat_image = sfn.generate_heat_map(
+                message['density_map'], config['heat_map_transform'], config['ground_plane_roi'],
+                config['ground_plane_size'], timestamp=message['timestamp_1'],
+                frame=tools.decode_image(message['frame_byte_array'], message['image_dims'], False)
+                )
+
+            log_text = log_text + ' crowd_density_local MESSAGE CONVERTED TO TOP DOWN.'
 
         global recent_cam_messages
         if len(recent_cam_messages) > 0:
             ind = None
             # FIND THE ENTRY FROM THIS CAM_ID FROM THIS MODULE AND REPLACE
             for i, item in enumerate(recent_cam_messages):
-                if (item['camera_ids'][0] == camera_id) and (item['type_module'] == module):
+                if (item['camera_ids'][0] == camera_id) and (item['type_module'] == wp_module):
                     ind = i
             if ind is not None:
+                print('THE MESSAGE FROM ' + wp_module + ' MODULE, FROM ' + camera_id + ', IS ALREADY STORED, REPLACING')
+                log_text = log_text + 'PREVIOUS MESSAGE FROM ' + wp_module + ' MODULE, FROM ' + camera_id\
+                    + ', ALREADY STORED, REPLACING.'
                 recent_cam_messages[ind] = message
             else:
-                # THIS IS THE FIRST INSTANCE OF THIS camera_id AND module PAIR
+                # THIS IS THE FIRST INSTANCE OF THIS camera_id AND wp_module PAIR
+                print('THIS IS A NEW MESSAGE FROM ' + wp_module + ' MODULE, FROM ' + camera_id)
+                log_text = log_text + 'THIS IS A NEW MESSAGE FROM ' + wp_module + ' MODULE, FROM ' + camera_id + '.'
                 recent_cam_messages.append(message)
         else:
             # NO MESSAGES HELD SO ADD THE FIRST ONE
+            print('FIRST EVER MESSAGE')
+            log_text = log_text + 'FIRST EVER MESSAGE.'
             recent_cam_messages.append(message)
 
         # message = next((item for item in recent_cam_messages
-        #                if item['camera_id'] == camera_id and item['type_module'] == module))
+        #                if item['camera_id'] == camera_id and item['type_module'] == wp_module))
 
         # FILTER CODE HERE
+        new_message = None
+        if wp_module == 'crowd_density_local':
+            # MESSAGE HAS ALREADY BEEN CONVERTED TO TOP DOWN VIEW
+            new_message = message
 
-        if module == 'crowd_density_local':
-            # CONVERT TO TOP DOWN, GET THE CONFIG FOR THIS CAMERA
-            frame = tools.decode_image(message['frame_byte_array'], message['image_dims'], False)
-            config = next((item for item in cam_configs if item['camera_id'] == camera_id))
-            # TODO: SORT OUT THE IMAGE SIZES
-            heat_map, heat_image = sfn.generate_heat_map(message['density_map'], config['heat_map_transform'],
-                                                         config['ground_plane_roi'], config['ground_plane_size'],
-                                                         # frame=frame)
-                                                         frame=None)
-            new_message = sfn.create_obs_message([camera_id], message['density_count'], heat_map,
-                                                 message['timestamp_1'], message['timestamp_2'], frame)
+        # DUMP THE NEW MESSAGE TO JSON AND FORWARD TO LINKSMART
+        if new_message is not None:
+            try:
+                resp = requests.post(linksmart_url + 'add_message', json=json.dumps(new_message))
+            except requests.exceptions.RequestException as e:
+                print(e)
+                return e, 299
+            else:
+                print(resp.text)
+                log_text = log_text + ' MESSAGE HAS BEEN FORWARDED TO LINKSMART(' + resp.text + ').'
+
+        # SHOULD WE RUN AMALGAMATION
+        crowd_density_global = None
+        # UNDER AND IF STATEMENT CHECK IF WE WANT TO AMALGAMATE AND CREATE A NEW MESSAGE
+
+        # RUN THE AMALGAMATION
+        # crowd_density_global = sfn.create_obs_message([camera_id], message['density_count'], message['density_map'],
+        #                                               message['timestamp_1'], message['timestamp_2'])
+        # log_text = log_text + ' CURRENTLY HELD MESSAGES HAVE BEEN AMALGAMATED INTO THE crowd_density_global VIEW. '
+
+        # SEND crowd_density_global MESSAGE TO LINKSMART
+        if crowd_density_global is not None:
             try:
                 resp = requests.post(linksmart_url + 'add_message', json=new_message)
             except requests.exceptions.RequestException as e:
@@ -117,15 +165,9 @@ def add_message():
                 return e, 299
             else:
                 print(resp.text)
+                log_text = log_text + ' crowd_density_global MESSAGE CREATED AND SENT TO LINKSMART(' + resp.text + ').'
 
-            # SHOULD WE RUN AMALAGAMTION
-
-            # RUN THE AMALGAMATION
-
-            # SEND THE AMALGAMATION MESSSAGE
-
-            return 'Crowd Density (local) message from ' + camera_id + \
-                   ', converted to top down view and forwarded to linksmart', 205
+        return log_text, 205
     else:
         return 'Aint no JSON.', 299
 
@@ -135,9 +177,10 @@ parser = argparse.ArgumentParser(description='Development Server Help')
 parser.add_argument("-d", "--debug", action="store_true", dest="debug_mode",
                     help="run in debug mode (for use with PyCharm)", default=False)
 parser.add_argument("-p", "--port", dest="port",
-                    help="port of server (default:%(default)s)", type=int, default=1000)
+                    help="port of server (default:%(default)s)", type=int, default=5000)
 parser.add_argument("-a", "--address", dest="host",
-                    help="host address of server (default:%(default)s)", type=str, default="0.0.0.0")
+                    # help="host address of server (default:%(default)s)", type=str, default="0.0.0.0")
+                    help="host address of server (default:%(default)s)", type=str, default="127.0.0.1")
 
 cmd_args = parser.parse_args()
 app_options = {"port": cmd_args.port,

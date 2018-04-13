@@ -27,8 +27,8 @@ parser.add_argument('--rtsp', default='rtsp://root:pass@10.144.129.107/axis-medi
                     type=str, help='The RTSP stream address to allow access to the feed and run the config on.')
 # parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/TO/KFF 2017/channel 8/2017-07-08 20-40-00~20-50-00//',
 # parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/TO/KFF 2017/channel 4/2017-07-08 14-00-00~14-10-00/',
-# parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/TO/KFF 2017/channel 2/2017-07-09 19-40-00~19-50-00/',
-parser.add_argument('--seq_location', default=None,
+parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/TO/KFF 2017/channel 2/2017-07-09 19-40-00~19-50-00/',
+# parser.add_argument('--seq_location', default=None,
                     type=str, help='Local file location to be used to stream images instead of RTSP')
 parser.add_argument('--x_size', default=1080, type=int, help='Desired frame in X for loaded images.')
 parser.add_argument('--y_size', default=768, type=int, help='Desired frame in Y for loaded images.')
@@ -37,6 +37,8 @@ _args = parser.parse_args()
 
 # TODO: ADD CAMERA BEARING
 # TODO: ADD STATE ACTIVE INACTIVE RADIO BUTTON
+# TODO: ADD ZoneId
+# TODO: NEW PAGE FOR FLOW rois
 
 
 class ConfigApp(Tk):
@@ -234,6 +236,10 @@ class PageTwo(Frame):
 
         # CREATE LABEL TO REFLECT CONTENT OF THE ConfigTool (UPDATED IN refresher())
         Label(self, text="Region of Interest Points").grid(row=1, column=3)
+        Label(self, text="Longitude and Latitude").grid(row=2, column=0)
+        Label(self, text="Camera Height (m)").grid(row=2, column=3)
+        Label(self, text="Tilt Angle (degrees)").grid(row=3, column=2)
+        Label(self, text="Camera bearing (degrees)").grid(row=4, column=2)
         self.l1 = Label(self, text="NONE")
         self.l1.grid(row=2, column=3)
 
