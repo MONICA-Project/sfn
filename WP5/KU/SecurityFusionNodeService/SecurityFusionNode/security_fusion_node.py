@@ -98,3 +98,6 @@ class SecurityFusionNode:
             # cv2.waitKey(0)
         # TODO: THIS WILL LIKELY NEED CHANGING IN ORDER TO COMPRESS THESE IMAGES
         return heat_map.tolist(), heat_image
+
+    def new_function(self):
+        print('HERE')
