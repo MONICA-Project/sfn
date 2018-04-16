@@ -11,7 +11,7 @@ import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 print(str(socket.gethostname()))
 
 url = 'http://dupre.hopto.org:5000/'
-url = 'http://127.0.0.1:5000/'
+# url = 'http://127.0.0.1:5000/'
 
 # HELLO WORLD
 try:
@@ -24,6 +24,7 @@ else:
 # UPDATE LINKSMART URL
 try:
     resp = requests.post(url + 'linksmart', json='http://127.0.0.2:3389/')
+    # resp = requests.post(url + 'linksmart', json='dupre.hopto.org:3389/')
 except requests.exceptions.RequestException as e:
     print('WOO THERE, Something went wrong, error:' + str(e))
 else:

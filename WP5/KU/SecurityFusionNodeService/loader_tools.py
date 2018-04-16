@@ -17,6 +17,7 @@ def load_settings(settings_location, cam_id, pickel_file=True):
     else:
         if pickel_file:
             entry = pickle.load(fo, encoding='latin1')
+            fo.close()
             if entry['camera_id'] == cam_id:
                 entry['heat_map_transform'] = entry['heat_map_transform'].tolist()
                 print('SETTINGS LOADED FOR CAMERA: ' + cam_id)
@@ -27,6 +28,7 @@ def load_settings(settings_location, cam_id, pickel_file=True):
         else:
             line = json_file.readline()
             data = json.loads(json.loads(line))
+            json_file.close()
             data['heat_map_transform'] = data['heat_map_transform'].tolist()
             return data
 
@@ -39,6 +41,7 @@ def load_json_txt(location, file_name):
     else:
         line = json_file.readline()
         data = json.loads(json.loads(line))
+        json_file.close()
         print('MESSAGE LOADED: ' + file_name)
         return data
 

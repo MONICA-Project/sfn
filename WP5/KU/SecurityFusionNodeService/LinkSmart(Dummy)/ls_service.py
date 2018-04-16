@@ -9,10 +9,11 @@ from WP5.KU.definitions import KU_DIR
 import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 
 app = Flask(__name__)
+print(str(Path(__file__).absolute().parents[4]))
 configs = [
-    tools.load_settings(os.path.join(KU_DIR, 'KU_Config_Tool/'), 'KFF_CAM_2', True),
-    tools.load_settings(os.path.join(KU_DIR, 'KU_Config_Tool/'), 'KFF_CAM_4', True),
-    tools.load_settings(os.path.join(KU_DIR, 'KU_Config_Tool/'), 'KFF_CAM_8', True)
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_2', True),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_4', True),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_8', True)
 ]
 messages = [
     # tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8_00004')
