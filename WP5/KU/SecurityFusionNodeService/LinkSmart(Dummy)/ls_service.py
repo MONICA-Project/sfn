@@ -111,6 +111,8 @@ def add_message():
     if request.is_json:
         message = json.loads(request.get_json(force=True))
         messages.append(message)
+        with open(message['camera_ids'][0] + '.txt', 'w') as outfile:
+            outfile.write(request.get_json(force=True))
         print('HOLDING ' + str(len(messages)) + ' MESSAGES.')
         return 'Added Message.', 205
     else:

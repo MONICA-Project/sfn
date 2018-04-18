@@ -10,8 +10,8 @@ import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 
 print(str(socket.gethostname()))
 
-url = 'http://dupre.hopto.org:5000/'
-# url = 'http://127.0.0.1:5000/'
+# url = 'http://dupre.hopto.org:5000/'
+url = 'http://127.0.0.1:5000/'
 
 # HELLO WORLD
 try:

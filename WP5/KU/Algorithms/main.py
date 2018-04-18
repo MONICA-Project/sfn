@@ -48,6 +48,7 @@ def load_settings(location):
     entry = pickle.load(fo, encoding='latin1')
     return entry
 
+
 info = dataset(12)
 # info = dataset(0)
 print(info)
@@ -62,7 +63,7 @@ analyser = GetCrowd('001')
 # analyser = GetFlow('001)
 
 with open(analyser.module_id + '_reg.txt', 'w') as outfile:
-    json.dump(analyser.create_reg_message(datetime.datetime.utcnow().isoformat()), outfile)
+    outfile.write(analyser.create_reg_message(datetime.datetime.utcnow().isoformat()))
 
 if info == -1:
     print('NO DATA SET SELECTED')
@@ -84,6 +85,7 @@ else:
                         (255, 255, 255), 1, cv2.LINE_AA)
             with open(info[2] + '_' + str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
                 json.dump(message, outfile)
+                # outfile.write(message)
 
             count = count + 1
             key = cv2.waitKey(1) & 0xFF
