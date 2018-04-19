@@ -13,7 +13,7 @@ from WP5.KU.SharedResources.cam_video_streamer import CamVideoStreamer
 from WP5.KU.SharedResources.frame_streamer import ImageSequenceStreamer
 from WP5.KU.KUConfigTool.config_tools import ConfigTools
 
-__version__ = '0.1'
+__version__ = '0.2'
 __author__ = 'Rob Dupre (KU)'
 
 parser = argparse.ArgumentParser(description='Config Tool to create settings files for each camera '
