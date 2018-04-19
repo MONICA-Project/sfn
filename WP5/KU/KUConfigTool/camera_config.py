@@ -12,6 +12,8 @@ sys.path.append(str(Path(__file__).absolute().parents[3]))
 from WP5.KU.SharedResources.cam_video_streamer import CamVideoStreamer
 from WP5.KU.SharedResources.frame_streamer import ImageSequenceStreamer
 from WP5.KU.KUConfigTool.config_tools import ConfigTools
+from WP5.KU.KUConfigTool.ground_plane_gui import GroundPlane, TopDown
+from WP5.KU.KUConfigTool.flow_rois import FlowROI
 
 __version__ = '0.2'
 __author__ = 'Rob Dupre (KU)'
@@ -41,13 +43,14 @@ _args = parser.parse_args()
 
 
 class ConfigApp(Tk):
-    def __init__(self, config_tools, *args, **kwargs):
+    def __init__(self, cam_stream, config_tools, *args, **kwargs):
         Tk.__init__(self, *args, **kwargs)
 
         # CREATE THE VARIABLES TO HOLD THE FRAMES
         self.title("KU Camera Registration and Configuration Tool")
         self.frames = {}
         self.config_tools = config_tools
+        self.cam = cam_stream
         # CREATE THE OVERALL CONTAINER FOR THE APP PAGES
         container = Frame(self)
         container.pack(side="top", fill="both", expand=True)
@@ -56,12 +59,14 @@ class ConfigApp(Tk):
         # FRAMES ARE CREATED ONE ON TOP OF THE OTHER AND RAISED TO THE TOP WHEN VIEWED
         self.frames["Main"] = MainPage(parent=container, controller=self)
         self.frames["FrameROI"] = FrameROI(parent=container, controller=self)
-        self.frames["GroundPlane"] = GroundPlane(parent=container, controller=self)
-        self.frames["PageFour"] = PageFour(parent=container, controller=self)
+        self.frames["GroundPlane"] = GroundPlane(container, self, self.cam)
+        self.frames["TopDown"] = TopDown(parent=container, controller=self)
+        self.frames["FlowROIs"] = FlowROI(container, self, self.cam)
         self.frames["Main"].grid(row=0, column=0, sticky="nsew")
         self.frames["FrameROI"].grid(row=0, column=0, sticky="nsew")
         self.frames["GroundPlane"].grid(row=0, column=0, sticky="nsew")
-        self.frames["PageFour"].grid(row=0, column=0, sticky="nsew")
+        self.frames["TopDown"].grid(row=0, column=0, sticky="nsew")
+        self.frames["FlowROIs"].grid(row=0, column=0, sticky="nsew")
         # SET THE FIRST PAGE TO BE VIEWED
         self.show_frame("Main")
         # self.show_frame("GroundPlane")
@@ -74,8 +79,8 @@ class ConfigApp(Tk):
         Keyword arguments:
         page_name -- (str) Name of the page as recorded in frames
         """
-        if page_name == "PageFour":
-            self.frames["PageFour"].draw_image()
+        if page_name == "TopDown":
+            self.frames["TopDown"].draw_image()
         frame = self.frames[page_name]
         frame.tkraise()
 
@@ -118,13 +123,15 @@ class ConfigApp(Tk):
             self.frames["GroundPlane"].draw_image()
             self.frames["GroundPlane"].draw_top_down()
 
-            self.frames["PageFour"].roi = self.config_tools.ground_plane_roi
-            self.frames["PageFour"].e1.delete(0, END)
-            self.frames["PageFour"].e2.delete(0, END)
-            self.frames["PageFour"].e1.insert(10, self.config_tools.ground_plane_size[0])
-            self.frames["PageFour"].e2.insert(10, self.config_tools.ground_plane_size[1])
-            self.frames["PageFour"].draw_image()
-            self.frames["PageFour"].draw_rect()
+            self.frames["TopDown"].roi = self.config_tools.ground_plane_roi
+            self.frames["TopDown"].e1.delete(0, END)
+            self.frames["TopDown"].e2.delete(0, END)
+            self.frames["TopDown"].e1.insert(10, self.config_tools.ground_plane_size[0])
+            self.frames["TopDown"].e2.insert(10, self.config_tools.ground_plane_size[1])
+            self.frames["TopDown"].draw_image()
+            self.frames["TopDown"].draw_rect()
+
+            self.frames["FlowROIs"].roi = self.config_tools.flow_rois
 
     def refresher(self):
         """Call back function which refreshes the various labels/canvases in each frame.
@@ -137,7 +144,8 @@ class ConfigApp(Tk):
         self.frames["FrameROI"].l1.config(text=str(self.config_tools.frame_roi))
         self.frames["GroundPlane"].l1.config(text=str(self.config_tools.ref_pt))
         self.frames["GroundPlane"].draw_image()
-        self.frames["PageFour"].l1.config(text=str(self.config_tools.ground_plane_roi))
+        self.frames["TopDown"].l1.config(text=str(self.config_tools.ground_plane_roi))
+        self.frames["FlowROIs"].l1.config(text=str(self.config_tools.flow_rois))
 
         # self.frames["GroundPlane"].label.config(image=im_new)
         # self.frames["GroundPlane"].label.image = im_new
@@ -162,11 +170,11 @@ class MainPage(Frame):
         self.label.image = im
 
         # CREATE LABELS FOR ENTRY BOXES
-        Label(self, text="Camera ID").grid(row=1, column=2)
-        Label(self, text="Zone ID").grid(row=1, column=4)
-        Label(self, text="Camera Type").grid(row=2, column=2)
-        Label(self, text="Registration Message Address").grid(row=3, column=2)
-        Label(self, text="Modules:").grid(row=1, column=0)
+        Label(self, text="Camera ID").grid(row=1, column=2, sticky=E)
+        Label(self, text="Zone ID").grid(row=1, column=4, sticky=E)
+        Label(self, text="Camera Type").grid(row=2, column=2, sticky=E)
+        Label(self, text="Registration Message Address").grid(row=3, column=2, sticky=E)
+        Label(self, text="Modules:").grid(row=1, column=0, sticky=E)
 
         # ADD ENTRIES FOR THE VARIOUS TEXT BOXES AND LABELS FOR DESCRIPTIONS
         self.e1 = Entry(self, justify='center')
@@ -186,10 +194,10 @@ class MainPage(Frame):
         self.v2 = IntVar()
         self.v3 = IntVar()
         self.v4 = IntVar()
-        self.c1 = Checkbutton(self, text='Crowd Density', variable=self.v1).grid(row=2, column=0)
-        self.c2 = Checkbutton(self, text='Optical Flow', variable=self.v2).grid(row=2, column=1)
-        self.c3 = Checkbutton(self, text='Fight Detection', variable=self.v3).grid(row=3, column=0)
-        self.c4 = Checkbutton(self, text='Object Detection', variable=self.v4).grid(row=3, column=1)
+        self.c1 = Checkbutton(self, text='Crowd Density', variable=self.v1).grid(row=2, column=0, sticky=E)
+        self.c2 = Checkbutton(self, text='Optical Flow', variable=self.v2).grid(row=2, column=1, sticky=W)
+        self.c3 = Checkbutton(self, text='Fight Detection', variable=self.v3).grid(row=3, column=0, sticky=E)
+        self.c4 = Checkbutton(self, text='Object Detection', variable=self.v4, anchor="w").grid(row=3, column=1, sticky=W)
 
         # CREATE BUTTONS FOR NAVIGATION
         # TODO:ADD LOGIC TO MAKE APPEAR A NEXT BUTTON WHEN ENTRIES RETURN TRUE FROM config_tools CHECKER
@@ -199,8 +207,8 @@ class MainPage(Frame):
         b2.grid(row=4, column=2, sticky=W, pady=4)
         b3 = Button(self, text='Load', command=lambda: controller.load(self.e1.get()))
         b3.grid(row=4, column=3, sticky=W, pady=4)
-        b4 = Button(self, text='Go Back', command=lambda: self.next_page(controller))
-        b4.grid(row=4, column=4, sticky=W, pady=4)
+        b4 = Button(self, text='Go Back', command=lambda: self.go_back(controller))
+        b4.grid(row=4, column=4, sticky=E, pady=4)
         b5 = Button(self, text='Next Page', command=lambda: self.next_page(controller))
         b5.grid(row=4, column=5, sticky=W, pady=4)
 
@@ -208,7 +216,7 @@ class MainPage(Frame):
 
     def go_back(self, controller):
         self.update_config()
-        controller.show_frame("GroundPlane")
+        controller.show_frame("FlowROIs")
 
     def next_page(self, controller):
         self.update_config()
@@ -225,7 +233,6 @@ class MainPage(Frame):
         self.controller.config_tools.module_types = [self.v1.get(), self.v2.get(), self.v3.get(), self.v4.get()]
 
 
-# TODO: SORT BUG WITH MORE THAN ONE RECTANGLE ON SCREEN WHEN RELOADING
 class FrameROI(Frame):
     # THE SECOND FRAME OF CONFIG TOOL USED TO DEFINE THE REGION OF INTEREST
     def __init__(self, parent, controller):
@@ -249,11 +256,11 @@ class FrameROI(Frame):
         self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
 
         # CREATE LABEL TO REFLECT CONTENT OF THE ConfigTool (UPDATED IN refresher())
-        Label(self, text="Region of Interest Points").grid(row=1, column=0)
-        Label(self, text="Longitude and Latitude").grid(row=2, column=0)
-        Label(self, text="Camera Height (m)").grid(row=2, column=3)
-        Label(self, text="Tilt Angle (degrees)").grid(row=3, column=0)
-        Label(self, text="Camera bearing (degrees)").grid(row=3, column=2)
+        Label(self, text="Region of Interest Points").grid(row=1, column=0, sticky=E)
+        Label(self, text="Longitude and Latitude").grid(row=2, column=0, sticky=E)
+        Label(self, text="Camera Height (m)").grid(row=2, column=3, sticky=E)
+        Label(self, text="Tilt Angle (degrees)").grid(row=3, column=0, sticky=E)
+        Label(self, text="Camera bearing (degrees)").grid(row=3, column=2, sticky=E)
 
         self.l1 = Label(self, text="NONE")
         self.l1.grid(row=1, column=1)
@@ -278,7 +285,7 @@ class FrameROI(Frame):
         b1 = Button(self, text='Quit', command=parent.quit)
         b1.grid(row=4, column=0, sticky=W, pady=4)
         b2 = Button(self, text='Go Back', command=lambda: self.go_back(self.controller))
-        b2.grid(row=4, column=3, sticky=W, pady=4)
+        b2.grid(row=4, column=3, sticky=E, pady=4)
         b2 = Button(self, text='Next Page', command=lambda: self.next_page(self.controller))
         b2.grid(row=4, column=4, sticky=W, pady=4)
 
@@ -309,6 +316,8 @@ class FrameROI(Frame):
         self.canvas.create_image(0, 0, anchor="nw", image=self.image)
 
     def draw_rect(self):
+        self.canvas.delete("all")
+        self._draw_image()
         self.rect = self.canvas.create_rectangle(self.roi[0], self.roi[1], 5, 5, fill=None)
         self.canvas.coords(self.rect, self.roi[0], self.roi[1], self.roi[2], self.roi[3])
 
@@ -316,324 +325,35 @@ class FrameROI(Frame):
         # save mouse drag start position
         self.roi[0] = event.x
         self.roi[1] = event.y
+        self.roi[2] = event.x + 5
+        self.roi[3] = event.y + 5
 
         # create rectangle if not yet exist
         if not self.rect:
-            self.rect = self.canvas.create_rectangle(self.roi[0], self.roi[1], 5, 5, fill=None)
-
-    def on_move_press(self, event):
-        self.roi[2], self.roi[3] = (event.x, event.y)
-        # LIMIT DRAG TO WITHIN IMAGE DIMENSIONS
-        if self.roi[2] < 0:
-            self.roi[2] = 0
-        elif self.roi[2] > self.width:
-            self.roi[2] = self.width
-
-        if self.roi[3] < 0:
-            self.roi[3] = 0
-        elif self.roi[3] > self.height:
-            self.roi[3] = self.height
-
-        # expand rectangle as you drag the mouse
-        self.canvas.coords(self.rect, self.roi[0], self.roi[1], self.roi[2], self.roi[3])
-
-    def on_button_release(self, event):
-        self.update_config()
-
-
-class GroundPlane(Frame):
-    # THE THIRD FRAME OF CONFIG TOOL USED TO DEFINE THE GROUND PLANE, CALCULATE THE TRANSFORMATION AND RECORD DETAILS
-    def __init__(self, parent, controller):
-        # INITIALISE THE FRAME
-        Frame.__init__(self, parent)
-        self.controller = controller
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1, minsize=216)
-        # GET THE CURRENT FRAME AND CONVERT
-        self.frame = cam.read()
-        self.width = int(self.frame.shape[1] / 1.25)
-        self.height = int(self.frame.shape[0] / 1.25)
-        self.im = Image.fromarray(self.frame, 'RGB')
-        self.im = self.im.resize((self.width, self.height), Image.ANTIALIAS)
-        self.image = ImageTk.PhotoImage(self.im)
-        # CREATE Canvas FOR THE IMAGE WHICH ALLOWS FOR DRAWING
-        self.canvas = Canvas(self, width=self.width, height=self.height, cursor="cross")
-        self.canvas.grid(row=0, columnspan=4)
-        self.canvas.bind("<ButtonPress-1>", self.on_button_press)
-        self.canvas.bind("<B1-Motion>", self.on_move_press)
-        self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
-        # CREATE LABEL TO HOLD THE WARPED IMAGE TO CHECK IT LOOKS CORRECT
-        self.width_t = int(self.frame.shape[1] * 0.25)
-        self.height_t = int(self.frame.shape[0] * 0.25)
-        self.label = Label(self, image=self.image, width=self.width_t, height=self.height_t)
-        self.label.grid(row=0, column=4)
-        self.label.image = self.im
-
-        # CREATE LABELS FOR ENTRY BOXES
-        Label(self, text="Ground Plane Points").grid(row=1, column=0)
-        Label(self, text="Longitude and Latitude of reference location").grid(row=2, column=0)
-        Label(self, text="Compass Orientation (degrees)").grid(row=3, column=0)
-
-        # ADD ENTRIES FOR THE VARIOUS TEXT BOXES AND LABELS FOR DESCRIPTIONS
-        self.l1 = Label(self, text="NONE")
-        self.l1.grid(row=1, column=1)
-        self.e1 = Entry(self, justify='center')
-        self.e2 = Entry(self, justify='center')
-        self.e3 = Entry(self, justify='center')
-        self.e1.insert(10, "51.40168")
-        self.e2.insert(10, "-0.30271")
-        self.e3.insert(10, "174")
-        self.e1.grid(row=2, column=1)
-        self.e2.grid(row=2, column=2)
-        self.e3.grid(row=3, column=1)
-
-        b1 = Button(self, text='Quit', command=parent.quit)
-        b1.grid(row=4, column=0, sticky=W, pady=4)
-        b2 = Button(self, text='Show Top Down', command=lambda: self.draw_top_down())
-        b2.grid(row=4, column=1, sticky=W, pady=4)
-        b3 = Button(self, text='ROI Top Down', command=lambda: self.roi_top_down(controller))
-        b3.grid(row=4, column=2, sticky=W, pady=4)
-        b4 = Button(self, text='Go Back', command=lambda: self.go_back(self.controller))
-        b4.grid(row=4, column=3, sticky=W, pady=4)
-        b5 = Button(self, text='Next Page', command=lambda: self.next_page(self.controller))
-        b5.grid(row=4, column=4, sticky=W, pady=4)
-
-        # FIRST 4 POINTS ARE THE GROUND PLANE SECOND FOUR ARE REFERENCE POINTS TO CHECK IT MAKES SENSE
-        self.ref_pt = [[50, 50], [300, 50], [50, 300], [300, 300], [100, 100]]
-
-        # DRAWING THE GROUND PLANE
-        self.intPt = []
-        self.clone = []
-        self.warped = []
-        self.drawing = False
-        self.current_point = -1
-
-        self.draw_image()
-        self.update_config()
-
-    def go_back(self, controller):
-        self.update_config()
-        controller.show_frame("FrameROI")
-
-    def next_page(self, controller):
-        self.update_config()
-        controller.show_frame("Main")
-
-    def update_config(self):
-        # RESCALE THE POINTS TO ALLOW FOR THE SMALLER IMAGE
-        t = [[int(self.ref_pt[0][0] * 1.25), int(self.ref_pt[0][1] * 1.25)],
-             [int(self.ref_pt[1][0] * 1.25), int(self.ref_pt[1][1] * 1.25)],
-             [int(self.ref_pt[2][0] * 1.25), int(self.ref_pt[2][1] * 1.25)],
-             [int(self.ref_pt[3][0] * 1.25), int(self.ref_pt[3][1] * 1.25)],
-             [int(self.ref_pt[4][0] * 1.25), int(self.ref_pt[4][1] * 1.25)]]
-        self.controller.config_tools.ref_pt = t
-        self.controller.config_tools.ground_plane_position = [float(self.e1.get()), float(self.e2.get())]
-        self.controller.config_tools.ground_plane_orientation = int(self.e3.get())
-
-    def draw_image(self):
-        # DELETE EVERYTHING OFF THE CANVAS
-        self.canvas.delete("all")
-        # RE-DRAW IMAGE
-        self.frame = cam.read()
-        self.frame = self.frame[self.controller.config_tools.frame_roi[1]:self.controller.config_tools.frame_roi[3],
-                                self.controller.config_tools.frame_roi[0]:self.controller.config_tools.frame_roi[2], :]
-        self.width = int(self.frame.shape[1] / 1.25)
-        self.height = int(self.frame.shape[0] / 1.25)
-        self.im = Image.fromarray(self.frame, 'RGB')
-        self.im = self.im.resize((self.width, self.height), Image.ANTIALIAS)
-        self.image = ImageTk.PhotoImage(self.im)
-        self.canvas.create_image(0, 0, anchor="nw", image=self.image)
-        # DRAW LINES AND OVALS
-        self.canvas.create_line(self.ref_pt[0][0], self.ref_pt[0][1], self.ref_pt[1][0], self.ref_pt[1][1],
-                                self.ref_pt[1][0], self.ref_pt[1][1], self.ref_pt[3][0], self.ref_pt[3][1],
-                                self.ref_pt[3][0], self.ref_pt[3][1], self.ref_pt[2][0], self.ref_pt[2][1],
-                                self.ref_pt[2][0], self.ref_pt[2][1], self.ref_pt[0][0], self.ref_pt[0][1], width=3)
-
-        self.canvas.create_oval(self.ref_pt[0][0], self.ref_pt[0][1], self.ref_pt[0][0], self.ref_pt[0][1], width=5)
-        self.canvas.create_oval(self.ref_pt[1][0], self.ref_pt[1][1], self.ref_pt[1][0], self.ref_pt[1][1], width=5)
-        self.canvas.create_oval(self.ref_pt[2][0], self.ref_pt[2][1], self.ref_pt[2][0], self.ref_pt[2][1], width=5)
-        self.canvas.create_oval(self.ref_pt[3][0], self.ref_pt[3][1], self.ref_pt[3][0], self.ref_pt[3][1], width=5)
-        self.canvas.create_oval(self.ref_pt[4][0], self.ref_pt[4][1], self.ref_pt[4][0], self.ref_pt[4][1], width=6)
-        self.canvas.create_text(self.ref_pt[0][0], self.ref_pt[0][1] + 5, fill="darkblue", font="Ariel 10 bold",
-                                text="X_0, Y_1")
-        self.canvas.create_text(self.ref_pt[1][0], self.ref_pt[1][1] + 5, fill="darkblue", font="Ariel 10 bold",
-                                text="X_1, Y_1")
-        self.canvas.create_text(self.ref_pt[2][0], self.ref_pt[2][1] + 5, fill="darkblue", font="Ariel 10 bold",
-                                text="X_0, Y_0")
-        self.canvas.create_text(self.ref_pt[3][0], self.ref_pt[3][1] + 5, fill="darkblue", font="Ariel 10 bold",
-                                text="X_1, Y_0")
-        self.canvas.create_text(self.ref_pt[4][0], self.ref_pt[4][1] + 5, fill="darkblue", font="Ariel 10 bold",
-                                text="Ref Loc")
-
-    def draw_top_down(self):
-        # USING THE ALREADY COMPUTED TRANSFORM, RETURN THE WARPED IMAGE FROM config_tools AND DISPLAY
-        self.warped = self.controller.config_tools.perspective_transform(self.frame)
-        self.warped = self.controller.config_tools.transform_points(self.warped)
-        self.warped = self.controller.config_tools.shrink_image(self.warped, both=True)
-        self.warped = Image.fromarray(self.warped, 'RGB')
-        self.warped = self.warped.resize((self.width_t, self.height_t), Image.ANTIALIAS)
-        self.warped = ImageTk.PhotoImage(self.warped)
-        self.label.config(image=self.warped)
-        self.label.image = self.warped
-
-    def roi_top_down(self, controller):
-        self.warped = self.controller.config_tools.perspective_transform(self.frame)
-        self.warped = self.controller.config_tools.shrink_image(self.warped)
-        self.warped = Image.fromarray(self.warped, 'RGB')
-        self.warped = self.warped.resize((self.width_t, self.height_t), Image.ANTIALIAS)
-        self.warped = ImageTk.PhotoImage(self.warped)
-        controller.show_frame("PageFour")
-
-    def on_button_press(self, event):
-        # save mouse drag start position
-        x = event.x
-        y = event.y
-
-        self.drawing = True
-        # FIND THE SELECTED POINT
-        for i in range(len(self.ref_pt)):
-            if abs(x - self.ref_pt[i][0]) < 10:
-                if abs(y - self.ref_pt[i][1]) < 10:
-                    self.current_point = i
-                    break
-
-    def on_move_press(self, event):
-        x = event.x
-        y = event.y
-        # LIMIT DRAG TO WITHIN IMAGE DIMENSIONS
-        if x < 0:
-            x = 0
-        elif x > self.width:
-            x = self.width
-
-        if y < 0:
-            y = 0
-        elif y > self.height:
-            y = self.height
-
-        if self.drawing is True:
-            # print('MOVING WITH MOUSE DOWN')
-            if self.current_point is not -1:
-                self.ref_pt[self.current_point] = (x, y)
-
-    def on_button_release(self, event):
-        self.drawing = False
-        self.current_point = -1
-        self.update_config()
-
-
-class PageFour(Frame):
-    # THE SECOND FRAME OF CONFIG TOOL USED TO DEFINE THE REGION OF INTEREST
-    def __init__(self, parent, controller):
-        # INITIALISE THE FRAME
-        Frame.__init__(self, parent)
-        self.controller = controller
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1, minsize=216)
-        # GET THE CURRENT FRAME AND CONVERT
-        frame = self.controller.config_tools.warped_image
-        self.width = frame.shape[1]
-        self.height = frame.shape[0]
-        self.w_scale = 1
-        self.h_scale = 1
-        self.im = Image.fromarray(frame, 'RGB')
-        self.im = self.im.resize((self.width, self.height), Image.ANTIALIAS)
-        self.image = ImageTk.PhotoImage(self.im)
-        # CREATE Canvas FOR THE IMAGE WHICH ALLOWS FOR DRAWING
-        self.canvas = Canvas(self, width=self.width, height=self.height, cursor="cross")
-        self.canvas.grid(row=0, columnspan=5)
-        # BIND FUNCTIONS TO THE EVENT CALLBACKS
-        self.canvas.bind("<ButtonPress-1>", self.on_button_press)
-        self.canvas.bind("<B1-Motion>", self.on_move_press)
-        # self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
-
-        # CREATE LABEL TO REFLECT CONTENT OF THE ConfigTool (UPDATED IN refresher())
-        Label(self, text="Top Down View: Region of Interest Points").grid(row=1, column=1)
-        self.l1 = Label(self, text="NONE")
-        self.l1.grid(row=1, column=2)
-
-        Label(self, text="Size X (m)").grid(row=2, column=3)
-        Label(self, text="Size Y (m)").grid(row=2, column=5)
-
-        # ADD ENTRIES FOR THE VARIOUS TEXT BOXES AND LABELS FOR DESCRIPTIONS
-        self.e1 = Entry(self, justify='center')
-        self.e2 = Entry(self, justify='center')
-        self.e1.insert(10, "0")
-        self.e2.insert(10, "0")
-        self.e1.grid(row=2, column=4)
-        self.e2.grid(row=2, column=6)
-
-        # CREATE BUTTONS FOR NAVIGATION
-        b2 = Button(self, text='Go Back', command=lambda: self.go_back(controller))
-        b2.grid(row=4, column=3, sticky=W, pady=4)
-
-        # VARIABLES USED IN OPERATION
-        self.rect = None
-        self.roi = [0, 0, self.width, self.height]
-
-        # DRAW THE IMAGE
-        self.draw_image()
-        self.update_config()
-
-    def go_back(self, controller):
-        self.update_config()
-        controller.show_frame("GroundPlane")
-
-    def update_config(self):
-        self.controller.config_tools.ground_plane_roi = self.roi
-        self.controller.config_tools.ground_plane_size = [int(self.e1.get()), int(self.e2.get())]
-
-    def draw_image(self):
-        # frame = self.controller.config_tools.perspective_transform(self.controller.config_tools.warped_image)
-        # frame = self.controller.config_tools.shrink_image(frame)
-        frame = self.controller.config_tools.warped_image
-        self.im = Image.fromarray(frame, 'RGB')
-        self.w_scale = frame.shape[1] / self.width
-        self.h_scale = frame.shape[0] / self.height
-        self.im = self.im.resize((self.width, self.height), Image.ANTIALIAS)
-        self.image = ImageTk.PhotoImage(self.im)
-        self.canvas.create_image(0, 0, anchor="nw", image=self.image)
-        if self.rect:
-            self.rect = self.canvas.create_rectangle(int(self.roi[0] / self.w_scale), int(self.roi[1] / self.h_scale),
-                               int(self.roi[2] / self.w_scale), int(self.roi[3] / self.h_scale), outline='white')
-
-    def draw_rect(self):
-        self.rect = self.canvas.create_rectangle(int(self.roi[0] / self.w_scale), int(self.roi[1] / self.h_scale),
-                                                 int(self.roi[2] / self.w_scale), int(self.roi[3] / self.h_scale),
-                                                 outline='white')
-
-    def on_button_press(self, event):
-        # save mouse drag start position
-        x = event.x
-        y = event.y
-
-        # create rectangle if not yet exist
-        if not self.rect:
-            self.rect = self.canvas.create_rectangle(x, y, 5, 5, fill=None, outline='white')
-        self.roi[0] = int(x * self.w_scale)
-        self.roi[1] = int(y * self.h_scale)
+            self.rect = self.canvas.create_rectangle(self.roi[0], self.roi[1], self.roi[2], self.roi[3], fill=None)
 
     def on_move_press(self, event):
         x, y = (event.x, event.y)
-        # LIMIT DRAG TO WITHIN IMAGE DIMENSIONS
-        if x < 0:
-            x = 0
-        elif x > self.width:
-            x = self.width
+        # LIMIT DRAG ONLY DOWN RIGHT
+        if x > self.roi[0] + 1 and y > self.roi[1] + 1:
+            self.roi[2] = x
+            self.roi[3] = y
+            # LIMIT DRAG TO WITHIN IMAGE DIMENSIONS
+            if self.roi[2] < 0:
+                self.roi[2] = 0
+            elif self.roi[2] > self.width:
+                self.roi[2] = self.width
 
-        if y < 0:
-            y = 0
-        elif y > self.height:
-            y = self.height
+            if self.roi[3] < 0:
+                self.roi[3] = 0
+            elif self.roi[3] > self.height:
+                self.roi[3] = self.height
 
-        # expand rectangle as you drag the mouse
-        self.canvas.coords(self.rect, int(self.roi[0] / self.w_scale), int(self.roi[1] / self.h_scale), x, y)
-        # self.canvas.create_text(self.roi[0], self.roi[1] + 5, fill="darkblue", font="Ariel 10 bold", text="X_0, Y_1")
-        # self.canvas.create_text(self.roi[3], self.roi[1] + 5, fill="darkblue", font="Ariel 10 bold", text="X_1, Y_1")
-        # self.canvas.create_text(self.roi[0], self.roi[2] + 5, fill="darkblue", font="Ariel 10 bold", text="X_0, Y_0")
-        # self.canvas.create_text(self.roi[3], self.roi[2] + 5, fill="darkblue", font="Ariel 10 bold", text="X_1, Y_0")
-        self.roi[2] = int(x * self.w_scale)
-        self.roi[3] = int(y * self.h_scale)
+            # expand rectangle as you drag the mouse
+            self.canvas.coords(self.rect, self.roi[0], self.roi[1], self.roi[2], self.roi[3])
+
+    def on_button_release(self, event):
+        self.update_config()
 
 
 if __name__ == '__main__':
@@ -645,7 +365,7 @@ if __name__ == '__main__':
     if cam.open():
         print("CAMERA CONNECTION IS ESTABLISHED.")
         config = ConfigTools()
-        config_app = ConfigApp(config)
+        config_app = ConfigApp(cam, config)
         config_app.mainloop()
         cam.stop()
         exit(-1)
