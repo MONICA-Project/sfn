@@ -1,9 +1,14 @@
 # main.py
-"""A test application design to mimic (badly) the VCA framework."""
+"""A test application designed to mimic (badly) the VCA framework."""
 import datetime
 import json
 import pickle
 import cv2
+import requests
+from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).absolute().parents[4]))
+from WP5.KU.definitions import KU_DIR
 from WP5.KU.SharedResources.cam_video_streamer import CamVideoStreamer
 from WP5.KU.SharedResources.frame_streamer import ImageSequenceStreamer
 import WP5.KU.SharedResources.get_incrementer as inc
@@ -54,15 +59,15 @@ info = dataset(12)
 print(info)
 
 # LOAD THE SETTINGS AND PASS THEN WHEN PROCESSING A FRAME
-settings_location = '/ocean/robdupre/PYTHON_SCRIPTS/MONICA/'
-settings = load_settings(settings_location + '/' + info[2])
+settings = load_settings(KU_DIR + '/KUConfigTool/' + '/' + info[2])
 
 # CREATE AN analyser OBJECT AND CREATE THE REGISTRATION MESSAGE
 analyser = GetCrowd('001')
 # analyser = GetPeople('001')
 # analyser = GetFlow('001)
 
-with open(analyser.module_id + '_reg.txt', 'w') as outfile:
+with open(KU_DIR + '/Algorithms/registration_messages/' + analyser.module_id + '_' + analyser.type_module + '_reg.txt',
+          'w') as outfile:
     outfile.write(analyser.create_reg_message(datetime.datetime.utcnow().isoformat()))
 
 if info == -1:
@@ -81,11 +86,19 @@ else:
         while cap.open():
             frame = cap.read()
             message, frame = analyser.process_frame(frame, settings['camera_id'], settings['roi'])
+
+            # SEND A HTTP REQUEST OFF
+            try:
+                res = requests.post('http://127.0.0.1:5000/message', json=message)
+            except requests.exceptions.RequestException as e:
+                print(e)
+            else:
+                print(res.status_code, res.headers['content-type'], res.text)
+
             cv2.putText(frame, json.dumps(message, indent=4), (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                         (255, 255, 255), 1, cv2.LINE_AA)
             with open(info[2] + '_' + str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
-                json.dump(message, outfile)
-                # outfile.write(message)
+                outfile.write(message)
 
             count = count + 1
             key = cv2.waitKey(1) & 0xFF
@@ -107,17 +120,17 @@ else:
             message, result = analyser.process_frame(frame, settings['camera_id'], settings['roi'])
 
             # SEND A HTTP REQUEST OFF
-            # try:
-            #     res = requests.post('http://127.0.0.2:5000/message', json=message)
-            # except requests.exceptions.RequestException as e:
-            #     print(e)
-            # else:
-            #     print(res.status_code, res.headers['content-type'], res.text)
+            try:
+                res = requests.post('http://127.0.0.1:5000/message', json=message)
+            except requests.exceptions.RequestException as e:
+                print(e)
+            else:
+                print(res.status_code, res.headers['content-type'], res.text)
             # WRITE FILES FOR USE LATER
             # cv2.imwrite(info[2] + '_Frame_' + str(inc.get_incrementer(count, 5)) + '.jpeg', frame)
             # cv2.imwrite(info[2] + '_Result_' + str(inc.get_incrementer(count, 5)) + '.jpeg', result)
             with open(info[2] + '_' + str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
-                json.dump(message, outfile)
+                outfile.write(message)
             count = count + 1
             key = cv2.waitKey(1) & 0xFF
             # KEYBINDINGS FOR DISPLAY

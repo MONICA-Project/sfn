@@ -90,19 +90,22 @@ def add_message():
         # TODO: DATABASE HERE?
         camera_id = message['camera_ids'][0]
         wp_module = message['type_module']
+
+        # CHECK THAT THERE ARE CONFIGS TO LOOK THROUGH
         global cam_configs
-        config = next((item for item in cam_configs if item['camera_id'] == camera_id))
+        if len(cam_configs) > 0:
+            config = next((item for item in cam_configs if item['camera_id'] == camera_id))
 
-        if wp_module == 'crowd_density_local':
-            # CONVERT TO TOP DOWN, GET THE CONFIG FOR THIS CAMERA
-            # TODO: SORT OUT THE IMAGE SIZES
-            message['density_map'], heat_image = sfn.generate_heat_map(
-                message['density_map'], config['heat_map_transform'], config['ground_plane_roi'],
-                config['ground_plane_size'], timestamp=message['timestamp_1'],
-                frame=tools.decode_image(message['frame_byte_array'], message['image_dims'], False)
-                )
+            if wp_module == 'crowd_density_local':
+                # CONVERT TO TOP DOWN, GET THE CONFIG FOR THIS CAMERA
+                # TODO: SORT OUT THE IMAGE SIZES
+                message['density_map'], heat_image = sfn.generate_heat_map(
+                    message['density_map'], config['image_2_ground_plane_matrix'], config['ground_plane_roi'],
+                    config['ground_plane_size'], timestamp=message['timestamp_1'],
+                    frame=tools.decode_image(message['frame_byte_array'], message['image_dims'], False)
+                    )
 
-            log_text = log_text + ' crowd_density_local MESSAGE CONVERTED TO TOP DOWN.'
+                log_text = log_text + ' crowd_density_local MESSAGE CONVERTED TO TOP DOWN.'
 
         global recent_cam_messages
         if len(recent_cam_messages) > 0:

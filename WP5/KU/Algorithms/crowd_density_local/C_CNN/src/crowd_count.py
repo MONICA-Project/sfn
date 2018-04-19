@@ -21,7 +21,7 @@ class CrowdCounter(nn.Module):
         return self.loss_mse + 0.0001*self.cross_entropy
     
     def forward(self,  im_data, gt_data=None, gt_cls_label=None, ce_weights=None):        
-        im_data = network.np_to_variable(im_data, is_cuda=True, is_training=self.training)
+        im_data = network.np_to_variable(im_data, is_cuda=self.cuda_available(), is_training=self.training)
         density_map, density_cls_score = self.CCN(im_data)
         density_cls_prob = F.softmax(density_cls_score, dim=0)
         
@@ -40,3 +40,7 @@ class CrowdCounter(nn.Module):
         ce_weights = ce_weights.cuda()
         cross_entropy = self.loss_bce_fn(density_cls_score, gt_cls_label)
         return loss_mse, cross_entropy
+
+    @staticmethod
+    def cuda_available():
+        return torch.cuda.is_available()

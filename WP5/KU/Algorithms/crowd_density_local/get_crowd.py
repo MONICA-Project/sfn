@@ -32,7 +32,6 @@ class GetCrowd(FrameAnalyser):
         self.cam_id = ''
 
         # ALGORITHM VARIABLES
-        self.cuda = True
         self.scale = 0.5
         self.count = 0
         self.model_path = []
@@ -41,7 +40,11 @@ class GetCrowd(FrameAnalyser):
         self.net = CrowdCounter()
         # TODO: FUTURE WARNING HERE
         nw.load_net(path.join(self.model_path), self.net)
-        self.net.cuda()
+        # CUDA WARNING
+        if self.net.cuda_available():
+            self.net.cuda()
+        else:
+            print('RUNNING WITHOUT CUDA SUPPORT')
         self.net.eval()
 
     def process_frame(self, frame, camera_id, roi):

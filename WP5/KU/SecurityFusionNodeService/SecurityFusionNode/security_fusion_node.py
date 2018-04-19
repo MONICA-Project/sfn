@@ -93,7 +93,8 @@ class SecurityFusionNode:
             # SCALE UP THE heat_map TO ENCOMPASS THE WHOLE WARPED roi
             heat_image = cv2.resize(heat_map, (gp_roi[2] - gp_roi[0], gp_roi[3] - gp_roi[1]))
             heat_image = ((warped_image / 255) / 3) + heat_image
-            cv2.imwrite('Detections_' + str(timestamp) + '.jpeg', heat_image)
+            # SAVE THE IMAGE (NORMALISE UP TO 255)
+            cv2.imwrite('Detections_' + str(timestamp) + '.jpeg', heat_image*255)
             # cv2.imshow('frame', heat_image)
             # cv2.waitKey(0)
         # TODO: THIS WILL LIKELY NEED CHANGING IN ORDER TO COMPRESS THESE IMAGES

@@ -19,7 +19,7 @@ def load_settings(settings_location, cam_id, pickel_file=True):
             entry = pickle.load(fo, encoding='latin1')
             fo.close()
             if entry['camera_id'] == cam_id:
-                entry['heat_map_transform'] = entry['heat_map_transform'].tolist()
+                entry['image_2_ground_plane_matrix'] = entry['image_2_ground_plane_matrix'].tolist()
                 print('SETTINGS LOADED FOR CAMERA: ' + cam_id)
                 return entry
             else:
@@ -27,7 +27,8 @@ def load_settings(settings_location, cam_id, pickel_file=True):
                 return None
         else:
             line = json_file.readline()
-            data = json.loads(json.loads(line))
+            # TODO: CHECK THIS IMPORT STILL WORKS
+            data = json.loads(line)
             json_file.close()
             data['heat_map_transform'] = data['heat_map_transform'].tolist()
             return data
@@ -40,7 +41,7 @@ def load_json_txt(location, file_name):
         print('IoError')
     else:
         line = json_file.readline()
-        data = json.loads(json.loads(line))
+        data = json.loads(line)
         json_file.close()
         print('MESSAGE LOADED: ' + file_name)
         return data

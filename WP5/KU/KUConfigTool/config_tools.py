@@ -24,14 +24,17 @@ class ConfigTools:
 
         # PAGE ONE
         self.camera_id = 'TEMP'
-        self.camera_position = [0, 0]
-        self.camera_tilt = 0
-        self.camera_height = 0
         self.camera_type = 'RGB'
+        self.camera_position = [0, 0]
+        self.camera_height = 0
+        self.camera_bearing = 0
+        self.camera_tilt = 0
         self.state = 'active'
+        self.zone_id = 'TEMP'
         # PAGE TWO
         # [Xo, Yo, X1, Y1]
-        self.roi = [0, 300, 0, 300]
+        self.module_types = [0, 0, 1, 0, 0, 0]
+        self.frame_roi = [0, 300, 0, 300]
         # PAGE THREE
         # [XoYo [x,y], X1Yo [x,y], XoY1 [x,y], X1Y1[x,y], RefPoint [x,y]]
         self.ref_pt = [[50, 50], [300, 50], [50, 300], [300, 300], [100, 100]]
@@ -41,6 +44,11 @@ class ConfigTools:
         # PAGE FOUR
         # [Xo, Yo, X1, Y1]
         self.ground_plane_roi = [200, 300, 200, 300]
+        self.ground_plane_size = [0, 0]
+        self.warped_image = np.zeros([768, 1080, 3], dtype=np.int)
+
+        # PAGE FOUR
+        self.flow_rois = [[200, 300, 200, 300]]
         self.ground_plane_size = [0, 0]
         self.warped_image = np.zeros([768, 1080, 3], dtype=np.int)
 
@@ -123,31 +131,54 @@ class ConfigTools:
                             current config.
         """
         if self.check_inputs():
-            fo = open((str(self.camera_id) + '.pk'), 'wb')
-            data = {'camera_id': self.camera_id,
-                    'camera_type': self.camera_type,
-                    'camera_position': self.camera_position,
-                    'camera_height': self.camera_height,
-                    # 'camera_bearing': self.camera_bearing,
-                    'camera_tilt': self.camera_tilt,
-                    'ground_plane_position': self.ground_plane_position,
-                    'ground_plane_orientation': self.ground_plane_orientation,
-                    'image_2_ground_plane_matrix': self.transform,
-                    'timestamp': datetime.datetime.utcnow().isoformat(),
-                    'state': 'active',
-                    'roi': self.roi,
-                    'ground_plane_roi': self.ground_plane_roi,
-                    'ground_plane_size': self.ground_plane_size,
-                    'ref_pt': self.ref_pt}
-            pickle.dump(data, fo)
-            fo.close()
+            try:
+                fo = open((str(self.camera_id) + '.pk'), 'wb')
+            except IOError:
+                print('IOError SAVING .pk FILE')
+            else:
+                data = {'camera_id': self.camera_id,
+                        'camera_type': self.camera_type,
+                        'camera_position': self.camera_position,
+                        'camera_height': self.camera_height,
+                        'camera_bearing': self.camera_bearing,
+                        'camera_tilt': self.camera_tilt,
+                        'ground_plane_position': self.ground_plane_position,
+                        'ground_plane_orientation': self.ground_plane_orientation,
+                        'image_2_ground_plane_matrix': self.transform,
+                        'zone_id': self.zone_id,
+                        'module_types': self.module_types,
+                        'frame_roi': self.frame_roi,
+                        'flow_rois': self.flow_rois,
+                        'timestamp': datetime.datetime.utcnow().isoformat(),
+                        'state': 'active',
+                        'ground_plane_roi': self.ground_plane_roi,
+                        'ground_plane_size': self.ground_plane_size,
+                        'ref_pt': self.ref_pt}
+                pickle.dump(data, fo)
+                fo.close()
+
+            # CONVERT TRANSFORM TO A SERIALIZABLE FORMAT
+            data['image_2_ground_plane_matrix'] = self.transform.tolist()
+            # CONVERT module_types TO LIST OF MODULES
+            modules = []
+            if data['module_types'][0] == 1:
+                modules.append('crowd_density_local')
+            if data['module_types'][1] == 1:
+                modules.append('flow_analysis')
+            if data['module_types'][2] == 1:
+                modules.append('fight_detection')
+            if data['module_types'][3] == 1:
+                modules.append('object_detection')
+            data['module_types'] = modules
+
             # WRITE THE REG MESSAGE TO txt FILE
             try:
-                outfile = open(self.camera_id + '.txt', 'w')
+                outfile = open(self.camera_id + '_reg.txt', 'w')
             except IOError:
-                print('IOError')
+                print('IOError SAVING .txt FILE')
             else:
                 json.dump(data, outfile)
+                outfile.close()
 
             # IF A URL HAS BEEN GIVEN TO A REST SERVICE TRY AND SEND THE JSON MESSAGE
             if url != 'none':
@@ -177,15 +208,30 @@ class ConfigTools:
             self.camera_type = entry['camera_type']
             self.camera_position = entry['camera_position']
             self.camera_height = entry['camera_height']
-            # self.camera_bearing = entry['camera_bearing']
+            if 'camera_bearing' in entry:
+                self.camera_bearing = entry['camera_bearing']
             self.camera_tilt = entry['camera_tilt']
-            self.ground_plane_position = entry['ground_plane_gps']
-            # self.ground_plane_position = entry['ground_plane_position']
+            if 'ground_plane_gps' in entry:
+                self.ground_plane_position = entry['ground_plane_gps']
+            if 'ground_plane_position' in entry:
+                self.ground_plane_position = entry['ground_plane_position']
             self.ground_plane_orientation = entry['ground_plane_orientation']
-            self.transform = entry['heat_map_transform']
-            # self.transform = entry['image_2_ground_plane_matrix']
-            # self.state = entry['state']
-            self.roi = entry['roi']
+            if 'heat_map_transform' in entry:
+                self.transform = entry['heat_map_transform']
+            if 'image_2_ground_plane_matrix' in entry:
+                self.transform = entry['image_2_ground_plane_matrix']
+            if 'zone_id' in entry:
+                self.zone_id = entry['zone_id']
+            if 'module_types' in entry:
+                self.module_types = entry['module_types']
+            if 'state' in entry:
+                self.state = entry['state']
+            if 'roi' in entry:
+                self.frame_roi = entry['roi']
+            if 'frame_roi' in entry:
+                self.frame_roi = entry['frame_roi']
+            if 'flow_rois' in entry:
+                self.flow_rois = entry['flow_rois']
             self.ground_plane_roi = entry['ground_plane_roi']
             self.ground_plane_size = entry['ground_plane_size']
             self.ref_pt = entry['ref_pt']
