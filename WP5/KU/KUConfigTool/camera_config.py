@@ -37,6 +37,7 @@ _args = parser.parse_args()
 
 # TODO: ADD STATE ACTIVE INACTIVE RADIO BUTTON
 # TODO: NEW PAGE FOR FLOW rois
+# TODO: IMPROVE LAYOUT
 
 
 class ConfigApp(Tk):
