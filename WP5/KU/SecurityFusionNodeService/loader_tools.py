@@ -30,7 +30,6 @@ def load_settings(settings_location, cam_id, pickel_file=True):
             # TODO: CHECK THIS IMPORT STILL WORKS
             data = json.loads(line)
             json_file.close()
-            data['heat_map_transform'] = data['heat_map_transform'].tolist()
             return data
 
 
