@@ -40,7 +40,7 @@ class ConfigTools:
         self.ref_pt = [[50, 50], [300, 50], [50, 300], [300, 300], [100, 100]]
         self.ground_plane_position = [0, 0]
         self.ground_plane_orientation = 0
-        self.transform = 0
+        self.transform = None
         # PAGE FOUR
         # [Xo, Yo, X1, Y1]
         self.ground_plane_roi = [200, 300, 200, 300]
@@ -55,7 +55,11 @@ class ConfigTools:
     def check_inputs(self):
         print(self.camera_id, self.camera_position)
         # TODO: CREATE CHECKS TO ENSURE THESE INPUTS ARE IN A CORRECT FORMAT
-        return True
+        if self.transform is not None:
+            return True
+        else:
+            print('AN ELEMENT IS NOT COMPLETE')
+            return False
 
     def perspective_transform(self, image, pts2=np.float32([[2000, 2000], [2250, 2000], [2000, 2250], [2250, 2250]]),
                               new_image_size=(10000, 10000)):
@@ -170,12 +174,15 @@ class ConfigTools:
             if data['module_types'][3] == 1:
                 modules.append('object_detection')
             data['module_types'] = modules
-            
+
             # CONVERT STATE VARIABLE TO TEXT
             if self.state == 1:
                 data['state'] = 'active'
             elif self.state == 0:
                 data['state'] = 'inactive'
+
+            # REMOVE ref_pts FROM THE REGISTRATION MESSSAGE
+            data.pop('ref_pt')
 
             # WRITE THE REG MESSAGE TO txt FILE
             try:
