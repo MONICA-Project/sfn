@@ -29,10 +29,10 @@ class CamVideoStreamer:
     def start(self):
         t = Thread(target=self.update, args=())
         t.daemon = True
-        self.stopped = False
         t.start()
         # ADD DELAY TO ALLOW STREAMER TO BUFFER SOME INITIAL FRAMES
         time.sleep(0.5)
+        self.stopped = False
         return self
 
     def update(self):

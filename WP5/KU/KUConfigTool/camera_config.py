@@ -28,18 +28,17 @@ parser.add_argument('--identifier', default='001', type=str, help='Camera identi
 parser.add_argument('--rtsp', default='rtsp://root:pass@10.144.129.107/axis-media/media.amp',
                     type=str, help='The RTSP stream address to allow access to the feed and run the config on.')
 # parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/TO/KFF 2017/channel 8/2017-07-08 20-40-00~20-50-00//',
-# parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/TO/KFF 2017/channel 4/2017-07-08 14-00-00~14-10-00/',
+parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/TO/KFF 2017/channel 4/2017-07-08 14-00-00~14-10-00/',
 # parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/TO/KFF 2017/channel 2/2017-07-09 19-40-00~19-50-00/',
-parser.add_argument('--seq_location', default=None,
+# parser.add_argument('--seq_location', default=None,
                     type=str, help='Local file location to be used to stream images instead of RTSP')
 parser.add_argument('--x_size', default=1080, type=int, help='Desired frame in X for loaded images.')
 parser.add_argument('--y_size', default=768, type=int, help='Desired frame in Y for loaded images.')
 parser.add_argument('--start_frame', default=1, type=int, help='Frame to start a given image sequence from.')
 _args = parser.parse_args()
 
-# TODO: ADD STATE ACTIVE INACTIVE RADIO BUTTON
-# TODO: NEW PAGE FOR FLOW rois
 # TODO: IMPROVE LAYOUT
+# TODO: ADD VISUAL CONFIRMATION SAVE HAS COMPLETED
 
 
 class ConfigApp(Tk):
@@ -69,6 +68,7 @@ class ConfigApp(Tk):
         self.frames["FlowROIs"].grid(row=0, column=0, sticky="nsew")
         # SET THE FIRST PAGE TO BE VIEWED
         self.show_frame("Main")
+        # self.show_frame("FlowROIs")
         # self.show_frame("GroundPlane")
         # START THE CALLBACK FUNCTION
         self.refresher()
@@ -94,6 +94,7 @@ class ConfigApp(Tk):
             self.frames["Main"].v2.set(self.config_tools.module_types[1])
             self.frames["Main"].v3.set(self.config_tools.module_types[2])
             self.frames["Main"].v4.set(self.config_tools.module_types[3])
+            self.frames["Main"].v5.set(self.config_tools.state)
 
             self.frames["FrameROI"].roi = self.config_tools.frame_roi
             self.frames["FrameROI"].draw_rect()
@@ -108,11 +109,7 @@ class ConfigApp(Tk):
             self.frames["FrameROI"].e4.insert(10, self.config_tools.camera_tilt)
             self.frames["FrameROI"].e5.insert(10, self.config_tools.camera_bearing)
 
-            self.frames["GroundPlane"].e1.delete(0, END)
-            self.frames["GroundPlane"].e2.delete(0, END)
             self.frames["GroundPlane"].e3.delete(0, END)
-            self.frames["GroundPlane"].e1.insert(10, self.config_tools.ground_plane_position[0])
-            self.frames["GroundPlane"].e2.insert(10, self.config_tools.ground_plane_position[1])
             self.frames["GroundPlane"].e3.insert(10, self.config_tools.ground_plane_orientation)
             self.frames["GroundPlane"].ref_pt = [
                 [int(self.config_tools.ref_pt[0][0] / 1.25), int(self.config_tools.ref_pt[0][1] / 1.25)],
@@ -126,12 +123,17 @@ class ConfigApp(Tk):
             self.frames["TopDown"].roi = self.config_tools.ground_plane_roi
             self.frames["TopDown"].e1.delete(0, END)
             self.frames["TopDown"].e2.delete(0, END)
+            self.frames["TopDown"].e3.delete(0, END)
+            self.frames["TopDown"].e4.delete(0, END)
             self.frames["TopDown"].e1.insert(10, self.config_tools.ground_plane_size[0])
             self.frames["TopDown"].e2.insert(10, self.config_tools.ground_plane_size[1])
+            self.frames["TopDown"].e3.insert(10, self.config_tools.ground_plane_position[0])
+            self.frames["TopDown"].e4.insert(10, self.config_tools.ground_plane_position[1])
             self.frames["TopDown"].draw_image()
             self.frames["TopDown"].draw_rect()
 
-            self.frames["FlowROIs"].roi = self.config_tools.flow_rois
+            self.frames["FlowROIs"].rois = self.config_tools.flow_rois
+            self.frames["FlowROIs"].draw_rect()
 
     def refresher(self):
         """Call back function which refreshes the various labels/canvases in each frame.
@@ -166,15 +168,16 @@ class MainPage(Frame):
         im = ImageTk.PhotoImage(im)
         # CREATE LABEL FOR THE IMAGE USE self TO ALLOW EXTERNAL ACCESS THROUGH refresher()
         self.label = Label(self, image=im)
-        self.label.grid(row=0, columnspan=6)
+        self.label.grid(row=0, columnspan=7)
         self.label.image = im
 
         # CREATE LABELS FOR ENTRY BOXES
-        Label(self, text="Camera ID").grid(row=1, column=2, sticky=E)
-        Label(self, text="Zone ID").grid(row=1, column=4, sticky=E)
-        Label(self, text="Camera Type").grid(row=2, column=2, sticky=E)
-        Label(self, text="Registration Message Address").grid(row=3, column=2, sticky=E)
-        Label(self, text="Modules:").grid(row=1, column=0, sticky=E)
+        Label(self, text="Camera ID").grid(row=1, column=3, sticky=E)
+        Label(self, text="Zone ID").grid(row=1, column=5, sticky=E)
+        Label(self, text="Camera Type").grid(row=2, column=3, sticky=E)
+        Label(self, text="Registration Message Address").grid(row=3, column=3, sticky=E)
+        Label(self, text="Modules:").grid(row=1, column=1, sticky=E)
+        Label(self, text="Camera State:").grid(row=1, column=0, sticky=W)
 
         # ADD ENTRIES FOR THE VARIOUS TEXT BOXES AND LABELS FOR DESCRIPTIONS
         self.e1 = Entry(self, justify='center')
@@ -185,32 +188,36 @@ class MainPage(Frame):
         self.e2.insert(10, "Not Set")
         self.e3.insert(10, NONE)
         self.e4.insert(10, "Not Set")
-        self.e1.grid(row=1, column=3, sticky="W")
-        self.e2.grid(row=2, column=3)
-        self.e3.grid(row=3, column=3)
-        self.e4.grid(row=1, column=5)
+        self.e1.grid(row=1, column=4, sticky="W")
+        self.e2.grid(row=2, column=4)
+        self.e3.grid(row=3, column=4)
+        self.e4.grid(row=1, column=6)
 
         self.v1 = IntVar()
         self.v2 = IntVar()
         self.v3 = IntVar()
         self.v4 = IntVar()
-        self.c1 = Checkbutton(self, text='Crowd Density', variable=self.v1).grid(row=2, column=0, sticky=E)
-        self.c2 = Checkbutton(self, text='Optical Flow', variable=self.v2).grid(row=2, column=1, sticky=W)
-        self.c3 = Checkbutton(self, text='Fight Detection', variable=self.v3).grid(row=3, column=0, sticky=E)
-        self.c4 = Checkbutton(self, text='Object Detection', variable=self.v4, anchor="w").grid(row=3, column=1, sticky=W)
+        self.c1 = Checkbutton(self, text='Crowd Density', variable=self.v1).grid(row=2, column=1, sticky=E)
+        self.c2 = Checkbutton(self, text='Optical Flow', variable=self.v2).grid(row=2, column=2, sticky=W)
+        self.c3 = Checkbutton(self, text='Fight Detection', variable=self.v3).grid(row=3, column=1, sticky=E)
+        self.c4 = Checkbutton(self, text='Object Detection', variable=self.v4, anchor="w").grid(row=3, column=2, sticky=W)
+
+        self.v5 = IntVar()
+        self.r1 = Radiobutton(self, text='Active', variable=self.v5, value=1).grid(row=2, column=0, sticky=W)
+        self.r1 = Radiobutton(self, text='Inactive', variable=self.v5, value=0).grid(row=3, column=0, sticky=W)
 
         # CREATE BUTTONS FOR NAVIGATION
         # TODO:ADD LOGIC TO MAKE APPEAR A NEXT BUTTON WHEN ENTRIES RETURN TRUE FROM config_tools CHECKER
         b1 = Button(self, text='Quit', command=parent.quit)
         b1.grid(row=4, column=0, sticky=W, pady=4)
         b2 = Button(self, text='Save & Send', command=lambda: self.save())
-        b2.grid(row=4, column=2, sticky=W, pady=4)
+        b2.grid(row=4, column=3, sticky=W, pady=4)
         b3 = Button(self, text='Load', command=lambda: controller.load(self.e1.get()))
-        b3.grid(row=4, column=3, sticky=W, pady=4)
+        b3.grid(row=4, column=4, sticky=W, pady=4)
         b4 = Button(self, text='Go Back', command=lambda: self.go_back(controller))
-        b4.grid(row=4, column=4, sticky=E, pady=4)
+        b4.grid(row=4, column=5, sticky=E, pady=4)
         b5 = Button(self, text='Next Page', command=lambda: self.next_page(controller))
-        b5.grid(row=4, column=5, sticky=W, pady=4)
+        b5.grid(row=4, column=6, sticky=W, pady=4)
 
         self.update_config()
 
@@ -231,6 +238,7 @@ class MainPage(Frame):
         self.controller.config_tools.camera_type = self.e2.get()
         self.controller.config_tools.zone_id = self.e4.get()
         self.controller.config_tools.module_types = [self.v1.get(), self.v2.get(), self.v3.get(), self.v4.get()]
+        self.controller.config_tools.state = self.v5.get()
 
 
 class FrameROI(Frame):

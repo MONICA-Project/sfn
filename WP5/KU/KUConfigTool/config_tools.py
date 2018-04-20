@@ -29,7 +29,7 @@ class ConfigTools:
         self.camera_height = 0
         self.camera_bearing = 0
         self.camera_tilt = 0
-        self.state = 'active'
+        self.state = 1
         self.zone_id = 'TEMP'
         # PAGE TWO
         # [Xo, Yo, X1, Y1]
@@ -48,7 +48,7 @@ class ConfigTools:
         self.warped_image = np.zeros([768, 1080, 3], dtype=np.int)
 
         # PAGE FOUR
-        self.flow_rois = [[200, 300, 200, 300]]
+        self.flow_rois = []
         self.ground_plane_size = [0, 0]
         self.warped_image = np.zeros([768, 1080, 3], dtype=np.int)
 
@@ -150,7 +150,7 @@ class ConfigTools:
                         'frame_roi': self.frame_roi,
                         'flow_rois': self.flow_rois,
                         'timestamp': datetime.datetime.utcnow().isoformat(),
-                        'state': 'active',
+                        'state': self.state,
                         'ground_plane_roi': self.ground_plane_roi,
                         'ground_plane_size': self.ground_plane_size,
                         'ref_pt': self.ref_pt}
@@ -170,6 +170,12 @@ class ConfigTools:
             if data['module_types'][3] == 1:
                 modules.append('object_detection')
             data['module_types'] = modules
+            
+            # CONVERT STATE VARIABLE TO TEXT
+            if self.state == 1:
+                data['state'] = 'active'
+            elif self.state == 0:
+                data['state'] = 'inactive'
 
             # WRITE THE REG MESSAGE TO txt FILE
             try:

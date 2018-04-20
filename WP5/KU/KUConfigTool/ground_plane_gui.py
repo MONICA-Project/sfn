@@ -39,21 +39,14 @@ class GroundPlane(Frame):
 
         # CREATE LABELS FOR ENTRY BOXES
         Label(self, text="Ground Plane Points").grid(row=1, column=0, sticky=E)
-        Label(self, text="Longitude and Latitude of reference location").grid(row=2, column=0, sticky=E)
-        Label(self, text="Compass Orientation (degrees)").grid(row=3, column=0, sticky=E)
+        Label(self, text="Compass Orientation (degrees)").grid(row=2, column=0, sticky=E)
 
         # ADD ENTRIES FOR THE VARIOUS TEXT BOXES AND LABELS FOR DESCRIPTIONS
         self.l1 = Label(self, text="NONE")
         self.l1.grid(row=1, column=1, columnspan=2)
-        self.e1 = Entry(self, justify='center')
-        self.e2 = Entry(self, justify='center')
         self.e3 = Entry(self, justify='center')
-        self.e1.insert(10, "51.40168")
-        self.e2.insert(10, "-0.30271")
         self.e3.insert(10, "174")
-        self.e1.grid(row=2, column=1)
-        self.e2.grid(row=2, column=2)
-        self.e3.grid(row=3, column=1)
+        self.e3.grid(row=2, column=1)
 
         b1 = Button(self, text='Quit', command=parent.quit)
         b1.grid(row=4, column=0, sticky=W, pady=4)
@@ -95,7 +88,6 @@ class GroundPlane(Frame):
              [int(self.ref_pt[3][0] * 1.25), int(self.ref_pt[3][1] * 1.25)],
              [int(self.ref_pt[4][0] * 1.25), int(self.ref_pt[4][1] * 1.25)]]
         self.controller.config_tools.ref_pt = t
-        self.controller.config_tools.ground_plane_position = [float(self.e1.get()), float(self.e2.get())]
         self.controller.config_tools.ground_plane_orientation = int(self.e3.get())
 
     def draw_image(self):
@@ -116,7 +108,7 @@ class GroundPlane(Frame):
         self.canvas.create_line(self.ref_pt[0][0], self.ref_pt[0][1], self.ref_pt[1][0], self.ref_pt[1][1],
                                 self.ref_pt[1][0], self.ref_pt[1][1], self.ref_pt[3][0], self.ref_pt[3][1],
                                 self.ref_pt[3][0], self.ref_pt[3][1], self.ref_pt[2][0], self.ref_pt[2][1],
-                                self.ref_pt[2][0], self.ref_pt[2][1], self.ref_pt[0][0], self.ref_pt[0][1], width=3)
+                                self.ref_pt[2][0], self.ref_pt[2][1], self.ref_pt[0][0], self.ref_pt[0][1], width=1)
 
         self.canvas.create_oval(self.ref_pt[0][0], self.ref_pt[0][1], self.ref_pt[0][0], self.ref_pt[0][1], width=5)
         self.canvas.create_oval(self.ref_pt[1][0], self.ref_pt[1][1], self.ref_pt[1][0], self.ref_pt[1][1], width=5)
@@ -221,16 +213,23 @@ class TopDown(Frame):
         self.l1 = Label(self, text="NONE")
         self.l1.grid(row=1, column=1, columnspan=2)
 
-        Label(self, text="Size X (m)").grid(row=2, column=0, sticky=E)
-        Label(self, text="Size Y (m)").grid(row=2, column=2, sticky=E)
+        Label(self, text="Longitude and Latitude of reference location").grid(row=2, column=0, sticky=E)
+        Label(self, text="Size X (m)").grid(row=3, column=0, sticky=E)
+        Label(self, text="Size Y (m)").grid(row=3, column=2, sticky=E)
 
         # ADD ENTRIES FOR THE VARIOUS TEXT BOXES AND LABELS FOR DESCRIPTIONS
         self.e1 = Entry(self, justify='center')
         self.e2 = Entry(self, justify='center')
+        self.e3 = Entry(self, justify='center')
+        self.e4 = Entry(self, justify='center')
         self.e1.insert(10, "0")
         self.e2.insert(10, "0")
-        self.e1.grid(row=2, column=1)
-        self.e2.grid(row=2, column=3)
+        self.e3.insert(10, "51.40168")
+        self.e4.insert(10, "-0.30271")
+        self.e1.grid(row=3, column=1)
+        self.e2.grid(row=3, column=3)
+        self.e3.grid(row=2, column=1)
+        self.e4.grid(row=2, column=2)
 
         # CREATE BUTTONS FOR NAVIGATION
         b2 = Button(self, text='Go Back', command=lambda: self.go_back(controller))
@@ -251,6 +250,7 @@ class TopDown(Frame):
     def update_config(self):
         self.controller.config_tools.ground_plane_roi = self.roi
         self.controller.config_tools.ground_plane_size = [int(self.e1.get()), int(self.e2.get())]
+        self.controller.config_tools.ground_plane_position = [float(self.e3.get()), float(self.e4.get())]
 
     def draw_image(self):
         # frame = self.controller.config_tools.perspective_transform(self.controller.config_tools.warped_image)
