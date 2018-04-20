@@ -39,6 +39,7 @@ _args = parser.parse_args()
 
 # TODO: IMPROVE LAYOUT
 # TODO: ADD VISUAL CONFIRMATION SAVE HAS COMPLETED
+# TODO: Further test
 
 
 class ConfigApp(Tk):
