@@ -16,7 +16,8 @@ sfn = SecurityFusionNode('001')
 linksmart_url = 'http://127.0.0.2:3389/'
 cam_configs = []
 recent_cam_messages = [
-    tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8_00004')]
+    # tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8_00004')
+                      ]
 
 
 @app.route("/")
@@ -152,17 +153,51 @@ def add_message():
 
         # SHOULD WE RUN AMALGAMATION
         crowd_density_global = None
+        topDown_maps = []
+        config_for_amalgamation = []
+        amal_cam_ids = []
+        amal_density_count = 0
+
         # UNDER AND IF STATEMENT CHECK IF WE WANT TO AMALGAMATE AND CREATE A NEW MESSAGE
+        if len(recent_cam_messages) > 0:
+            ind = None
+            # FIND THE ENTRY FROM THIS CAM_ID FROM THIS MODULE AND REPLACE
+            for i, item in enumerate(recent_cam_messages):
+                if (item['type_module'] == 'crowd_density_local'):
+                    if i == 0:
+                        amal_timestamp_1 = recent_cam_messages[i]['timestamp_1']
+                        amal_timestamp_2 = recent_cam_messages[i]['timestamp_2']
+                    else:
+                        amal_timestamp_1 = min(amal_timestamp_1, recent_cam_messages[i]['timestamp_1'])
+                        amal_timestamp_2 = max(amal_timestamp_2, recent_cam_messages[i]['timestamp_2'])
+                    amal_cam_ids.append(recent_cam_messages[i]['camera_ids'])
+                    amal_density_count += recent_cam_messages[i]['density_count']
+                    topDown_maps.append(recent_cam_messages[i]['density_map'])
+                    conf = next(
+                        (item for item in cam_configs if item['camera_id'] == recent_cam_messages[i]['camera_ids'][0]))
+                    # config_for_amalgamation.append(config['ground_plane_gps']+[conf['camera_tilt']])
+                    config_for_amalgamation.append(config['ground_plane_position'] + [conf['camera_tilt']])
+        else:
+            # NO MESSAGES HELD
+            print('NO MESSAGE in recent_cam_messages')
 
         # RUN THE AMALGAMATION
+        print('111111111111111111111111111')
+        print(len(recent_cam_messages))
+        print(len(topDown_maps))
+        amalgamated_topDown_map = sfn.generate_amalgamated_topDown_map(topDown_maps, config_for_amalgamation)
+        print('222222222222222222222222222')
         # crowd_density_global = sfn.create_obs_message([camera_id], message['density_count'], message['density_map'],
-        #                                               message['timestamp_1'], message['timestamp_2'])
-        # log_text = log_text + ' CURRENTLY HELD MESSAGES HAVE BEEN AMALGAMATED INTO THE crowd_density_global VIEW. '
+        # Create new message                                             message['timestamp_1'], message['timestamp_2'])
+        crowd_density_global = sfn.create_obs_message(amal_cam_ids, amal_density_count, amalgamated_topDown_map,
+                                                      amal_timestamp_1, amal_timestamp_2)
+
+        log_text = log_text + ' CURRENTLY HELD MESSAGES HAVE BEEN AMALGAMATED INTO THE crowd_density_global VIEW. '
 
         # SEND crowd_density_global MESSAGE TO LINKSMART
         if crowd_density_global is not None:
             try:
-                resp = requests.post(linksmart_url + 'add_message', json=new_message)
+                resp = requests.post(linksmart_url + 'add_message', json=crowd_density_global)
             except requests.exceptions.RequestException as e:
                 print(e)
                 return e, 299
