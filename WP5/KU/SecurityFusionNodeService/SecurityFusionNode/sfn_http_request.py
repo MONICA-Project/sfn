@@ -11,7 +11,7 @@ import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 print(str(socket.gethostname()))
 
 # url = 'http://dupre.hopto.org:5000/'
-url = 'http://127.0.0.5:5000/'
+url = 'http://127.0.0.1:5000/'
 
 # HELLO WORLD
 try:
@@ -58,6 +58,14 @@ else:
 # GET THE CONFIGS FROM LINKSMART VIA SFN
 try:
     resp = requests.get(url + 'linksmart/get_configs')
+except requests.exceptions.RequestException as e:
+    print('WOO THERE, Something went wrong, error:' + str(e))
+else:
+    print(resp.text, resp.status_code)
+
+# UPDATE LINKSMART URL
+try:
+    resp = requests.post(url + 'linksmart', json='https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring')
 except requests.exceptions.RequestException as e:
     print('WOO THERE, Something went wrong, error:' + str(e))
 else:
