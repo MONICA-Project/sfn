@@ -37,8 +37,8 @@ else:
 
 # ADD A CONFIG
 try:
-    res = requests.post(url + 'add_configs', json=json.dumps(tools.load_settings(
-        os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_8')))
+    res = requests.post(url + 'add_config', data=json.dumps(tools.load_settings(
+        os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_8')), headers={'content-Type': 'application/json'})
 except requests.exceptions.RequestException as e:  # This is the correct syntax
     print(e)
 else:
@@ -82,7 +82,7 @@ else:
 
 # ADD A MESSAGE
 try:
-    res = requests.post(url + 'add_message', json=json.dumps(tools.load_json_txt(
+    res = requests.put(url + 'add_message', json=json.dumps(tools.load_json_txt(
         os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8_00000')))
 except requests.exceptions.RequestException as e:  # This is the correct syntax
     print(e)
