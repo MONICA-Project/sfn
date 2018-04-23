@@ -187,7 +187,7 @@ class MainPage(Frame):
         self.e4 = Entry(self, justify='center')
         self.e1.insert(10, "CAMERA_XXX")
         self.e2.insert(10, "Not Set")
-        self.e3.insert(10, NONE)
+        self.e3.insert(10, 'https://portal.monica-cloud.eu/scral/sfn/camera')
         self.e4.insert(10, "Not Set")
         self.e1.grid(row=1, column=4, sticky="W")
         self.e2.grid(row=2, column=4)
@@ -232,7 +232,7 @@ class MainPage(Frame):
 
     def save(self):
         self.update_config()
-        self.controller.config_tools.save_config(self.e3.get())
+        self.controller.config_tools.save_config(str(self.e3.get()))
 
     def update_config(self):
         self.controller.config_tools.camera_id = self.e1.get()

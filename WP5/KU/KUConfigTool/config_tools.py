@@ -195,12 +195,15 @@ class ConfigTools:
 
             # IF A URL HAS BEEN GIVEN TO A REST SERVICE TRY AND SEND THE JSON MESSAGE
             if url != 'none':
+                headers = {
+                    'content-Type': 'application/json',
+                }
                 try:
-                    req = requests.get(url, json=json.dumps(data))
+                    res = requests.post(url, data=json.dumps(data), headers=headers)
                 except requests.exceptions.RequestException as e:
                     print(e)
                 else:
-                    print('Registration Message has been Sent')
+                    print('Registration Message has been Sent. Response: ' + str(res.status_code) + '. ' + res.text)
 
     def load_config(self, cam_id):
         """Loads the defined variables for a .pk file with name cam_id.
