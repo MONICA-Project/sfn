@@ -193,6 +193,6 @@ class SecurityFusionNode:
                                                                                 y[i] - amal_longitude + h[i])] * (
                                                                                 all_rotated_images[i] == 0)
 
-        cv2.imshow('img_amal', img_amal)
+        cv2.imshow('img_amal', cv2.resize(img_amal, None, fx=5, fy=5, interpolation=cv2.INTER_CUBIC))
         cv2.waitKey(0)
         return img_amal
