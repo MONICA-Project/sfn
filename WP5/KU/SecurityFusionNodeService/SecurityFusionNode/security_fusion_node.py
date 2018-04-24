@@ -3,6 +3,8 @@ import numpy as np
 import cv2
 import json
 import base64
+import math
+
 
 def rotateImage(image, angle):
     """
@@ -55,6 +57,20 @@ def rotateImage(image, angle):
     result = cv2.warpAffine(image, affine_mat, new_image_size, flags=cv2.INTER_LINEAR)
 
     return result
+
+
+# Convert the distance between 2 geo point into metre
+def conversionTOmeter(lat1, lon1, lat2, lon2):  # generally used geo measurement function
+    R = 6378.137   # Radius of earth in KM
+    dLat = lat2 * math.pi / 180 - lat1 * math.pi / 180
+    dLon = lon2 * math.pi / 180 - lon1 * math.pi / 180
+    a = math.sin(dLat/2) * math.sin(dLat/2) + math.cos(lat1 * math.pi / 180) * math.cos(lat2 * math.pi / 180) \
+                                              * math.sin(dLon/2) * math.sin(dLon/2)
+
+
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    d = R * c
+    return(d * 1000)  # meters
 
 
 class SecurityFusionNode:
@@ -165,7 +181,6 @@ class SecurityFusionNode:
         for i in range(len(topDown_maps)):
             # Convert from list of lists to matrix
             img = np.array(topDown_maps[i])
-            print(img.shape)
             rotated_img = rotateImage(img, config_for_amal[i][2])  # angle
 
             all_rotated_images.append(rotated_img)
@@ -177,22 +192,43 @@ class SecurityFusionNode:
         amal_latitude = min(x)
         amal_longitude = min(y)
 
-        amal_w = int(max([a + b for a, b in zip(x, w)]) - amal_latitude)
-        amal_h = int(max([a + b for a, b in zip(y, h)]) - amal_longitude)
+        #amal_w = int(max([a + b for a, b in zip(x, w)]) - amal_latitude)
+        #amal_h = int(max([a + b for a, b in zip(y, h)]) - amal_longitude)
+
+        #x = [2, 3, 11, 4, 55, 6, 7, 8, 3, 54]
+        #(m, ind) = max((v, i) for i, v in enumerate(x))
+        #print(m, ind)
+
+        d= [conversionTOmeter(f, 0, amal_latitude, 0) for f in x]  # distance
+        amal_w = int(max([i + j for i, j in zip(d, w)]))
+
+        d = [conversionTOmeter(0, f, 0, amal_longitude) for f in y]  # distance
+        amal_h = int(max([i + j for i, j in zip(d, h)]))
+
+        print("---------------------------------")
+        print(x)
+        print(y)
+        print(w)
+        print(h)
+
+        print(amal_latitude)
+        print(amal_longitude)
+        print(amal_w)
+        print(amal_h)
 
         # Generate the amalgamated image
         img_amal = np.zeros(shape=(amal_w, amal_h))
 
         for i in range(len(all_rotated_images)):
             # y[3:8, 1:3] = X + y[3:8, 1:3] * (X == 0)
-            img_amal[int(x[i] - amal_latitude):int(x[i] - amal_latitude + w[i]),
-            int(y[i] - amal_longitude):int(y[i] - amal_longitude + h[i])] = all_rotated_images[i] + \
-                                                                            img_amal[int(x[i] - amal_latitude):int(
-                                                                                x[i] - amal_latitude + w[i]),
-                                                                            int(y[i] - amal_longitude):int(
-                                                                                y[i] - amal_longitude + h[i])] * (
-                                                                                all_rotated_images[i] == 0)
+            dis_x = int(conversionTOmeter(x[i], 0, amal_latitude, 0))
+            dis_y = int(conversionTOmeter(0, y[i], 0, amal_longitude))
+            img_amal[dis_x:(dis_x + w[i]), dis_y:(dis_y + h[i])] = all_rotated_images[i] + \
+                                                                   img_amal[dis_x:(dis_x + w[i]),
+                                                                   dis_y:(dis_y + h[i])] * (
+                                                                       all_rotated_images[i] == 0)
 
-        cv2.imshow('img_amal', cv2.resize(img_amal, None, fx=5, fy=5, interpolation=cv2.INTER_CUBIC))
+
+        cv2.imshow('img_amal', cv2.resize(img_amal, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
         cv2.waitKey(0)
         return img_amal

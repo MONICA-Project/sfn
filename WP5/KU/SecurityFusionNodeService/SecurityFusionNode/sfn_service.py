@@ -176,17 +176,14 @@ def add_message():
                     conf = next(
                         (item for item in cam_configs if item['camera_id'] == recent_cam_messages[i]['camera_ids'][0]))
                     # config_for_amalgamation.append(config['ground_plane_gps']+[conf['camera_tilt']])
-                    config_for_amalgamation.append(config['ground_plane_position'] + [conf['camera_tilt']])
+                    config_for_amalgamation.append(conf['ground_plane_position'] + [conf['camera_tilt']])
         else:
             # NO MESSAGES HELD
             print('NO MESSAGE in recent_cam_messages')
 
         # RUN THE AMALGAMATION
-        print('111111111111111111111111111')
-        print(len(recent_cam_messages))
-        print(len(topDown_maps))
         amalgamated_topDown_map = sfn.generate_amalgamated_topDown_map(topDown_maps, config_for_amalgamation)
-        print('222222222222222222222222222')
+
         # crowd_density_global = sfn.create_obs_message([camera_id], message['density_count'], message['density_map'],
         # Create new message                                             message['timestamp_1'], message['timestamp_2'])
         crowd_density_global = sfn.create_obs_message(amal_cam_ids, amal_density_count, amalgamated_topDown_map,
