@@ -27,6 +27,7 @@ class GetCrowd(FrameAnalyser):
         self.type_module = 'crowd_density_local'
         self.module_id = module_id
         self.state = 'active'
+        self.zone_id = 'N/A'
         FrameAnalyser.__init__(self, module_id)
         # CAMERA INFO
         self.cam_id = ''
@@ -139,6 +140,7 @@ class GetCrowd(FrameAnalyser):
                 'module_id': self.module_id,
                 'type_module': self.type_module,
                 'timestamp': timestamp,
+                'zone_id': self.zone_id,
                 'state': self.state,
         }
         message = json.dumps(data)

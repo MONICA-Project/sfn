@@ -40,16 +40,28 @@ def search_config():
         print('RETURN CONFIG ' + str(config_id) + '. ' + 'REQUEST IS OF TYPE: ' + str(type(config_id)))
         return json.dumps(configs[config_id])
     else:
-        return 'No JSON.', 299
+        return 'No JSON.', 499
 
 
-@app.route('/add_configs', methods=['POST'])
+@app.route('/add_config', methods=['POST'])
 def add_config():
     print('REQUEST: ADD CONFIG')
     if request.is_json:
-        message = json.loads(request.get_json(force=True))
+        message = request.get_json(force=True)
         # LOOP THROUGH CURRENT CONFIGS
         ind = None
+        # WRITE THE NEW CONFIG TO FILE (DEBUGGING)
+        try:
+            if 'module_id' in message:
+                outfile = open(message['module_id'] + '_reg.txt', 'w')
+            else:
+                outfile = open(message['camera_ids'][0] + '_reg.txt', 'w')
+        except IOError:
+            print('IOError SAVING .txt FILE')
+            return 'IOError', 401
+        else:
+            outfile.write(request.get_json(force=True))
+            outfile.close()
         for i, item in enumerate(configs):
             # CHECK IF THE CURRENT CONFIG item AND THE message HAS EITHER camera_id OR A module_id KEYS
             if 'camera_id' in message and 'camera_id' in item:
@@ -71,7 +83,7 @@ def add_config():
             return 'OLD CONFIG (' + str(ind) + ') REPLACED', 205
 
     else:
-        return 'No JSON.', 299
+        return 'No JSON.', 499
 
 
 @app.route('/configs', methods=['DELETE'])
@@ -82,7 +94,7 @@ def del_config():
         del configs[config_id]
         return 'Deleted', 205
     else:
-        return 'No JSON.', 299
+        return 'No JSON.', 499
 
 
 # MESSAGE ROUTES
@@ -100,21 +112,30 @@ def search_message():
         print('RETURN CONFIG ' + str(message_id) + '. ' + 'REQUEST IS OF TYPE: ' + str(type(message_id)))
         return json.dumps(messages[message_id])
     else:
-        return 'No JSON.', 299
+        return 'No JSON.', 499
 
 
-@app.route('/add_message', methods=['POST'])
+@app.route('/add_message', methods=['PUT'])
 def add_message():
     print('REQUEST: ADD MESSAGE')
     if request.is_json:
         message = json.loads(request.get_json(force=True))
         messages.append(message)
-        with open(message['camera_ids'][0] + '.txt', 'w') as outfile:
+        try:
+            if 'module_id' in message:
+                outfile = open(message['module_id'] + '.txt', 'w')
+            else:
+                outfile = open(message['camera_ids'][0] + '.txt', 'w')
+        except IOError:
+            print('IOError SAVING .txt FILE')
+            return 'IOError', 401
+        else:
             outfile.write(request.get_json(force=True))
+            outfile.close()
         print('HOLDING ' + str(len(messages)) + ' MESSAGES.')
         return 'Added Message.', 205
     else:
-        return 'No JSON.', 299
+        return 'No JSON.', 499
 
 
 @app.route('/message', methods=['DELETE'])
@@ -123,9 +144,10 @@ def del_message():
     if request.is_json:
         message_id = json.loads(request.get_json())
         del messages[message_id]
+        print('HOLDING ' + str(len(messages)) + ' MESSAGES.')
         return 'Deleted Message', 205
     else:
-        return 'No JSON.', 299
+        return 'No JSON.', 499
 
 
 # RUN THE SERVICE

@@ -1,1 +1,1 @@
-{"timestamp": "2018-04-18T13:24:00.394683", "type_module": "crowd_density_local", "module_id": "001", "state": "inactive"}
+{"module_id": "001", "type_module": "crowd_density_local", "zone_id": "N/A", "timestamp": "2018-04-23T15:49:39.626319", "state": "inactive"}

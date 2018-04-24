@@ -66,10 +66,22 @@ analyser = GetCrowd('001')
 # analyser = GetPeople('001')
 # analyser = GetFlow('001)
 
+linksmart_url = 'http://127.0.0.2:3389/add_config'
+# linksmart_url = 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring'
+reg_message = analyser.create_reg_message(datetime.datetime.utcnow().isoformat())
 with open(KU_DIR + '/Algorithms/registration_messages/' + analyser.module_id + '_' + analyser.type_module + '_reg.txt',
           'w') as outfile:
-    outfile.write(analyser.create_reg_message(datetime.datetime.utcnow().isoformat()))
+    outfile.write(reg_message)
 
+try:
+    res = requests.post(linksmart_url, data=reg_message, headers={'content-Type': 'application/json'})
+except requests.exceptions.RequestException as e:
+    print(e)
+else:
+    print('Registration Message has been Sent. Response: ' + str(res.status_code) + '. ' + res.text)
+
+
+sfn_url = 'http://127.0.0.1:5000/message'
 if info == -1:
     print('NO DATA SET SELECTED')
 else:
@@ -85,15 +97,15 @@ else:
         count = 0
         while cap.open():
             frame = cap.read()
-            message, frame = analyser.process_frame(frame, settings['camera_id'], settings['roi'])
+            message, frame = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'])
 
             # SEND A HTTP REQUEST OFF
             try:
-                res = requests.post('http://127.0.0.1:5000/message', json=message)
+                res = requests.post(sfn_url, json=message)
             except requests.exceptions.RequestException as e:
                 print(e)
             else:
-                print(res.status_code, res.headers['content-type'], res.text)
+                print('Obs Message Sent. Response: ' + str(res.status_code) + '. ' + res.text)
 
             cv2.putText(frame, json.dumps(message, indent=4), (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                         (255, 255, 255), 1, cv2.LINE_AA)
@@ -117,15 +129,15 @@ else:
         count = 0
         while cam.open():
             frame = cam.read()
-            message, result = analyser.process_frame(frame, settings['camera_id'], settings['roi'])
+            message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'])
 
             # SEND A HTTP REQUEST OFF
             try:
-                res = requests.post('http://127.0.0.1:5000/message', json=message)
+                res = requests.post(sfn_url, json=message)
             except requests.exceptions.RequestException as e:
                 print(e)
             else:
-                print(res.status_code, res.headers['content-type'], res.text)
+                print('Obs Message Sent. Response: ' + str(res.status_code) + '. ' + res.text)
             # WRITE FILES FOR USE LATER
             # cv2.imwrite(info[2] + '_Frame_' + str(inc.get_incrementer(count, 5)) + '.jpeg', frame)
             # cv2.imwrite(info[2] + '_Result_' + str(inc.get_incrementer(count, 5)) + '.jpeg', result)
