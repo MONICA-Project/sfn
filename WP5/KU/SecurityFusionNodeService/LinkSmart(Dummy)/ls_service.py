@@ -1,3 +1,5 @@
+# ls_service.py
+"""Dummy webservice created to test the sfn_service in the absence of a actual Linksmart instance"""
 import json
 import os
 import argparse
@@ -7,6 +9,9 @@ import sys
 sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.definitions import KU_DIR
 import WP5.KU.SecurityFusionNodeService.loader_tools as tools
+
+__version__ = '0.1'
+__author__ = 'RoViT (KU)'
 
 app = Flask(__name__)
 print(str(Path(__file__).absolute().parents[4]))

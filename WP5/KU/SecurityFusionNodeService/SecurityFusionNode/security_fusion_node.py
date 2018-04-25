@@ -232,3 +232,9 @@ class SecurityFusionNode:
         cv2.imshow('img_amal', cv2.resize(img_amal, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
         cv2.waitKey(0)
         return img_amal
+
+    @staticmethod
+    def waste_time(time_amount):
+        import time
+        time.sleep(time_amount)
+        return 'Done'

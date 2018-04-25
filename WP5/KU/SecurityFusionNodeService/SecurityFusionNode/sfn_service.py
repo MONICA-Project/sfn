@@ -1,3 +1,6 @@
+# sfn_service.py
+"""Implementation of a RESTful webservice to handle messages produced from the VCA framework and forward them on to
+linksmart"""
 import argparse
 import requests
 import json
@@ -10,6 +13,9 @@ sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.definitions import KU_DIR
 import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
+
+__version__ = '0.1'
+__author__ = 'RoViT (KU)'
 
 app = Flask(__name__)
 sfn = SecurityFusionNode('001')
