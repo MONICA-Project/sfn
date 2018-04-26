@@ -3,74 +3,9 @@ import numpy as np
 import cv2
 import json
 import base64
-import math
-
-
-def rotateImage(image, angle):
-    """
-    Rotates the given image about it's centre
-    """
-
-    image_size = (image.shape[1], image.shape[0])
-    image_center = tuple(np.array(image_size) / 2)
-
-    rot_mat = np.vstack([cv2.getRotationMatrix2D(image_center, angle, 1.0), [0, 0, 1]])
-    trans_mat = np.identity(3)
-
-    w2 = image_size[0] * 0.5
-    h2 = image_size[1] * 0.5
-
-    rot_mat_notranslate = np.matrix(rot_mat[0:2, 0:2])
-
-    tl = (np.array([-w2, h2]) * rot_mat_notranslate).A[0]
-    tr = (np.array([w2, h2]) * rot_mat_notranslate).A[0]
-    bl = (np.array([-w2, -h2]) * rot_mat_notranslate).A[0]
-    br = (np.array([w2, -h2]) * rot_mat_notranslate).A[0]
-
-    x_coords = [pt[0] for pt in [tl, tr, bl, br]]
-    x_pos = [x for x in x_coords if x > 0]
-    x_neg = [x for x in x_coords if x < 0]
-
-    y_coords = [pt[1] for pt in [tl, tr, bl, br]]
-    y_pos = [y for y in y_coords if y > 0]
-    y_neg = [y for y in y_coords if y < 0]
-
-    right_bound = max(x_pos)
-    left_bound = min(x_neg)
-    top_bound = max(y_pos)
-    bot_bound = min(y_neg)
-
-    new_w = int(abs(right_bound - left_bound))
-    new_h = int(abs(top_bound - bot_bound))
-    new_image_size = (new_w, new_h)
-
-    new_midx = new_w * 0.5
-    new_midy = new_h * 0.5
-
-    dx = int(new_midx - w2)
-    dy = int(new_midy - h2)
-
-
-    # getTranslationMatrix2d: a numpy affine transformation matrix for a 2D translation of
-    trans_mat = np.matrix([[1, 0, dx], [0, 1, dy], [0, 0, 1]])
-    affine_mat = (np.matrix(trans_mat) * np.matrix(rot_mat))[0:2, :]
-    result = cv2.warpAffine(image, affine_mat, new_image_size, flags=cv2.INTER_LINEAR)
-
-    return result
-
-
-# Convert the distance between 2 geo point into metre
-def conversionTOmeter(lat1, lon1, lat2, lon2):  # generally used geo measurement function
-    R = 6378.137   # Radius of earth in KM
-    dLat = lat2 * math.pi / 180 - lat1 * math.pi / 180
-    dLon = lon2 * math.pi / 180 - lon1 * math.pi / 180
-    a = math.sin(dLat/2) * math.sin(dLat/2) + math.cos(lat1 * math.pi / 180) * math.cos(lat2 * math.pi / 180) \
-                                              * math.sin(dLon/2) * math.sin(dLon/2)
-
-
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-    d = R * c
-    return(d * 1000)  # meters
+import sqlite3
+from WP5.KU.SharedResources.convert_to_meter import convert_to_meter
+from WP5.KU.SharedResources.rotate_image import rotate_image
 
 
 class SecurityFusionNode:
@@ -79,6 +14,43 @@ class SecurityFusionNode:
         self.module_id = module_id + '_crowd_density_global'
         self.module_type = 'crowd_density_global'
         self.state = 'active'
+
+        # Create a data structure
+        self.conn = sqlite3.connect('recent_camera_messages.db')
+        self.c = self.conn.cursor()
+
+        # Create table
+        self.c.execute(
+            '''Create TABLE IF NOT EXISTS messages(cam_id TEXT, module_id TEXT, msg TEXT)''')
+        self.conn.commit()
+
+    def insert_db(self, c_id, m_id, msg):
+        self.c.execute('''INSERT INTO messages(cam_id, module_id, msg) VALUES(?,?,?)''', (c_id, m_id, msg))
+
+    def delete_db(self, c_id, m_id):
+        self.c.execute("DELETE FROM messages WHERE cam_id=? AND module_id=?", (c_id, m_id))
+
+    def length_db(self):
+        return len(self.query_db())
+
+    def query_db(self,*args):
+        try:
+            if len(args)==0:  # No input
+                self.c.execute("select * from messages")
+            elif (len(args)==1):  # only camera_id
+                self.c.execute("SELECT * FROM messages WHERE cam_id=?", args[0])
+            elif (len(args)==2):  # both camera_id and
+                self.c.execute("SELECT * FROM messages WHERE cam_id=? AND module_id=?", (args[0],args[1]))
+
+            rows = self.c.fetchall()
+            return rows
+        except Exception as error:
+            print('error executing query, error: {}'.format(error))
+            return None
+
+    def __del__(self):
+        self.conn.close()
+        # self.c.close()
 
     def create_reg_message(self, timestamp):
         data = {
@@ -169,7 +141,7 @@ class SecurityFusionNode:
         return heat_map.tolist(), heat_image
 
     @staticmethod
-    def generate_amalgamated_topDown_map(topDown_maps, config_for_amal):
+    def generate_amalgamated_top_down_map(top_down_maps, config_for_amalgamation):
         """
         Amalgamate N color images from a list of image paths.
         """
@@ -178,57 +150,35 @@ class SecurityFusionNode:
         w = []
         h = []
         all_rotated_images = []
-        for i in range(len(topDown_maps)):
+        for i in range(len(top_down_maps)):
             # Convert from list of lists to matrix
-            img = np.array(topDown_maps[i])
-            rotated_img = rotateImage(img, config_for_amal[i][2])  # angle
+            img = np.array(top_down_maps[i])
+            rotated_img = rotate_image(img, config_for_amalgamation[i][2])  # angle
 
             all_rotated_images.append(rotated_img)
-            x.append(config_for_amal[i][0])  # latitude
-            y.append(config_for_amal[i][1])  # longitude
+            x.append(config_for_amalgamation[i][0])  # latitude
+            y.append(config_for_amalgamation[i][1])  # longitude
             w.append(rotated_img.shape[0])
             h.append(rotated_img.shape[1])
 
-        amal_latitude = min(x)
-        amal_longitude = min(y)
+        amalgamation_latitude = min(x)
+        amalgamation_longitude = min(y)
 
-        #amal_w = int(max([a + b for a, b in zip(x, w)]) - amal_latitude)
-        #amal_h = int(max([a + b for a, b in zip(y, h)]) - amal_longitude)
+        d = [convert_to_meter(f, 0, amalgamation_latitude, 0) for f in x]  # distance
+        amalgamation_w = int(max([i + j for i, j in zip(d, w)]))
 
-        #x = [2, 3, 11, 4, 55, 6, 7, 8, 3, 54]
-        #(m, ind) = max((v, i) for i, v in enumerate(x))
-        #print(m, ind)
-
-        d= [conversionTOmeter(f, 0, amal_latitude, 0) for f in x]  # distance
-        amal_w = int(max([i + j for i, j in zip(d, w)]))
-
-        d = [conversionTOmeter(0, f, 0, amal_longitude) for f in y]  # distance
-        amal_h = int(max([i + j for i, j in zip(d, h)]))
-
-        print("---------------------------------")
-        print(x)
-        print(y)
-        print(w)
-        print(h)
-
-        print(amal_latitude)
-        print(amal_longitude)
-        print(amal_w)
-        print(amal_h)
+        d = [convert_to_meter(0, f, 0, amalgamation_longitude) for f in y]  # distance
+        amalgamation_h = int(max([i + j for i, j in zip(d, h)]))
 
         # Generate the amalgamated image
-        img_amal = np.zeros(shape=(amal_w, amal_h))
+        img_amalgamation = np.zeros(shape=(amalgamation_w, amalgamation_h))
 
         for i in range(len(all_rotated_images)):
-            # y[3:8, 1:3] = X + y[3:8, 1:3] * (X == 0)
-            dis_x = int(conversionTOmeter(x[i], 0, amal_latitude, 0))
-            dis_y = int(conversionTOmeter(0, y[i], 0, amal_longitude))
-            img_amal[dis_x:(dis_x + w[i]), dis_y:(dis_y + h[i])] = all_rotated_images[i] + \
-                                                                   img_amal[dis_x:(dis_x + w[i]),
-                                                                   dis_y:(dis_y + h[i])] * (
-                                                                       all_rotated_images[i] == 0)
+            dis_x = int(convert_to_meter(x[i], 0, amalgamation_latitude, 0))
+            dis_y = int(convert_to_meter(0, y[i], 0, amalgamation_longitude))
+            img_amalgamation[dis_x:(dis_x + w[i]), dis_y:(dis_y + h[i])] = all_rotated_images[i] + \
+                img_amalgamation[dis_x:(dis_x + w[i]), dis_y:(dis_y + h[i])] * (all_rotated_images[i] == 0)
 
-
-        cv2.imshow('img_amal', cv2.resize(img_amal, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
+        cv2.imshow('img_amalgamation', cv2.resize(img_amalgamation, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
         cv2.waitKey(0)
-        return img_amal
+        return img_amalgamation
