@@ -1,3 +1,6 @@
+# security_fusion_node.py
+"""The class that handles the storage of current messages on the sfn_service and contains the functions to process those
+messages"""
 import pickle
 import numpy as np
 import cv2
@@ -6,6 +9,18 @@ import base64
 import sqlite3
 from WP5.KU.SharedResources.convert_to_meter import convert_to_meter
 from WP5.KU.SharedResources.rotate_image import rotate_image
+import math
+import time
+
+__version__ = '0.1'
+__author__ = 'RoViT (KU)'
+
+
+def waste_time(time_amount):
+    print('started')
+    time.sleep(time_amount)
+    print('finished')
+    return 'Done'
 
 
 class SecurityFusionNode:

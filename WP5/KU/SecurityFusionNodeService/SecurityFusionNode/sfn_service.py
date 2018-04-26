@@ -1,3 +1,6 @@
+# sfn_service.py
+"""Implementation of a RESTful webservice to handle messages produced from the VCA framework and forward them on to
+linksmart"""
 import argparse
 import requests
 import json
@@ -11,14 +14,23 @@ from WP5.KU.definitions import KU_DIR
 import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
 
+__version__ = '0.1'
+__author__ = 'RoViT (KU)'
+
 app = Flask(__name__)
 sfn = SecurityFusionNode('001')
-linksmart_url = 'http://127.0.0.2:3389/'
+urls = {'dummy_linksmart_url': 'http://127.0.0.2:3389/',
+        # 'crowd_density_url': 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring',
+        'crowd_density_url': 'http://127.0.0.2:3389/crowd_density',
+        }
+
 # TODO: A NUMBER OF THESE WILL NEED TO BE STORED FOR EACH MODULES MESSAGE
 cam_configs = []
 # recent_cam_messages = [
 #     # tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8_00004')
 #                       ]
+
+headers = {'content-Type': 'application/json'}
 
 
 @app.route("/")
@@ -27,68 +39,49 @@ def hello_world():
     return "SECURITY FUSION NODE"
 
 
-@app.route("/linksmart")
-def hello_linksmart():
-    print('REQUEST: HELLO LINKSMART')
-    try:
-        resp = requests.get(linksmart_url)
-    except requests.exceptions.RequestException as e:
-        print(e)
-        return 'Linksmart Connection Failed: ' + e, 450
-    else:
-        print(resp.text, resp.status_code)
-        return resp.text + ' VIA SECURITY FUSION NODE', 205\
-
-
-
-@app.route("/linksmart", methods=['POST'])
-def set_linksmart_url():
-    print('REQUEST: SET LINKSMART URL')
+# TODO: add functionality to change a stored url
+@app.route("/urls", methods=['POST'])
+def update_urls():
+    print('REQUEST: UPDATE URLS')
     if request.is_json:
-        global linksmart_url
-        linksmart_url = request.get_json(force=True)
-        return 'Linksmart url UPDATED', 205
-    else:
-        return 'Aint no JSON.', 499
+        url_updates = request.get_json(force=True)
+        # CHECK IF ITS STILL A STRING AND IF SO LOAD FROM JSON FORMAT
+        if type(url_updates) == str:
+            url_updates = json.loads(url_updates)
 
-
-@app.route("/linksmart/get_configs")
-def get_configs_linksmart():
-    print('REQUEST: GET THE CONFIGS FROM LINKSMART')
-    try:
-        resp = requests.get(linksmart_url + 'configs')
-    except requests.exceptions.RequestException as e:
-        print(e)
-        return 'Linksmart Connection Failed: ' + e, 450
+        global urls
+        for url in urls:
+            if url in url_updates:
+                urls[url] = url_updates[url]
+                print('Updating Key ({}) to: {}.'.format(url, url_updates[url]))
+            else:
+                print('Key ({}) not found.'.format(url))
+        return 'SFN urls updated', 201
     else:
-        global cam_configs
-        cam_configs = resp.json()
-        print('NUMBER OF CONFIGS RETURNED = ' + str(len(cam_configs)), resp.status_code)
-        return 'OBTAINED CONFIGS VIA SECURITY FUSION NODE: ' + str(cam_configs), 205
+        return 'No JSON.', 415
 
 
 @app.route("/register")
 def register_sfn():
-    print('REQUEST: SEND SFN REGISTRATION TO LINKSMART')
+    print('REQUEST: SEND SFN REGISTRATION')
     data = sfn.create_reg_message(datetime.datetime.utcnow().isoformat())
     try:
-        resp = requests.post(linksmart_url + 'add_configs', json=data)
+        resp = requests.post(urls['crowd_density_url'], data=data, headers=headers)
     except requests.exceptions.RequestException as e:
         print(e)
         return 'Linksmart Connection Failed: ' + e, 450
     else:
-        print(resp.status_code, resp.headers['content-type'], resp.text)
-        return 'Registered SFN on LINKSMART: ' + resp.text, resp.status_code
+        print('SFN CONFIG ADDED: ' + resp.text, resp.status_code)
+        return 'Registered SFN: ' + resp.text, resp.status_code
 
 
-@app.route('/message', methods=['POST'])
+@app.route('/message', methods=['PUT'])
 def add_message():
     print('REQUEST: ADD MESSAGE')
     if request.is_json:
         log_text = ''
         # TODO: ADD CHECK TO REMOVE THE POSSIBILITY OF TRYING TO LOAD JSON WHEN ITS ALREADY LOADED (str)
         message = json.loads(request.get_json(force=True))
-        headers = {'content-Type': 'application/json'}
         camera_id = message['camera_ids'][0]
         wp_module = message['type_module']
 
@@ -142,13 +135,14 @@ def add_message():
         if wp_module == 'crowd_density_local':
             # MESSAGE HAS ALREADY BEEN CONVERTED TO TOP DOWN VIEW
             new_message = message
+            url = urls['crowd_density_url']
         elif wp_module == 'flow_analysis':
             print('DO SOMETHING FLOW-EY')
 
         # DUMP THE NEW MESSAGE TO JSON AND FORWARD TO LINKSMART
         if new_message is not None:
             try:
-                resp = requests.put(linksmart_url, data=json.dumps(new_message), headers=headers)
+                resp = requests.put(url, data=json.dumps(new_message), headers=headers)
                 # resp = requests.put(linksmart_url + 'add_message', data=json.dumps(new_message), headers=headers)
             except requests.exceptions.RequestException as e:
                 print(e)
@@ -198,7 +192,7 @@ def add_message():
             if crowd_density_global is not None:
                 try:
                     # resp = requests.put(linksmart_url + 'add_message', json=crowd_density_global,
-                    resp = requests.put(linksmart_url, json=crowd_density_global,
+                    resp = requests.put(urls['crowd_density_url'], json=crowd_density_global,
                                         headers={'content-Type': 'application/json'})
                 except requests.exceptions.RequestException as e:
                     print(e)
@@ -208,11 +202,40 @@ def add_message():
                     log_text = log_text + ' crowd_density_global MESSAGE CREATED AND SENT TO LINKSMART(' + resp.text + ').'
         else:
             # NO MESSAGES HELD
-            print('NO MESSAGE in recent_cam_messages')
+            print('NOT ENOUGH MESSAGES in recent_cam_messages')
 
         return log_text, 205
     else:
-        return 'Aint no JSON.', 499
+        return 'No JSON.', 415
+
+
+# ROUTES FOR THE DUMMY LINKSMART ONLY
+@app.route("/linksmart")
+def hello_linksmart():
+    print('REQUEST: HELLO LINKSMART')
+    try:
+        resp = requests.get(urls['dummy_linksmart_url'])
+    except requests.exceptions.RequestException as e:
+        print(e)
+        return 'Dummy Linksmart Connection Failed: ' + e, 502
+    else:
+        print(resp.text, resp.status_code)
+        return resp.text + ' VIA SECURITY FUSION NODE', 200
+
+
+@app.route("/linksmart/get_configs")
+def get_configs_linksmart():
+    print('REQUEST: GET THE CONFIGS FROM LINKSMART')
+    try:
+        resp = requests.get(urls['dummy_linksmart_url'] + 'configs')
+    except requests.exceptions.RequestException as e:
+        print(e)
+        return 'Dummy Linksmart Connection Failed: ' + e, 502
+    else:
+        global cam_configs
+        cam_configs = resp.json()
+        print('NUMBER OF CONFIGS RETURNED = ' + str(len(cam_configs)), resp.status_code)
+        return 'OBTAINED CONFIGS VIA SECURITY FUSION NODE: ' + str(cam_configs), 200
 
 
 # RUN THE SERVICE
