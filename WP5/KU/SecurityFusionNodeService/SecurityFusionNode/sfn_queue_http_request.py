@@ -23,20 +23,35 @@ else:
     print(resp.text, resp.status_code)
 
 # SEND MESSAGE TO SFN
-job_key = []
+job_key1 = []
 try:
-    res = requests.post(url + 'message', json=json.dumps({'message': 'HI'}))
+    res = requests.post(url + 'message', json=json.dumps({'time': 20}))
 except requests.exceptions.RequestException as e:  # This is the correct syntax
     print(str(e))
 else:
-    job_key = res.text
+    job_key1 = res.text
     print(res.text, res.status_code)
 
-
-# CHECK STATUS OF JOB
+# CHECK QUEUE STATUS
 try:
-    res = requests.post(url + 'result', json=json.dumps({'job_key': job_key}))
-except requests.exceptions.RequestException as e:
+    res = requests.get(url + 'queue')
+except requests.exceptions.RequestException as e:  # This is the correct syntax
+    print(str(e))
+else:
+    print(res.text, res.status_code)
+
+# CHECK QUEUE STATUS
+try:
+    res = requests.get(url + 'queue')
+except requests.exceptions.RequestException as e:  # This is the correct syntax
+    print(str(e))
+else:
+    print(res.text, res.status_code)
+
+# CHECK QUEUE STATUS
+try:
+    res = requests.get(url + 'queue')
+except requests.exceptions.RequestException as e:  # This is the correct syntax
     print(str(e))
 else:
     print(res.text, res.status_code)
@@ -45,8 +60,9 @@ time.sleep(10)
 
 # CHECK STATUS OF JOB
 try:
-    res = requests.post(url + 'result', json=json.dumps({'job_key': job_key}))
+    res = requests.post(url + 'result', json=json.dumps({'job_key': job_key1}))
 except requests.exceptions.RequestException as e:
     print(str(e))
 else:
-    print(res.text, res.status_code)
+    print('Job {}: {}. {}'.format(job_key1, res.text, res.status_code))
+

@@ -1,9 +1,23 @@
+# security_fusion_node.py
+"""The class that handles the storage of current messages on the sfn_service and contains the functions to process those
+messages"""
 import pickle
 import numpy as np
 import cv2
 import json
 import base64
 import math
+import time
+
+__version__ = '0.1'
+__author__ = 'RoViT (KU)'
+
+
+def waste_time(time_amount):
+    print('started')
+    time.sleep(time_amount)
+    print('finished')
+    return 'Done'
 
 
 def rotateImage(image, angle):
@@ -233,8 +247,3 @@ class SecurityFusionNode:
         cv2.waitKey(0)
         return img_amal
 
-    @staticmethod
-    def waste_time(time_amount):
-        import time
-        time.sleep(time_amount)
-        return 'Done'

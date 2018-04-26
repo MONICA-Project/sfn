@@ -6,8 +6,10 @@ import requests
 import json
 import datetime
 import os
+from redis import Redis
 from rq import Queue
 from rq.job import Job
+from rq.registry import StartedJobRegistry
 from flask import Flask, request
 from pathlib import Path
 import sys
@@ -15,16 +17,31 @@ sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.definitions import KU_DIR
 import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
-from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.worker import conn
+import WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node as sfn
+# from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.sfn_worker import conn
 
 __version__ = '0.1'
 __author__ = 'RoViT (KU)'
 
 app = Flask(__name__)
-q = Queue(connection=conn)
 
-sfn = SecurityFusionNode('001')
+conn = Redis()
+queue_name = 'default'
+q = Queue(name=queue_name, connection=conn)
+
+sfn_module = sfn.SecurityFusionNode('001')
 linksmart_url = 'http://127.0.0.2:3389/'
+
+# for i in range(20):
+#     job = q.enqueue(sfn.waste_time, 10, ttl=43)
+#     print(job.get_id())
+#
+# registry = StartedJobRegistry(name=queue_name, connection=conn)
+# print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
+# print('Current Running Job = {}'.format(registry.get_job_ids()))
+# print('Expired Job = {}'.format(registry.get_expired_job_ids()))
+# print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
+# print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
 
 
 @app.route("/")
@@ -38,10 +55,15 @@ def add_message():
     print('REQUEST: ADD MESSAGE START TASK')
     if request.is_json:
         log_text = ''
-        job = q.enqueue_call(func=sfn.waste_time(20), result_ttl=5000)
-        print(job.get_id)
+        message = json.loads(request.get_json(force=True))
+        for i in range(3):
+            job = q.enqueue(sfn.waste_time, 10, ttl=43)
+            print(job.get_id())
+        # job = q.enqueue_call(func=sfn.waste_time, args=(message['time'],), result_ttl=5000)
+        print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
+        # print(job2.get_id())
 
-        return job.key, 205
+        return job.get_id(), 205
     else:
         return 'No JSON.', 499
 
@@ -58,6 +80,17 @@ def get_result():
             return 'Job not Finished', 406
     else:
         return 'No JSON.', 499
+
+
+@app.route('/queue')
+def query_queue():
+    print('GET: QUERY QUEUE')
+    registry = StartedJobRegistry(name=queue_name, connection=conn)
+    print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
+    print('Current Running Job = {}'.format(registry.get_job_ids()))
+    print('Expired Job = {}'.format(registry.get_expired_job_ids()))
+    print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
+    return 'RESULTS', 206
 
 
 # RUN THE SERVICE

@@ -1,8 +1,14 @@
+# loader_tools.py
+""" A set of functions to load JSON messages from text file, decode base64 encoded images and read configs from .pk
+files"""
 import pickle
 import numpy as np
 import cv2
 import json
 import base64
+
+__version__ = '0.1'
+__author__ = 'RoViT (KU)'
 
 
 def load_settings(settings_location, cam_id, pickel_file=True):
