@@ -4,3 +4,4 @@ opencv-contrib-python==3.4.0.12
 numpy==1.14.0
 redis==2.10
 rq==0.5.6
+rq-dashboard==0.3.10

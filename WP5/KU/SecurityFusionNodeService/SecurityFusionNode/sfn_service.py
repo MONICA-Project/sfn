@@ -13,22 +13,20 @@ sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.definitions import KU_DIR
 import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
+import WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node as sfn
 
-__version__ = '0.1'
+__version__ = '0.2'
 __author__ = 'RoViT (KU)'
 
 app = Flask(__name__)
-sfn = SecurityFusionNode('001')
+sfn_module = SecurityFusionNode('001')
 urls = {'dummy_linksmart_url': 'http://127.0.0.2:3389/',
         # 'crowd_density_url': 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring',
         'crowd_density_url': 'http://127.0.0.2:3389/crowd_density',
+        'flow_analysis_url': 'http://127.0.0.2:3389/flow_analysis',
         }
 
-# TODO: A NUMBER OF THESE WILL NEED TO BE STORED FOR EACH MODULES MESSAGE
 cam_configs = []
-# recent_cam_messages = [
-#     # tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8_00004')
-#                       ]
 
 headers = {'content-Type': 'application/json'}
 
@@ -39,7 +37,6 @@ def hello_world():
     return "SECURITY FUSION NODE"
 
 
-# TODO: add functionality to change a stored url
 @app.route("/urls", methods=['POST'])
 def update_urls():
     print('REQUEST: UPDATE URLS')
@@ -64,12 +61,12 @@ def update_urls():
 @app.route("/register")
 def register_sfn():
     print('REQUEST: SEND SFN REGISTRATION')
-    data = sfn.create_reg_message(datetime.datetime.utcnow().isoformat())
+    data = sfn_module.create_reg_message(datetime.datetime.utcnow().isoformat())
     try:
         resp = requests.post(urls['crowd_density_url'], data=data, headers=headers)
     except requests.exceptions.RequestException as e:
         print(e)
-        return 'Linksmart Connection Failed: ' + e, 450
+        return 'Linksmart Connection Failed: ' + str(e), 450
     else:
         print('SFN CONFIG ADDED: ' + resp.text, resp.status_code)
         return 'Registered SFN: ' + resp.text, resp.status_code
@@ -80,8 +77,11 @@ def add_message():
     print('REQUEST: ADD MESSAGE')
     if request.is_json:
         log_text = ''
-        # TODO: ADD CHECK TO REMOVE THE POSSIBILITY OF TRYING TO LOAD JSON WHEN ITS ALREADY LOADED (str)
-        message = json.loads(request.get_json(force=True))
+        # GET THE JSON AND CHECK IF ITS STILL A STRING, IF SO loads JSON FORMAT
+        message = request.get_json(force=True)
+        if type(message) == str:
+            message = json.loads(message)
+
         camera_id = message['camera_ids'][0]
         wp_module = message['type_module']
 
@@ -103,32 +103,32 @@ def add_message():
                 log_text = log_text + ' crowd_density_local MESSAGE CONVERTED TO TOP DOWN.'
 
         # MESSAGE SORTING CODE: FIND THE CAMERA ID AND MODULE AND UPDATE recent_cam_messages
-        # TODO: CONVERT TO DATABASE HERE?
-        # global recent_cam_messages
-        if sfn.length_db() > 0:  # if len(recent_cam_messages) > 0:
+        if sfn_module.length_db() > 0:  # if len(recent_cam_messages) > 0:
             # FIND THE ENTRY FROM THIS CAM_ID FROM THIS MODULE AND REPLACE
+            # row: the index of previous message for this camera and module
+            row = sfn_module.query_db(camera_id, wp_module)
 
-            row = sfn.query_db(camera_id, wp_module)  # row: the index of previous message for this camera and module
-
-            if len(row)!=0: # ind is not None:
+            # IF AN ENTRY IS FOUND:
+            if len(row) != 0:
                 print('THE MESSAGE FROM ' + wp_module + ' MODULE, FROM ' + camera_id + ', IS ALREADY STORED, REPLACING')
                 log_text = log_text + 'PREVIOUS MESSAGE FROM ' + wp_module + ' MODULE, FROM ' + camera_id\
                     + ', ALREADY STORED, REPLACING.'
-                sfn.delete_db(camera_id, wp_module)  # Delete the previous message from the database
-                sfn.insert_db(camera_id, wp_module, json.dumps(message))  # Insert new message to the database
+                sfn_module.delete_db(camera_id, wp_module)  # Delete the previous message from the database
+                sfn_module.insert_db(camera_id, wp_module, json.dumps(message))  # Insert new message to the database
             else:
                 # THIS IS THE FIRST INSTANCE OF THIS camera_id AND wp_module PAIR
                 print('THIS IS A NEW MESSAGE FROM ' + wp_module + ' MODULE, FROM ' + camera_id)
                 log_text = log_text + 'THIS IS A NEW MESSAGE FROM ' + wp_module + ' MODULE, FROM ' + camera_id + '.'
-                sfn.insert_db(camera_id, wp_module, json.dumps(message))  # Insert new message to the database
+                sfn_module.insert_db(camera_id, wp_module, json.dumps(message))  # Insert new message to the database
         else:
             # NO MESSAGES HELD SO ADD THE FIRST ONE
             print('FIRST EVER MESSAGE')
             log_text = log_text + 'FIRST EVER MESSAGE.'
-            sfn.insert_db(camera_id, wp_module, json.dumps(message))  # Insert new message to the database
+            sfn_module.insert_db(camera_id, wp_module, json.dumps(message))  # Insert new message to the database
 
         # FILTER CODE HERE: DO SOMETHING BASED ON WHAT MODULE SENT THE MESSAGE
         new_message = None
+        url = ''
         if wp_module == 'crowd_density_local':
             # MESSAGE HAS ALREADY BEEN CONVERTED TO TOP DOWN VIEW
             new_message = message
@@ -143,22 +143,22 @@ def add_message():
                 # resp = requests.put(linksmart_url + 'add_message', data=json.dumps(new_message), headers=headers)
             except requests.exceptions.RequestException as e:
                 print(e)
-                return 'Linksmart Connection Failed: ' + e, 450
+                return 'Linksmart Connection Failed: ' + str(e), 450
             else:
                 print(resp.text)
                 log_text = log_text + ' MESSAGE HAS BEEN FORWARDED TO LINKSMART(' + resp.text + ').'
 
         # UNDER AND IF STATEMENT CHECK IF WE WANT TO AMALGAMATE AND CREATE A NEW MESSAGE
         # TODO: CHANGE THIS SO ITS NOT RUN EVERY TIME A MESSAGE IS SENT
-        if sfn.length_db() > 2:  # len(recent_cam_messages) > 2:
-            crowd_density_global = None
+        if sfn_module.length_db() > 2:  # len(recent_cam_messages) > 2:
             top_down_maps = []
             config_for_amalgamation = []
             amalgamation_cam_ids = []
             amalgamation_density_count = 0
-
+            amalgamation_timestamp_1 = 0
+            amalgamation_timestamp_2 = 0
             # FIND THE ENTRY FROM THIS CAM_ID FROM THIS MODULE AND REPLACE
-            recent_cam_messages = sfn.query_db(None,'crowd_density_local')  # Search for a specific module_id
+            recent_cam_messages = sfn_module.query_db(None, 'crowd_density_local')  # Search for a specific module_id
             recent_cam_messages = [json.loads(item[2]) for item in recent_cam_messages]
 
             for i, item in enumerate(recent_cam_messages):
@@ -172,31 +172,31 @@ def add_message():
                 amalgamation_cam_ids.append(recent_cam_messages[i]['camera_ids'])
                 amalgamation_density_count += recent_cam_messages[i]['density_count']
                 top_down_maps.append(recent_cam_messages[i]['density_map'])
-                conf = next((item for item in cam_configs if item['camera_id'] == recent_cam_messages[i]['camera_ids'][0]))
+                conf = next((item for item in cam_configs if item['camera_id'] ==
+                             recent_cam_messages[i]['camera_ids'][0]))
                 config_for_amalgamation.append(conf['ground_plane_position'] + [conf['camera_tilt']])
 
             # RUN THE AMALGAMATION
-            amalgamated_top_down_map = sfn.generate_amalgamated_top_down_map(top_down_maps, config_for_amalgamation)
+            amalgamated_top_down_map = sfn_module.generate_amalgamated_top_down_map(top_down_maps,
+                                                                                    config_for_amalgamation)
 
             # Create new message
-            crowd_density_global = sfn.create_obs_message(amalgamation_cam_ids, amalgamation_density_count,
-                                                          amalgamated_top_down_map,amalgamation_timestamp_1,
-                                                          amalgamation_timestamp_2)
+            crowd_density_global = sfn_module.create_obs_message(amalgamation_cam_ids, amalgamation_density_count,
+                                                                 amalgamated_top_down_map, amalgamation_timestamp_1,
+                                                                 amalgamation_timestamp_2)
 
             log_text = log_text + ' CURRENTLY HELD MESSAGES HAVE BEEN AMALGAMATED INTO THE crowd_density_global VIEW. '
 
             # SEND crowd_density_global MESSAGE TO LINKSMART
-            if crowd_density_global is not None:
-                try:
-                    # resp = requests.put(linksmart_url + 'add_message', json=crowd_density_global,
-                    resp = requests.put(urls['crowd_density_url'], json=crowd_density_global,
-                                        headers={'content-Type': 'application/json'})
-                except requests.exceptions.RequestException as e:
-                    print(e)
-                    return 'Linksmart Connection Failed: ' + e, 450
-                else:
-                    print(resp.text)
-                    log_text = log_text + ' crowd_density_global MESSAGE CREATED AND SENT TO LINKSMART(' + resp.text + ').'
+            try:
+                resp = requests.put(urls['crowd_density_url'], json=crowd_density_global,
+                                    headers={'content-Type': 'application/json'})
+            except requests.exceptions.RequestException as e:
+                print(e)
+                return 'Linksmart Connection Failed: ' + str(e), 450
+            else:
+                print(resp.text)
+                log_text = log_text + ' crowd_density_global MESSAGE CREATED AND SENT(' + resp.text + ').'
         else:
             # NO MESSAGES HELD
             print('NOT ENOUGH MESSAGES in recent_cam_messages')
@@ -214,7 +214,7 @@ def hello_linksmart():
         resp = requests.get(urls['dummy_linksmart_url'])
     except requests.exceptions.RequestException as e:
         print(e)
-        return 'Dummy Linksmart Connection Failed: ' + e, 502
+        return 'Dummy Linksmart Connection Failed: ' + str(e), 502
     else:
         print(resp.text, resp.status_code)
         return resp.text + ' VIA SECURITY FUSION NODE', 200
@@ -227,7 +227,7 @@ def get_configs_linksmart():
         resp = requests.get(urls['dummy_linksmart_url'] + 'configs')
     except requests.exceptions.RequestException as e:
         print(e)
-        return 'Dummy Linksmart Connection Failed: ' + e, 502
+        return 'Dummy Linksmart Connection Failed: ' + str(e), 502
     else:
         global cam_configs
         cam_configs = resp.json()

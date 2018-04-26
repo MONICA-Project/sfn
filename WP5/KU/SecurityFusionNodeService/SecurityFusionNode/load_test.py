@@ -12,29 +12,39 @@ print(str(socket.gethostname()))
 
 # url = 'http://dupre.hopto.org:5000/'
 url = 'http://127.0.0.1:5000/'
+sfn_urls = {'dummy_linksmart_url': 'http://127.0.0.2:3389/',
+            # 'crowd_density_url': 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring',
+            'crowd_density_url': 'http://127.0.0.2:3389/crowd_density',
+            }
+
 responses = []
 
 
-# UPDATE LINKSMART URL
+# CHECK CONNECTION WITH SFN AND UPDATE URLS CHECK LINKSMART CONNECTION
 try:
-    resp = requests.post(url + 'linksmart', json='http://127.0.0.2:3389/')
-    # resp = requests.post(url + 'linksmart', json='dupre.hopto.org:3389/')
+    resp = requests.get(url)
 except requests.exceptions.RequestException as e:
     print('WOO THERE, Something went wrong, error:' + str(e))
 else:
     print(resp.text, resp.status_code)
-
-# HELLO LINKSMART VIA SFN
-try:
-    resp = requests.get(url + 'linksmart')
-except requests.exceptions.RequestException as e:
-    print('WOO THERE, Something went wrong, error:' + str(e))
-else:
     if resp.ok:
-        # GET THE CONFIGS FROM LINKSMART VIA SFN
-        resp = requests.get(url + 'linksmart/get_configs')
+        # UPDATE URLS AND CHECK LINKSMART
+        try:
+            resp = requests.post(url + 'urls', json=json.dumps(sfn_urls))
+        except requests.exceptions.RequestException as e:
+            print('WOO THERE, Something went wrong, error:' + str(e))
+        else:
+            print(resp.text, resp.status_code)
+        try:
+            resp = requests.get(url + 'linksmart')
+        except requests.exceptions.RequestException as e:
+            print('WOO THERE, Something went wrong, error:' + str(e))
+        else:
+            if resp.ok:
+                # GET THE CONFIGS FROM LINKSMART VIA SFN
+                resp = requests.get(url + 'linksmart/get_configs')
 
-# HELLO WORLD
+# LOAD TEST WITH LOTS OF MESSAGES
 try:
     resp = requests.get(url)
 except requests.exceptions.RequestException as e:

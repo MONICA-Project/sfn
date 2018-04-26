@@ -23,6 +23,135 @@ def waste_time(time_amount):
     return 'Done'
 
 
+def generate_heat_map(detections, transform, gp_roi, ground_plane_size, frame=None, timestamp=None):
+    detections = np.array(detections)
+    # detections IS EITHER AN (MxN) IMAGE OR A (Mx2) LIST OF X Y COORDINATES
+    if detections.shape[1] > 2:
+        # CONVERT TO LIST OF POINTS
+        detections_image = detections.copy()
+        values = detections_image[detections_image > 0]
+        detections = np.array(np.nonzero(detections_image > 0))
+        detections = np.transpose(np.vstack([detections[1, :], detections[0, :]]))
+    else:
+        # ELSE CREATE VALUES FOR INDIVIDUAL DETECTIONS
+        values = np.ones(len(detections))
+
+    # TRANSFORM THE LIST OF DETECTIONS
+    q = np.dot(transform, np.transpose(np.hstack([detections, np.ones([len(detections), 1])])))
+    p = np.array(q[2, :])
+    transformed_pts = np.int32(np.round(np.vstack([(q[0, :] / p), (q[1, :] / p)])))
+    transformed_pts = np.vstack([transformed_pts, values])
+
+    # import datetime
+    # start = datetime.datetime.now()
+
+    # FOR EACH DETECTION CHECK IT IS WITHIN THE gp_roi AND BIN
+    x = transformed_pts[0, :]
+    transformed_pts = transformed_pts[:, (gp_roi[0] < x) & (x < gp_roi[2])]
+    y = transformed_pts[1, :]
+    transformed_pts = transformed_pts[:, (gp_roi[1] < y) & (y < gp_roi[3])]
+
+    # print(datetime.datetime.now() - start)
+    # CREATE THE HEAT MAP, USING THE transformed_pts, USING THE NUMBER OF BINS DEFINED IN ground_plane_size,
+    # WHERE WEIGHTS ARE THE AMOUNT ADDED TO EACH BIN FOR EACH POINT AND APPLYING THE RANGE GIVEN BY gp_roi
+    heat_map, _, _ = np.histogram2d(transformed_pts[1, :], transformed_pts[0, :], bins=ground_plane_size[::-1],
+                                    weights=transformed_pts[2, :],
+                                    range=[[gp_roi[1], gp_roi[3]], [gp_roi[0], gp_roi[2]]])
+
+    heat_image = None
+    # IF A FRAME IS PROVIDED GET THE HEAT MAP OVERLAID
+    if frame is not None:
+        # heat_image = cv2.resize(heat_map, (0, 0), fx=10, fy=10)
+        transform = np.array(transform)
+        warped_image = cv2.warpPerspective(frame, transform, (10000, 10000))
+        # USE cv2 TO DRAW CIRCLES FOR EACH POINT IN transformed_pts. SLOW
+        # for i in range(len(detections)):
+        #     cv2.circle(warped_image, (int(transformed_pts[0, i]), int(transformed_pts[1, i])), 3, (255, 0, 0), -1)
+
+        # CHANGE TO GRAY SCALE AND GET ONLY THE roi FOR THE WARPED IMAGE
+        if np.ndim(frame) > 2:
+            warped_image = cv2.cvtColor(warped_image[gp_roi[1]: gp_roi[3], gp_roi[0]: gp_roi[2]],
+                                        cv2.COLOR_RGB2GRAY)
+        else:
+            warped_image = warped_image[gp_roi[1]: gp_roi[3], gp_roi[0]: gp_roi[2]]
+        # SCALE UP THE heat_map TO ENCOMPASS THE WHOLE WARPED roi
+        heat_image = cv2.resize(heat_map, (gp_roi[2] - gp_roi[0], gp_roi[3] - gp_roi[1]))
+        heat_image = ((warped_image / 255) / 3) + heat_image
+        # SAVE THE IMAGE (NORMALISE UP TO 255)
+        cv2.imwrite('Detections_' + str(timestamp) + '.jpeg', heat_image*255)
+        # cv2.imshow('frame', heat_image)
+        # cv2.waitKey(0)
+    # TODO: THIS WILL LIKELY NEED CHANGING IN ORDER TO COMPRESS THESE IMAGES
+    return heat_map.tolist(), heat_image
+
+
+def rotateImage(image, angle):
+    """
+    Rotates the given image about it's centre
+    """
+
+    image_size = (image.shape[1], image.shape[0])
+    image_center = tuple(np.array(image_size) / 2)
+
+    rot_mat = np.vstack([cv2.getRotationMatrix2D(image_center, angle, 1.0), [0, 0, 1]])
+    trans_mat = np.identity(3)
+
+    w2 = image_size[0] * 0.5
+    h2 = image_size[1] * 0.5
+
+    rot_mat_notranslate = np.matrix(rot_mat[0:2, 0:2])
+
+    tl = (np.array([-w2, h2]) * rot_mat_notranslate).A[0]
+    tr = (np.array([w2, h2]) * rot_mat_notranslate).A[0]
+    bl = (np.array([-w2, -h2]) * rot_mat_notranslate).A[0]
+    br = (np.array([w2, -h2]) * rot_mat_notranslate).A[0]
+
+    x_coords = [pt[0] for pt in [tl, tr, bl, br]]
+    x_pos = [x for x in x_coords if x > 0]
+    x_neg = [x for x in x_coords if x < 0]
+
+    y_coords = [pt[1] for pt in [tl, tr, bl, br]]
+    y_pos = [y for y in y_coords if y > 0]
+    y_neg = [y for y in y_coords if y < 0]
+
+    right_bound = max(x_pos)
+    left_bound = min(x_neg)
+    top_bound = max(y_pos)
+    bot_bound = min(y_neg)
+
+    new_w = int(abs(right_bound - left_bound))
+    new_h = int(abs(top_bound - bot_bound))
+    new_image_size = (new_w, new_h)
+
+    new_midx = new_w * 0.5
+    new_midy = new_h * 0.5
+
+    dx = int(new_midx - w2)
+    dy = int(new_midy - h2)
+
+
+    # getTranslationMatrix2d: a numpy affine transformation matrix for a 2D translation of
+    trans_mat = np.matrix([[1, 0, dx], [0, 1, dy], [0, 0, 1]])
+    affine_mat = (np.matrix(trans_mat) * np.matrix(rot_mat))[0:2, :]
+    result = cv2.warpAffine(image, affine_mat, new_image_size, flags=cv2.INTER_LINEAR)
+
+    return result
+
+
+# Convert the distance between 2 geo point into metre
+def conversionTOmeter(lat1, lon1, lat2, lon2):  # generally used geo measurement function
+    R = 6378.137   # Radius of earth in KM
+    dLat = lat2 * math.pi / 180 - lat1 * math.pi / 180
+    dLon = lon2 * math.pi / 180 - lon1 * math.pi / 180
+    a = math.sin(dLat/2) * math.sin(dLat/2) + math.cos(lat1 * math.pi / 180) * math.cos(lat2 * math.pi / 180) \
+                                              * math.sin(dLon/2) * math.sin(dLon/2)
+
+
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    d = R * c
+    return(d * 1000)  # meters
+
+
 class SecurityFusionNode:
 
     def __init__(self, module_id):
@@ -95,68 +224,6 @@ class SecurityFusionNode:
         }
         message = json.dumps(data)
         return message
-
-    @staticmethod
-    def generate_heat_map(detections, transform, gp_roi, ground_plane_size, frame=None, timestamp=None):
-        detections = np.array(detections)
-        # detections IS EITHER AN (MxN) IMAGE OR A (Mx2) LIST OF X Y COORDINATES
-        if detections.shape[1] > 2:
-            # CONVERT TO LIST OF POINTS
-            detections_image = detections.copy()
-            values = detections_image[detections_image > 0]
-            detections = np.array(np.nonzero(detections_image > 0))
-            detections = np.transpose(np.vstack([detections[1, :], detections[0, :]]))
-        else:
-            # ELSE CREATE VALUES FOR INDIVIDUAL DETECTIONS
-            values = np.ones(len(detections))
-
-        # TRANSFORM THE LIST OF DETECTIONS
-        q = np.dot(transform, np.transpose(np.hstack([detections, np.ones([len(detections), 1])])))
-        p = np.array(q[2, :])
-        transformed_pts = np.int32(np.round(np.vstack([(q[0, :] / p), (q[1, :] / p)])))
-        transformed_pts = np.vstack([transformed_pts, values])
-
-        # import datetime
-        # start = datetime.datetime.now()
-
-        # FOR EACH DETECTION CHECK IT IS WITHIN THE gp_roi AND BIN
-        x = transformed_pts[0, :]
-        transformed_pts = transformed_pts[:, (gp_roi[0] < x) & (x < gp_roi[2])]
-        y = transformed_pts[1, :]
-        transformed_pts = transformed_pts[:, (gp_roi[1] < y) & (y < gp_roi[3])]
-
-        # print(datetime.datetime.now() - start)
-        # CREATE THE HEAT MAP, USING THE transformed_pts, USING THE NUMBER OF BINS DEFINED IN ground_plane_size,
-        # WHERE WEIGHTS ARE THE AMOUNT ADDED TO EACH BIN FOR EACH POINT AND APPLYING THE RANGE GIVEN BY gp_roi
-        heat_map, _, _ = np.histogram2d(transformed_pts[1, :], transformed_pts[0, :], bins=ground_plane_size[::-1],
-                                        weights=transformed_pts[2, :],
-                                        range=[[gp_roi[1], gp_roi[3]], [gp_roi[0], gp_roi[2]]])
-
-        heat_image = None
-        # IF A FRAME IS PROVIDED GET THE HEAT MAP OVERLAID
-        if frame is not None:
-            # heat_image = cv2.resize(heat_map, (0, 0), fx=10, fy=10)
-            transform = np.array(transform)
-            warped_image = cv2.warpPerspective(frame, transform, (10000, 10000))
-            # USE cv2 TO DRAW CIRCLES FOR EACH POINT IN transformed_pts. SLOW
-            # for i in range(len(detections)):
-            #     cv2.circle(warped_image, (int(transformed_pts[0, i]), int(transformed_pts[1, i])), 3, (255, 0, 0), -1)
-
-            # CHANGE TO GRAY SCALE AND GET ONLY THE roi FOR THE WARPED IMAGE
-            if np.ndim(frame) > 2:
-                warped_image = cv2.cvtColor(warped_image[gp_roi[1]: gp_roi[3], gp_roi[0]: gp_roi[2]],
-                                            cv2.COLOR_RGB2GRAY)
-            else:
-                warped_image = warped_image[gp_roi[1]: gp_roi[3], gp_roi[0]: gp_roi[2]]
-            # SCALE UP THE heat_map TO ENCOMPASS THE WHOLE WARPED roi
-            heat_image = cv2.resize(heat_map, (gp_roi[2] - gp_roi[0], gp_roi[3] - gp_roi[1]))
-            heat_image = ((warped_image / 255) / 3) + heat_image
-            # SAVE THE IMAGE (NORMALISE UP TO 255)
-            cv2.imwrite('Detections_' + str(timestamp) + '.jpeg', heat_image*255)
-            # cv2.imshow('frame', heat_image)
-            # cv2.waitKey(0)
-        # TODO: THIS WILL LIKELY NEED CHANGING IN ORDER TO COMPRESS THESE IMAGES
-        return heat_map.tolist(), heat_image
 
     @staticmethod
     def generate_amalgamated_top_down_map(top_down_maps, config_for_amalgamation):

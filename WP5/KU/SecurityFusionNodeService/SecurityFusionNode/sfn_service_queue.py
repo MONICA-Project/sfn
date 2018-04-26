@@ -24,24 +24,22 @@ __version__ = '0.1'
 __author__ = 'RoViT (KU)'
 
 app = Flask(__name__)
+sfn_module = sfn.SecurityFusionNode('001')
+urls = {'dummy_linksmart_url': 'http://127.0.0.2:3389/',
+        # 'crowd_density_url': 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring',
+        'crowd_density_url': 'http://127.0.0.2:3389/crowd_density',
+        'flow_analysis_url': 'http://127.0.0.2:3389/flow_analysis',
+        }
+headers = {'content-Type': 'application/json'}
 
+cam_configs = []
+recent_cam_messages = [
+    # tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8_00004')
+                      ]
+# QUEUE VARIABLES
 conn = Redis()
 queue_name = 'default'
 q = Queue(name=queue_name, connection=conn)
-
-sfn_module = sfn.SecurityFusionNode('001')
-linksmart_url = 'http://127.0.0.2:3389/'
-
-# for i in range(20):
-#     job = q.enqueue(sfn.waste_time, 10, ttl=43)
-#     print(job.get_id())
-#
-# registry = StartedJobRegistry(name=queue_name, connection=conn)
-# print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
-# print('Current Running Job = {}'.format(registry.get_job_ids()))
-# print('Expired Job = {}'.format(registry.get_expired_job_ids()))
-# print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
-# print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
 
 
 @app.route("/")
@@ -50,18 +48,53 @@ def hello_world():
     return "SECURITY FUSION NODE"
 
 
+@app.route("/urls", methods=['POST'])
+def update_urls():
+    print('REQUEST: UPDATE URLS')
+    if request.is_json:
+        url_updates = request.get_json(force=True)
+        # CHECK IF ITS STILL A STRING AND IF SO LOAD FROM JSON FORMAT
+        if type(url_updates) == str:
+            url_updates = json.loads(url_updates)
+
+        global urls
+        for url in urls:
+            if url in url_updates:
+                urls[url] = url_updates[url]
+                print('Updating Key ({}) to: {}.'.format(url, url_updates[url]))
+            else:
+                print('Key ({}) not found.'.format(url))
+        return 'SFN urls updated', 201
+    else:
+        return 'No JSON.', 415
+
+
+@app.route("/register")
+def register_sfn():
+    print('REQUEST: SEND SFN REGISTRATION')
+    data = sfn_module.create_reg_message(datetime.datetime.utcnow().isoformat())
+    try:
+        resp = requests.post(urls['crowd_density_url'], data=data, headers=headers)
+    except requests.exceptions.RequestException as e:
+        print(e)
+        return 'Linksmart Connection Failed: ' + str(e), 450
+    else:
+        print('SFN CONFIG ADDED: ' + resp.text, resp.status_code)
+        return 'Registered SFN: ' + resp.text, resp.status_code
+
+
 @app.route('/message', methods=['POST'])
 def add_message():
     print('REQUEST: ADD MESSAGE START TASK')
     if request.is_json:
         log_text = ''
-        message = json.loads(request.get_json(force=True))
-        for i in range(3):
+        # GET THE JSON AND CHECK IF ITS STILL A STRING, IF SO loads JSON FORMAT
+        message = request.get_json(force=True)
+        if type(message) == str:
+            message = json.loads(message)
+        for i in range(10):
             job = q.enqueue(sfn.waste_time, 10, ttl=43)
-            print(job.get_id())
-        # job = q.enqueue_call(func=sfn.waste_time, args=(message['time'],), result_ttl=5000)
         print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
-        # print(job2.get_id())
 
         return job.get_id(), 205
     else:
@@ -72,7 +105,10 @@ def add_message():
 def get_result():
     print('REQUEST: CHECK JOB STATUS')
     if request.is_json:
-        message = json.loads(request.get_json(force=True))
+        # GET THE JSON AND CHECK IF ITS STILL A STRING, IF SO loads JSON FORMAT
+        message = request.get_json(force=True)
+        if type(message) == str:
+            message = json.loads(message)
         job = Job.fetch(message['job_key'], connection=conn)
         if job.is_finished:
             return str(job.result), 206
@@ -82,15 +118,33 @@ def get_result():
         return 'No JSON.', 499
 
 
-@app.route('/queue')
-def query_queue():
-    print('GET: QUERY QUEUE')
-    registry = StartedJobRegistry(name=queue_name, connection=conn)
-    print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
-    print('Current Running Job = {}'.format(registry.get_job_ids()))
-    print('Expired Job = {}'.format(registry.get_expired_job_ids()))
-    print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
-    return 'RESULTS', 206
+# ROUTES FOR THE DUMMY LINKSMART ONLY
+@app.route("/linksmart")
+def hello_linksmart():
+    print('REQUEST: HELLO LINKSMART')
+    try:
+        resp = requests.get(urls['dummy_linksmart_url'])
+    except requests.exceptions.RequestException as e:
+        print(e)
+        return 'Dummy Linksmart Connection Failed: ' + e, 502
+    else:
+        print(resp.text, resp.status_code)
+        return resp.text + ' VIA SECURITY FUSION NODE', 200
+
+
+@app.route("/linksmart/get_configs")
+def get_configs_linksmart():
+    print('REQUEST: GET THE CONFIGS FROM LINKSMART')
+    try:
+        resp = requests.get(urls['dummy_linksmart_url'] + 'configs')
+    except requests.exceptions.RequestException as e:
+        print(e)
+        return 'Dummy Linksmart Connection Failed: ' + e, 502
+    else:
+        global cam_configs
+        cam_configs = resp.json()
+        print('NUMBER OF CONFIGS RETURNED = ' + str(len(cam_configs)), resp.status_code)
+        return 'OBTAINED CONFIGS VIA SECURITY FUSION NODE: ' + str(cam_configs), 200
 
 
 # RUN THE SERVICE
