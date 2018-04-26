@@ -116,18 +116,15 @@ def add_message():
                     + ', ALREADY STORED, REPLACING.'
                 sfn.delete_db(camera_id, wp_module)  # Delete the previous message from the database
                 sfn.insert_db(camera_id, wp_module, json.dumps(message))  # Insert new message to the database
-                # recent_cam_messages[ind] = message
             else:
                 # THIS IS THE FIRST INSTANCE OF THIS camera_id AND wp_module PAIR
                 print('THIS IS A NEW MESSAGE FROM ' + wp_module + ' MODULE, FROM ' + camera_id)
                 log_text = log_text + 'THIS IS A NEW MESSAGE FROM ' + wp_module + ' MODULE, FROM ' + camera_id + '.'
-                # recent_cam_messages.append(message)
                 sfn.insert_db(camera_id, wp_module, json.dumps(message))  # Insert new message to the database
         else:
             # NO MESSAGES HELD SO ADD THE FIRST ONE
             print('FIRST EVER MESSAGE')
             log_text = log_text + 'FIRST EVER MESSAGE.'
-            # recent_cam_messages.append(message)
             sfn.insert_db(camera_id, wp_module, json.dumps(message))  # Insert new message to the database
 
         # FILTER CODE HERE: DO SOMETHING BASED ON WHAT MODULE SENT THE MESSAGE
@@ -161,22 +158,22 @@ def add_message():
             amalgamation_density_count = 0
 
             # FIND THE ENTRY FROM THIS CAM_ID FROM THIS MODULE AND REPLACE
-            recent_cam_msges = sfn.query_db()
-            recent_cam_msges = [json.loads(item[2]) for item in recent_cam_msges]
-            for i, item in enumerate(recent_cam_msges):
-                if item['type_module'] == 'crowd_density_local':
-                    if i == 0:
-                        amalgamation_timestamp_1 = recent_cam_msges[i]['timestamp_1']
-                        amalgamation_timestamp_2 = recent_cam_msges[i]['timestamp_2']
-                    else:
-                        amalgamation_timestamp_1 = min(amalgamation_timestamp_1, recent_cam_msges[i]['timestamp_1'])
-                        amalgamation_timestamp_2 = max(amalgamation_timestamp_2, recent_cam_msges[i]['timestamp_2'])
-                    amalgamation_cam_ids.append(recent_cam_msges[i]['camera_ids'])
-                    amalgamation_density_count += recent_cam_msges[i]['density_count']
-                    top_down_maps.append(recent_cam_msges[i]['density_map'])
-                    conf = next(
-                        (item for item in cam_configs if item['camera_id'] == recent_cam_msges[i]['camera_ids'][0]))
-                    config_for_amalgamation.append(conf['ground_plane_position'] + [conf['camera_tilt']])
+            recent_cam_messages = sfn.query_db(None,'crowd_density_local')  # Search for a specific module_id
+            recent_cam_messages = [json.loads(item[2]) for item in recent_cam_messages]
+
+            for i, item in enumerate(recent_cam_messages):
+
+                if i == 0:
+                    amalgamation_timestamp_1 = recent_cam_messages[i]['timestamp_1']
+                    amalgamation_timestamp_2 = recent_cam_messages[i]['timestamp_2']
+                else:
+                    amalgamation_timestamp_1 = min(amalgamation_timestamp_1, recent_cam_messages[i]['timestamp_1'])
+                    amalgamation_timestamp_2 = max(amalgamation_timestamp_2, recent_cam_messages[i]['timestamp_2'])
+                amalgamation_cam_ids.append(recent_cam_messages[i]['camera_ids'])
+                amalgamation_density_count += recent_cam_messages[i]['density_count']
+                top_down_maps.append(recent_cam_messages[i]['density_map'])
+                conf = next((item for item in cam_configs if item['camera_id'] == recent_cam_messages[i]['camera_ids'][0]))
+                config_for_amalgamation.append(conf['ground_plane_position'] + [conf['camera_tilt']])
 
             # RUN THE AMALGAMATION
             amalgamated_top_down_map = sfn.generate_amalgamated_top_down_map(top_down_maps, config_for_amalgamation)

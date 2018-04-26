@@ -50,12 +50,15 @@ class SecurityFusionNode:
 
     def query_db(self,*args):
         try:
-            if len(args)==0:  # No input
+            if len(args) == 0:  # No input
                 self.c.execute("select * from messages")
-            elif (len(args)==1):  # only camera_id
-                self.c.execute("SELECT * FROM messages WHERE cam_id=?", args[0])
-            elif (len(args)==2):  # both camera_id and
-                self.c.execute("SELECT * FROM messages WHERE cam_id=? AND module_id=?", (args[0],args[1]))
+            elif len(args) == 2:
+                if args[0] is None:
+                    self.c.execute("SELECT * FROM messages WHERE module_id=?", (args[1],))
+                elif args[1] is None:
+                    self.c.execute("SELECT * FROM messages WHERE cam_id=?", (args[0],))
+                else:
+                    self.c.execute("SELECT * FROM messages WHERE cam_id=? AND module_id=?", (args[0],args[1]))
 
             rows = self.c.fetchall()
             return rows
