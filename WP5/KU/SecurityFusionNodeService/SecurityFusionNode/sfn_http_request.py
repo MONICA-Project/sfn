@@ -6,9 +6,9 @@ import os
 import socket
 from pathlib import Path
 import sys
-sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.definitions import KU_DIR
 import WP5.KU.SecurityFusionNodeService.loader_tools as tools
+sys.path.append(str(Path(__file__).absolute().parents[4]))
 
 __version__ = '0.1'
 __author__ = 'RoViT (KU)'

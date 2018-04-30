@@ -45,11 +45,11 @@ def rotate_image(image, angle):
     new_h = int(abs(top_bound - bot_bound))
     new_image_size = (new_w, new_h)
 
-    new_midx = new_w * 0.5
-    new_midy = new_h * 0.5
+    new_mid_x = new_w * 0.5
+    new_mid_y = new_h * 0.5
 
-    dx = int(new_midx - w2)
-    dy = int(new_midy - h2)
+    dx = int(new_mid_x - w2)
+    dy = int(new_mid_y - h2)
 
     # getTranslationMatrix2d: a numpy affine transformation matrix for a 2D translation of
     trans_mat = np.matrix([[1, 0, dx], [0, 1, dy], [0, 0, 1]])

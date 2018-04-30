@@ -77,6 +77,7 @@ class ConfigTools:
         self.transform, mask = cv2.findHomography(pts1, pts2)
 
         self.warped_image = cv2.warpPerspective(image, self.transform, new_image_size)
+        # cv2.imwrite('test.png', self.warped_image)
         return self.warped_image
 
     def shrink_image(self, image, both=False):

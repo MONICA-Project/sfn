@@ -5,15 +5,13 @@ import argparse
 import requests
 import json
 import datetime
-import os
 from flask import Flask, request
 from pathlib import Path
 import sys
-sys.path.append(str(Path(__file__).absolute().parents[4]))
-from WP5.KU.definitions import KU_DIR
 import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
-import WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node as sfn
+import WP5.KU.SecurityFusionNodeService.SecurityFusionNode.message_processing as i2g
+sys.path.append(str(Path(__file__).absolute().parents[4]))
 
 __version__ = '0.2'
 __author__ = 'RoViT (KU)'
@@ -25,8 +23,6 @@ urls = {'dummy_linksmart_url': 'http://127.0.0.2:3389/',
         'crowd_density_url': 'http://127.0.0.2:3389/crowd_density',
         'flow_analysis_url': 'http://127.0.0.2:3389/flow_analysis',
         }
-
-cam_configs = []
 
 headers = {'content-Type': 'application/json'}
 
@@ -85,15 +81,16 @@ def add_message():
         camera_id = message['camera_ids'][0]
         wp_module = message['type_module']
 
-        # CHECK THAT THERE ARE CONFIGS TO LOOK THROUGH
-        global cam_configs
-        if len(cam_configs) > 0:
-            config = next((item for item in cam_configs if item['camera_id'] == camera_id))
+        # CHECK IF MESSAGE NEEDS CONVERTING TO TOP DOWN
+        if wp_module == 'crowd_density_local':
+            # IF SO GET THE CONFIG WITH MATCHING camera_id
+            config = sfn_module.query_config_db(camera_id)
+            if len(config) == 1:
+                config = json.loads(config[0][1])
 
-            if wp_module == 'crowd_density_local':
-                # CONVERT TO TOP DOWN, GET THE CONFIG FOR THIS CAMERA
+                # CONVERT TO TOP DOWN, AND SAVE TO THE DATABASE OF MESSAGES
                 # TODO: SORT OUT THE IMAGE SIZES
-                message['density_map'], heat_image = sfn.generate_heat_map(
+                message['density_map'], heat_image = i2g.generate_heat_map(
                     message['density_map'], config['image_2_ground_plane_matrix'], config['ground_plane_roi'],
                     config['ground_plane_size'], timestamp=message['timestamp_1'],
                     frame=tools.decode_image(message['frame_byte_array'], message['image_dims'], False)
@@ -114,17 +111,17 @@ def add_message():
                 log_text = log_text + 'PREVIOUS MESSAGE FROM ' + wp_module + ' MODULE, FROM ' + camera_id\
                     + ', ALREADY STORED, REPLACING.'
                 sfn_module.delete_db(camera_id, wp_module)  # Delete the previous message from the database
-                sfn_module.insert_db(camera_id, wp_module, json.dumps(message))  # Insert new message to the database
+                sfn_module.insert_db(c_id=camera_id, m_id=wp_module, msg=json.dumps(message))  # Insert message in db
             else:
                 # THIS IS THE FIRST INSTANCE OF THIS camera_id AND wp_module PAIR
                 print('THIS IS A NEW MESSAGE FROM ' + wp_module + ' MODULE, FROM ' + camera_id)
                 log_text = log_text + 'THIS IS A NEW MESSAGE FROM ' + wp_module + ' MODULE, FROM ' + camera_id + '.'
-                sfn_module.insert_db(camera_id, wp_module, json.dumps(message))  # Insert new message to the database
+                sfn_module.insert_db(c_id=camera_id, m_id=wp_module, msg=json.dumps(message))  # Insert message in db
         else:
             # NO MESSAGES HELD SO ADD THE FIRST ONE
             print('FIRST EVER MESSAGE')
             log_text = log_text + 'FIRST EVER MESSAGE.'
-            sfn_module.insert_db(camera_id, wp_module, json.dumps(message))  # Insert new message to the database
+            sfn_module.insert_db(c_id=camera_id, m_id=wp_module, msg=json.dumps(message))  # Insert message in db
 
         # FILTER CODE HERE: DO SOMETHING BASED ON WHAT MODULE SENT THE MESSAGE
         new_message = None
@@ -172,9 +169,10 @@ def add_message():
                 amalgamation_cam_ids.append(recent_cam_messages[i]['camera_ids'])
                 amalgamation_density_count += recent_cam_messages[i]['density_count']
                 top_down_maps.append(recent_cam_messages[i]['density_map'])
-                conf = next((item for item in cam_configs if item['camera_id'] ==
-                             recent_cam_messages[i]['camera_ids'][0]))
-                config_for_amalgamation.append(conf['ground_plane_position'] + [conf['camera_tilt']])
+
+                config = sfn_module.query_config_db(recent_cam_messages[i]['camera_ids'][0])
+                config = json.loads(config[0][1])
+                config_for_amalgamation.append(config['ground_plane_position'] + [config['camera_tilt']])
 
             # RUN THE AMALGAMATION
             amalgamated_top_down_map = sfn_module.generate_amalgamated_top_down_map(top_down_maps,
@@ -206,6 +204,32 @@ def add_message():
         return 'No JSON.', 415
 
 
+# ROUTE FOR VCA TO UPDATE CONFIGS
+@app.route("/configs", methods=['POST'])
+def update_configs():
+    print('REQUEST: UPDATE THE CONFIG DB')
+    if request.is_json:
+        new_configs = request.get_json(force=True)
+        # CHECK IF ITS STILL A STRING AND IF SO LOAD FROM JSON FORMAT
+        if type(new_configs) == str:
+            new_configs = json.loads(new_configs)
+        # TODO: ADD CHECKS TO THE AMOUNT OF CONFIGS BEING UPDATED WITH THE AMOUNT IN THE DB
+        # TODO: RETURN USEFUL INFO ON TEH UPDATES
+        # TODO: CHECK THE DB FOR EXISTING VERSION OF THE CONFIG
+        # GET A LIST OF CONFIG DICTS, LOOP THROUGH AND ADD TO DB
+        for config in new_configs:
+            # CHECK IF CONFIG ALREADY EXISTS
+            if new_configs:
+
+                sfn_module.insert_config_db(c_id=config['camera_id'], msg=config)
+            else:
+                print('THIS IS A NEW CONFIG... WHY?')
+                sfn_module.insert_config_db(c_id=config['camera_id'], msg=config)
+        return 'UPDATED THE CONFIGS ON THE DB:', 200
+    else:
+        return 'No JSON.', 415
+
+
 # ROUTES FOR THE DUMMY LINKSMART ONLY
 @app.route("/linksmart")
 def hello_linksmart():
@@ -231,8 +255,15 @@ def get_configs_linksmart():
     else:
         global cam_configs
         cam_configs = resp.json()
-        print('NUMBER OF CONFIGS RETURNED = ' + str(len(cam_configs)), resp.status_code)
-        return 'OBTAINED CONFIGS VIA SECURITY FUSION NODE: ' + str(cam_configs), 200
+        # GET A LIST OF CONFIG DICTS, LOOP THROUGH AND ADD TO DB
+        for config in cam_configs:
+            if 'camera_id' in config:
+                sfn_module.insert_config_db(c_id=config['camera_id'], msg=json.dumps(config))
+            elif 'module_id' in config:
+                sfn_module.insert_config_db(c_id=config['module_id'], msg=json.dumps(config))
+
+        print('NUMBER OF CONFIGS RETURNED = ' + str(len(sfn_module.query_config_db())), resp.status_code)
+        return 'OBTAINED CONFIGS VIA SECURITY FUSION NODE: ' + str(sfn_module.query_config_db()), 200
 
 
 # RUN THE SERVICE
