@@ -6,12 +6,22 @@ import redis
 from rq import Worker, Queue, Connection
 from pathlib import Path
 import sys
+
+# LIB PRE LOADS
+import numpy as np
+import cv2
+import json
+import requests
+import time
+import WP5.KU.SecurityFusionNodeService.loader_tools as tools
+from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
+import WP5.KU.SecurityFusionNodeService.SecurityFusionNode.message_processing as mp
 sys.path.append(str(Path(__file__).absolute().parents[4]))
 sys.path.append(str(Path(__file__).absolute()))
 
 
 __version__ = '0.1'
-__author__ = 'RoViT (KU)'
+__author__ = 'Rob Dupre'
 
 listen = ['default']
 

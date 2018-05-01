@@ -82,7 +82,7 @@ def add_message():
         messages.append(message)
         try:
             if 'module_id' in message:
-                outfile = open(message['module_id'] + '.txt', 'w')
+                outfile = open(message['module_id'] + '_' + message['camera_ids'][0] + '.txt', 'w')
             else:
                 outfile = open(message['camera_ids'][0] + '.txt', 'w')
         except IOError:

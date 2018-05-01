@@ -7,17 +7,9 @@ import json
 import sqlite3
 from WP5.KU.SharedResources.convert_to_meter import convert_to_meter
 from WP5.KU.SharedResources.rotate_image import rotate_image
-import time
 
 __version__ = '0.1'
 __author__ = 'RoViT (KU)'
-
-
-def waste_time(time_amount):
-    print('started')
-    time.sleep(time_amount)
-    print('finished')
-    return 'Done'
 
 
 class SecurityFusionNode:
@@ -49,14 +41,11 @@ class SecurityFusionNode:
 
         # IF AN ENTRY IS FOUND:
         if len(row) != 0:
-            print('THE MESSAGE FROM ' + m_id + ' MODULE, FROM ' + c_id + ', IS ALREADY STORED, REPLACING')
-            log_text = log_text + 'PREVIOUS MESSAGE FROM ' + m_id + ' MODULE, FROM ' + c_id \
-                       + ', ALREADY STORED, REPLACING.'
+            log_text = log_text + 'PREVIOUS MESSAGE FROM {}, FROM {}, ALREADY STORED, REPLACING. '.format(m_id, c_id)
             self.delete_db(c_id, m_id)  # Delete the previous message from the database
         else:
             # THIS IS THE FIRST INSTANCE OF THIS camera_id AND wp_module PAIR
-            print('THIS IS A NEW MESSAGE FROM ' + m_id + ' MODULE, FROM ' + c_id)
-            log_text = log_text + 'THIS IS A NEW MESSAGE FROM ' + m_id + ' MODULE, FROM ' + c_id + '.'
+            log_text = log_text + 'THIS IS A NEW MESSAGE FROM {}, ({}). '.format(m_id, c_id)
 
         self.c.execute('''INSERT INTO messages(cam_id, module_id, msg) VALUES(?,?,?)''', (c_id, m_id, msg))
         return log_text
@@ -178,6 +167,8 @@ class SecurityFusionNode:
             img_amalgamation[dis_x:(dis_x + w[i]), dis_y:(dis_y + h[i])] = all_rotated_images[i] + \
                 img_amalgamation[dis_x:(dis_x + w[i]), dis_y:(dis_y + h[i])] * (all_rotated_images[i] == 0)
 
-        cv2.imshow('img_amalgamation', cv2.resize(img_amalgamation, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
-        cv2.waitKey(0)
+        # cv2.imshow('img_amalgamation', cv2.resize(img_amalgamation, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
+        # cv2.waitKey(0)
+        cv2.imwrite('Global_density.png',
+                    cv2.resize(img_amalgamation * 255, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
         return img_amalgamation

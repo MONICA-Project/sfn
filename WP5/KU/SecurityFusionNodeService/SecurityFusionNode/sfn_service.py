@@ -8,7 +8,9 @@ import datetime
 from flask import Flask, request
 from pathlib import Path
 import sys
-import WP5.KU.SecurityFusionNodeService.loader_tools as tools
+from redis import Redis
+from rq import Queue
+from rq.job import Job
 from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
 import WP5.KU.SecurityFusionNodeService.SecurityFusionNode.message_processing as mp
 sys.path.append(str(Path(__file__).absolute().parents[4]))
@@ -25,6 +27,10 @@ urls = {'dummy_linksmart_url': 'http://127.0.0.2:3389/',
         }
 
 headers = {'content-Type': 'application/json'}
+# QUEUE VARIABLES
+conn = Redis()
+queue_name = 'default'
+q = Queue(name=queue_name, connection=conn)
 
 
 @app.route("/")
@@ -73,6 +79,7 @@ def add_message():
     print('REQUEST: ADD MESSAGE')
     if request.is_json:
         log_text = ''
+        resp_code = 0
         # GET THE JSON AND CHECK IF ITS STILL A STRING, IF SO loads JSON FORMAT
         message = request.get_json(force=True)
         if type(message) == str:
@@ -81,49 +88,29 @@ def add_message():
         camera_id = message['camera_ids'][0]
         wp_module = message['type_module']
 
-        # CHECK IF MESSAGE NEEDS CONVERTING TO TOP DOWN
+        # BEGINNING OF QUE INTEGRATION
+        for i in range(10):
+            job = q.enqueue(mp.waste_time, 10, ttl=43)
+        print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
+
+        # BASED ON wp_module PERFORM PROCESSING ON MODULE
         if wp_module == 'crowd_density_local':
-            # IF SO GET THE CONFIG WITH MATCHING camera_id
-            config = sfn_module.query_config_db(camera_id)
-            if len(config) == 1:
-                config = json.loads(config[0][1])
-
-                # CONVERT TO TOP DOWN, AND SAVE TO THE DATABASE OF MESSAGES
-                # TODO: SORT OUT THE IMAGE SIZES
-                message['density_map'], heat_image = mp.generate_heat_map(
-                    message['density_map'], config['image_2_ground_plane_matrix'], config['ground_plane_roi'],
-                    config['ground_plane_size'], timestamp=message['timestamp_1'],
-                    frame=tools.decode_image(message['frame_byte_array'], message['image_dims'], False)
-                    )
-                # REMOVE THE FRAME AS ITS NOT NEEDED
-                message['frame_byte_array'] = ''
-                log_text = log_text + ' crowd_density_local MESSAGE CONVERTED TO TOP DOWN.'
-
-        # MESSAGE SORTING CODE: FIND THE CAMERA ID AND MODULE AND UPDATE recent_cam_messages
-        log_text = log_text + sfn_module.insert_db(c_id=camera_id, m_id=wp_module, msg=json.dumps(message))
-
-        # FILTER CODE HERE: DO SOMETHING BASED ON WHAT MODULE SENT THE MESSAGE
-        new_message = None
-        url = ''
-        if wp_module == 'crowd_density_local':
-            # MESSAGE HAS ALREADY BEEN CONVERTED TO TOP DOWN VIEW
-            new_message = message
-            url = urls['crowd_density_url']
+            text, resp_code = mp.crowd_density_local(sfn_module, camera_id, urls['crowd_density_url'], message)
         elif wp_module == 'flow_analysis':
-            print('DO SOMETHING FLOW-EY')
+            text, resp_code = mp.flow_analysis(sfn_module, urls['flow_analysis_url'], message)
 
-        # DUMP THE NEW MESSAGE TO JSON AND FORWARD TO LINKSMART
-        if new_message is not None:
-            mp.forward_message(new_message, url)
+        log_text = log_text + text
 
         # UNDER AND IF STATEMENT CHECK IF WE WANT TO AMALGAMATE AND CREATE A NEW MESSAGE
         if sfn_module.length_db() > 2:
-            mp.amalgamate_crowd_density_local(sfn_module, urls['crowd_density_url'])
+            text, resp_code = mp.amalgamate_crowd_density_local(sfn_module, urls['crowd_density_url'])
         else:
             # NO MESSAGES HELD
-            print('NOT ENOUGH MESSAGES in recent_cam_messages')
+            text = 'NOT ENOUGH MESSAGES in recent_cam_messages. '
 
-        return log_text, 205
+        log_text = log_text + text
+        print(log_text)
+        return log_text, resp_code
     else:
         return 'No JSON.', 415
 
@@ -152,6 +139,24 @@ def update_configs():
         return 'UPDATED THE CONFIGS ON THE DB:', 200
     else:
         return 'No JSON.', 415
+
+
+# JOB ID CHECK
+@app.route('/result', methods=['POST'])
+def get_result():
+    print('REQUEST: CHECK JOB STATUS')
+    if request.is_json:
+        # GET THE JSON AND CHECK IF ITS STILL A STRING, IF SO loads JSON FORMAT
+        message = request.get_json(force=True)
+        if type(message) == str:
+            message = json.loads(message)
+        job = Job.fetch(message['job_key'], connection=conn)
+        if job.is_finished:
+            return str(job.result), 206
+        else:
+            return 'Job not Finished', 406
+    else:
+        return 'No JSON.', 499
 
 
 # ROUTES FOR THE DUMMY LINKSMART ONLY

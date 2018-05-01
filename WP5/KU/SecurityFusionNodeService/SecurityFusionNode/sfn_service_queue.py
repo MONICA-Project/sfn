@@ -18,7 +18,6 @@ from WP5.KU.definitions import KU_DIR
 import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
 import WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node as sfn
-# from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.sfn_worker import conn
 
 __version__ = '0.1'
 __author__ = 'RoViT (KU)'
@@ -101,21 +100,7 @@ def add_message():
         return 'No JSON.', 499
 
 
-@app.route('/result', methods=['POST'])
-def get_result():
-    print('REQUEST: CHECK JOB STATUS')
-    if request.is_json:
-        # GET THE JSON AND CHECK IF ITS STILL A STRING, IF SO loads JSON FORMAT
-        message = request.get_json(force=True)
-        if type(message) == str:
-            message = json.loads(message)
-        job = Job.fetch(message['job_key'], connection=conn)
-        if job.is_finished:
-            return str(job.result), 206
-        else:
-            return 'Job not Finished', 406
-    else:
-        return 'No JSON.', 499
+
 
 
 # ROUTES FOR THE DUMMY LINKSMART ONLY
