@@ -8,9 +8,9 @@ import datetime
 from flask import Flask, request
 from pathlib import Path
 import sys
-from redis import Redis
-from rq import Queue
-from rq.job import Job
+#from redis import Redis
+#from rq import Queue
+#from rq.job import Job
 from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
 import WP5.KU.SecurityFusionNodeService.SecurityFusionNode.message_processing as mp
 sys.path.append(str(Path(__file__).absolute().parents[4]))
@@ -28,9 +28,9 @@ urls = {'dummy_linksmart_url': 'http://127.0.0.2:3389/',
 
 headers = {'content-Type': 'application/json'}
 # QUEUE VARIABLES
-conn = Redis()
+#conn = Redis()
 queue_name = 'default'
-q = Queue(name=queue_name, connection=conn)
+#q = Queue(name=queue_name, connection=conn)
 
 
 @app.route("/")
@@ -89,9 +89,9 @@ def add_message():
         wp_module = message['type_module']
 
         # BEGINNING OF QUE INTEGRATION
-        for i in range(10):
-            job = q.enqueue(mp.waste_time, 10, ttl=43)
-        print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
+        #for i in range(10):
+        #    job = q.enqueue(mp.waste_time, 10, ttl=43)
+        #print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
 
         # BASED ON wp_module PERFORM PROCESSING ON MODULE
         if wp_module == 'crowd_density_local':

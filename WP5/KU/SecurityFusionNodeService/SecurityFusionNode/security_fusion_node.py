@@ -48,19 +48,25 @@ class SecurityFusionNode:
             log_text = log_text + 'THIS IS A NEW MESSAGE FROM {}, ({}). '.format(m_id, c_id)
 
         self.c.execute('''INSERT INTO messages(cam_id, module_id, msg) VALUES(?,?,?)''', (c_id, m_id, msg))
+        self.conn.commit()
         return log_text
 
     def insert_config_db(self, c_id, msg):
         """Insert for configs"""
         self.c.execute('''INSERT INTO configs(conf_id, msg) VALUES(?,?)''', (c_id, msg))
+        self.conn.commit()
 
-    def delete_db(self, c_id, m_id):
-        """Delete for recent camera messages"""
-        self.c.execute("DELETE FROM messages WHERE cam_id=? AND module_id=?", (c_id, m_id))
-
-    def delete_db(self, c_id):
-        """Delete for configs"""
-        self.c.execute("DELETE FROM configs WHERE conf_id=?", c_id)
+    def delete_db(self, *args):
+        try:
+            if len(args) == 1:  # """Delete for configs""" # c_id
+                self.c.execute("DELETE FROM configs WHERE conf_id=?", (args[0],))
+                self.conn.commit()
+            elif len(args) == 2:  # """Delete for recent camera messages"""  # c_id, m_id
+                self.c.execute("DELETE FROM messages WHERE cam_id=? AND module_id=?", (args[0], args[1]))
+                self.conn.commit()
+        except Exception as error:
+            print('error executing deleting from db, error: {}'.format(error))
+            return None
 
     def length_db(self):
         return len(self.query_db())
@@ -70,13 +76,17 @@ class SecurityFusionNode:
         try:
             if len(args) == 0:  # No input
                 self.c.execute("select * from messages")
+                self.conn.commit()
             elif len(args) == 2:
                 if args[0] is None:
                     self.c.execute("SELECT * FROM messages WHERE module_id=?", (args[1],))
+                    self.conn.commit()
                 elif args[1] is None:
                     self.c.execute("SELECT * FROM messages WHERE cam_id=?", (args[0],))
+                    self.conn.commit()
                 else:
-                    self.c.execute("SELECT * FROM messages WHERE cam_id=? AND module_id=?", (args[0],args[1]))
+                    self.c.execute("SELECT * FROM messages WHERE cam_id=? AND module_id=?", (args[0], args[1]))
+                    self.conn.commit()
 
             rows = self.c.fetchall()
             return rows
@@ -89,8 +99,10 @@ class SecurityFusionNode:
         try:
             if len(args) == 0:  # No input
                 self.c.execute("select * from configs")
+                self.conn.commit()
             elif len(args) == 1:
-                    self.c.execute("SELECT * FROM configs WHERE conf_id=?", (args[0],))
+                self.c.execute("SELECT * FROM configs WHERE conf_id=?", (args[0],))
+                self.conn.commit()
 
             rows = self.c.fetchall()
             return rows
