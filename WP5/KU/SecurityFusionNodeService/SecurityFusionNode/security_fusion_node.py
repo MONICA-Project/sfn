@@ -28,26 +28,42 @@ class SecurityFusionNode:
         self.state = 'active'
 
         # Create a data structure
-        self.conn = sqlite3.connect('recent_camera_messages.db')
+        self.conn = sqlite3.connect('sfn_database.db')
         self.c = self.conn.cursor()
-        self.conn_config = sqlite3.connect('configs.db')
-        self.c_config = self.conn_config.cursor()
 
         # Create table
         self.c.execute(
             '''Create TABLE IF NOT EXISTS messages(cam_id TEXT, module_id TEXT, msg TEXT)''')
         self.conn.commit()
-        self.c_config.execute(
+        self.c.execute(
             '''Create TABLE IF NOT EXISTS configs(conf_id TEXT, msg TEXT)''')
-        self.conn_config.commit()
+        self.conn.commit()
 
     def insert_db(self, c_id, m_id, msg):
         """Insert for recent camera messages"""
+
+        # MESSAGE SORTING CODE: FIND THE CAMERA ID AND MODULE AND UPDATE recent_cam_messages
+        log_text = ''
+        # row: the index of previous message for this camera and module
+        row = self.query_db(c_id, m_id)
+
+        # IF AN ENTRY IS FOUND:
+        if len(row) != 0:
+            print('THE MESSAGE FROM ' + m_id + ' MODULE, FROM ' + c_id + ', IS ALREADY STORED, REPLACING')
+            log_text = log_text + 'PREVIOUS MESSAGE FROM ' + m_id + ' MODULE, FROM ' + c_id \
+                       + ', ALREADY STORED, REPLACING.'
+            self.delete_db(c_id, m_id)  # Delete the previous message from the database
+        else:
+            # THIS IS THE FIRST INSTANCE OF THIS camera_id AND wp_module PAIR
+            print('THIS IS A NEW MESSAGE FROM ' + m_id + ' MODULE, FROM ' + c_id)
+            log_text = log_text + 'THIS IS A NEW MESSAGE FROM ' + m_id + ' MODULE, FROM ' + c_id + '.'
+
         self.c.execute('''INSERT INTO messages(cam_id, module_id, msg) VALUES(?,?,?)''', (c_id, m_id, msg))
+        return log_text
 
     def insert_config_db(self, c_id, msg):
         """Insert for configs"""
-        self.c_config.execute('''INSERT INTO configs(conf_id, msg) VALUES(?,?)''', (c_id, msg))
+        self.c.execute('''INSERT INTO configs(conf_id, msg) VALUES(?,?)''', (c_id, msg))
 
     def delete_db(self, c_id, m_id):
         """Delete for recent camera messages"""
@@ -55,7 +71,7 @@ class SecurityFusionNode:
 
     def delete_db(self, c_id):
         """Delete for configs"""
-        self.c_config.execute("DELETE FROM configs WHERE conf_id=?", c_id)
+        self.c.execute("DELETE FROM configs WHERE conf_id=?", c_id)
 
     def length_db(self):
         return len(self.query_db())
@@ -83,21 +99,18 @@ class SecurityFusionNode:
         """Query the configs database"""
         try:
             if len(args) == 0:  # No input
-                self.c_config.execute("select * from configs")
+                self.c.execute("select * from configs")
             elif len(args) == 1:
-                    self.c_config.execute("SELECT * FROM configs WHERE conf_id=?", (args[0],))
+                    self.c.execute("SELECT * FROM configs WHERE conf_id=?", (args[0],))
 
-            rows = self.c_config.fetchall()
+            rows = self.c.fetchall()
             return rows
         except Exception as error:
             print('error executing query, error: {}'.format(error))
             return None
 
-    def __del__(self, bd_name='messages'):
-        if bd_name == 'messages':
-            self.conn.close()
-        elif bd_name == 'configs':
-            self.conn_config.close()
+    def __del__(self):
+        self.conn.close()
         # self.c.close()
 
     def create_reg_message(self, timestamp):

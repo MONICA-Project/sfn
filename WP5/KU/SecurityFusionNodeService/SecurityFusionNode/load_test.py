@@ -4,11 +4,12 @@ import os
 import socket
 from pathlib import Path
 import sys
-sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.definitions import KU_DIR
 import WP5.KU.SecurityFusionNodeService.loader_tools as tools
+sys.path.append(str(Path(__file__).absolute().parents[4]))
 
 print(str(socket.gethostname()))
+# TODO: MAKE THIS A PROPER THING TO TEST THE QUEUE ABILITIES OF SFN
 
 # url = 'http://dupre.hopto.org:5000/'
 url = 'http://127.0.0.1:5000/'

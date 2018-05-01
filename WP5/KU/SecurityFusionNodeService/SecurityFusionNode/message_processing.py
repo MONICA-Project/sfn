@@ -3,13 +3,77 @@
 
 import numpy as np
 import cv2
+import json
+import requests
 
 
 __version__ = '0.1'
 __author__ = 'RoViT (KU)'
 
 
+def forward_message(message, url):
+    try:
+        resp = requests.put(url, data=json.dumps(message), headers={'content-Type': 'application/json'})
+    except requests.exceptions.RequestException as e:
+        print(e)
+        return 'Connection Failed: ' + str(e), 450
+    else:
+        print(resp.text)
+        return ' MESSAGE HAS BEEN FORWARDED (' + resp.text + ').', 201
 
+
+def amalgamate_crowd_density_local(sfn_instance, url):
+    sfn_module = sfn_instance
+    log_text = ''
+
+    top_down_maps = []
+    config_for_amalgamation = []
+    amalgamation_cam_ids = []
+    amalgamation_density_count = 0
+    amalgamation_timestamp_1 = 0
+    amalgamation_timestamp_2 = 0
+    # FIND THE ENTRY FROM THIS CAM_ID FROM THIS MODULE AND REPLACE
+    recent_cam_messages = sfn_module.query_db(None, 'crowd_density_local')  # Search for a specific module_id
+    recent_cam_messages = [json.loads(item[2]) for item in recent_cam_messages]
+
+    for i, item in enumerate(recent_cam_messages):
+
+        if i == 0:
+            amalgamation_timestamp_1 = recent_cam_messages[i]['timestamp_1']
+            amalgamation_timestamp_2 = recent_cam_messages[i]['timestamp_2']
+        else:
+            amalgamation_timestamp_1 = min(amalgamation_timestamp_1, recent_cam_messages[i]['timestamp_1'])
+            amalgamation_timestamp_2 = max(amalgamation_timestamp_2, recent_cam_messages[i]['timestamp_2'])
+        amalgamation_cam_ids.append(recent_cam_messages[i]['camera_ids'])
+        amalgamation_density_count += recent_cam_messages[i]['density_count']
+        top_down_maps.append(recent_cam_messages[i]['density_map'])
+
+        config = sfn_module.query_config_db(recent_cam_messages[i]['camera_ids'][0])
+        config = json.loads(config[0][1])
+        config_for_amalgamation.append(config['ground_plane_position'] + [config['camera_tilt']])
+
+    # RUN THE AMALGAMATION
+    amalgamated_top_down_map = sfn_module.generate_amalgamated_top_down_map(top_down_maps,
+                                                                            config_for_amalgamation)
+
+    # Create new message
+    crowd_density_global = sfn_module.create_obs_message(amalgamation_cam_ids, amalgamation_density_count,
+                                                         amalgamated_top_down_map, amalgamation_timestamp_1,
+                                                         amalgamation_timestamp_2)
+
+    log_text = log_text + ' CURRENTLY HELD MESSAGES HAVE BEEN AMALGAMATED INTO THE crowd_density_global VIEW. '
+
+    # SEND crowd_density_global MESSAGE TO LINKSMART
+    try:
+        resp = requests.put(url, json=crowd_density_global,
+                            headers={'content-Type': 'application/json'})
+    except requests.exceptions.RequestException as e:
+        print(e)
+        return 'Linksmart Connection Failed: ' + str(e), 450
+    else:
+        print(resp.text)
+        log_text = log_text + ' crowd_density_global MESSAGE CREATED AND SENT(' + resp.text + ').'
+        return log_text, 205
 
 
 def generate_heat_map(detections, transform, gp_roi, ground_plane_size, frame=None, timestamp=None):
@@ -87,5 +151,4 @@ def generate_heat_map(detections, transform, gp_roi, ground_plane_size, frame=No
         cv2.imwrite('Detections_' + str(timestamp) + '.jpeg', heat_image*255)
         # cv2.imshow('frame', heat_image)
         # cv2.waitKey(0)
-    # TODO: THIS WILL LIKELY NEED CHANGING IN ORDER TO COMPRESS THESE IMAGES
     return heat_map.tolist(), heat_image
