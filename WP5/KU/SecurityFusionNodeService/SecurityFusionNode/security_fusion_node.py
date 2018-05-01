@@ -53,8 +53,21 @@ class SecurityFusionNode:
 
     def insert_config_db(self, c_id, msg):
         """Insert for configs"""
+        # MESSAGE SORTING CODE: FIND THE CAMERA ID AND MODULE AND UPDATE recent_cam_messages
+        log_text = ''
+        # row: the index of previous message for this camera and module
+        row = self.query_config_db(c_id)
+
+        # IF AN ENTRY IS FOUND:
+        if len(row) != 0:
+            log_text = log_text + 'PREVIOUS CONFIG FOUND ({}), REPLACING. '.format(c_id)
+            self.delete_db(c_id)  # Delete the previous message from the database
+        else:
+            # THIS IS THE FIRST INSTANCE OF THIS camera_id AND wp_module PAIR
+            log_text = log_text + 'THIS IS A NEW CONFIG ({}). '.format(c_id)
         self.c.execute('''INSERT INTO configs(conf_id, msg) VALUES(?,?)''', (c_id, msg))
         self.conn.commit()
+        return log_text
 
     def delete_db(self, *args):
         try:

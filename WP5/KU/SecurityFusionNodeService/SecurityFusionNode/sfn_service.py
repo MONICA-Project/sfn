@@ -187,11 +187,11 @@ def get_configs_linksmart():
         # GET A LIST OF CONFIG DICTS, LOOP THROUGH AND ADD TO DB
         for config in cam_configs:
             if 'camera_id' in config:
-                sfn_module.insert_config_db(c_id=config['camera_id'], msg=json.dumps(config))
+                text = sfn_module.insert_config_db(c_id=config['camera_id'], msg=json.dumps(config))
             elif 'module_id' in config:
-                sfn_module.insert_config_db(c_id=config['module_id'], msg=json.dumps(config))
+                text = sfn_module.insert_config_db(c_id=config['module_id'], msg=json.dumps(config))
 
-        print('NUMBER OF CONFIGS RETURNED = ' + str(len(sfn_module.query_config_db())), resp.status_code)
+        print('NUMBER OF CONFIGS RETURNED = {}, {}'.format(str(len(sfn_module.query_config_db())), resp.status_code))
         return 'OBTAINED CONFIGS VIA SECURITY FUSION NODE: ' + str(sfn_module.query_config_db()), 200
 
 
