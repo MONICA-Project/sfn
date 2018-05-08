@@ -13,6 +13,7 @@ from WP5.KU.SharedResources.cam_video_streamer import CamVideoStreamer
 from WP5.KU.SharedResources.frame_streamer import ImageSequenceStreamer
 import WP5.KU.SharedResources.get_incrementer as inc
 from WP5.KU.Algorithms.crowd_density_local.get_crowd import GetCrowd
+from WP5.KU.Algorithms.flow_analysis.get_flow import GetFlow
 from WP5.KU.Algorithms.object_detection.get_people import GetPeople
 
 __version__ = '0.1'
@@ -62,9 +63,9 @@ print(info)
 settings = load_settings(KU_DIR + '/KUConfigTool/' + '/' + info[2])
 
 # CREATE AN analyser OBJECT AND CREATE THE REGISTRATION MESSAGE
-analyser = GetCrowd('001')
+# analyser = GetCrowd('001')
 # analyser = GetPeople('001')
-# analyser = GetFlow('001)
+analyser = GetFlow('001')
 
 linksmart_url = 'http://127.0.0.2:3389/add_config'
 # linksmart_url = 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring'

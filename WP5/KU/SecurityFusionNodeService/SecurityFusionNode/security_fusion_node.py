@@ -138,7 +138,7 @@ class SecurityFusionNode:
         # message = json.loads(message)
         return message
 
-    def create_obs_message(self, camera_ids, count, heat_map, timestamp_oldest, timestamp_newest):
+    def create_obs_message(self, camera_ids, count, heat_map, timestamp_oldest, timestamp_newest, ground_plane_pos):
         data = {
                 'module_id': self.module_id,
                 'type_module': self.module_type,
@@ -147,6 +147,7 @@ class SecurityFusionNode:
                 'density_map': heat_map.tolist(),
                 'frame_byte_array': '',
                 'image_dims': '',
+                'ground_plane_position': ground_plane_pos,
                 'timestamp_1': timestamp_oldest,
                 'timestamp_2': timestamp_newest,
         }
@@ -196,4 +197,5 @@ class SecurityFusionNode:
         # cv2.waitKey(0)
         cv2.imwrite('Global_density.png',
                     cv2.resize(img_amalgamation * 255, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
-        return img_amalgamation
+        amalgamation_ground_plane_position = [amalgamation_latitude, amalgamation_longitude]
+        return img_amalgamation, amalgamation_ground_plane_position

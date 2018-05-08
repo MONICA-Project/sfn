@@ -111,6 +111,7 @@ class GetCrowd(FrameAnalyser):
                 'density_map': density_map.tolist(),
                 'frame_byte_array': '',
                 'image_dims': '',
+                'ground_plane_position': '',
                 'timestamp_1': timestamp,
                 'timestamp_2': timestamp,
         }

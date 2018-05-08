@@ -113,14 +113,14 @@ def amalgamate_crowd_density_local(sfn_instance, url):
         config_for_amalgamation.append(config['ground_plane_position'] + [config['camera_tilt']])
 
     # RUN THE AMALGAMATION
-    amalgamated_top_down_map = sfn_module.generate_amalgamated_top_down_map(top_down_maps,
-                                                                            config_for_amalgamation)
+    amalgamated_top_down_map, amalgamation_ground_plane_position = sfn_module.generate_amalgamated_top_down_map(
+        top_down_maps, config_for_amalgamation)
     log_text = log_text + 'CURRENTLY HELD MESSAGES HAVE BEEN AMALGAMATED INTO THE crowd_density_global VIEW. '
 
     # Create new message
     crowd_density_global = sfn_module.create_obs_message(amalgamation_cam_ids, amalgamation_density_count,
                                                          amalgamated_top_down_map, amalgamation_timestamp_1,
-                                                         amalgamation_timestamp_2)
+                                                         amalgamation_timestamp_2, amalgamation_ground_plane_position)
     log_text = log_text + 'crowd_density_global MESSAGE CREATED. '
 
     # SEND crowd_density_global MESSAGE TO LINKSMART

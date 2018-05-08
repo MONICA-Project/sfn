@@ -1,13 +1,23 @@
 # get_flow.py
 import numpy as np
 import pickle
-from frame_analyser import FrameAnalyser
+from WP5.KU.Algorithms.frame_analyser import FrameAnalyser
 import json
+import cv2
+
+
+__version__ = '0.1'
+__author__ = 'Hajar Sadeghi (KU)'
 
 
 class GetFlow(FrameAnalyser):
 
     def __init__(self, module_id, settings_location):
+        """ Initialise the GetFlow object.
+            Keyword arguments:
+                module_id -- A unique string identifier
+                settings_location -- Camera settings: location
+        """
         self.module_id = module_id + '_flow'
         self.type_module = 'flow'
         self.state = True
@@ -22,7 +32,7 @@ class GetFlow(FrameAnalyser):
         self.cuda = False
 
     def process_frame(self, frame, camera_id):
-        # USES ONLY THE REGION OF INTEREST DEFINED IN TEH SETTINGS
+        # USES ONLY THE REGION OF INTEREST DEFINED IN THE SETTINGS
         frame = frame[self.roi[1]:self.roi[3], self.roi[0]:self.roi[2], :]
         # CONVERT FRAME TO WHATEVER FORMAT IS REQUIRED
 
@@ -30,7 +40,7 @@ class GetFlow(FrameAnalyser):
 
         # CREATE THE MESSAGE AND RETURN
         self.cam_id = camera_id
-        message = self.create_message()
+        message = self.create_obs_message()
         return message, frame
 
     def create_obs_message(self):
