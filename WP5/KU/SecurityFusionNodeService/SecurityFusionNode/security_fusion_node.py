@@ -5,6 +5,9 @@ import numpy as np
 import cv2
 import json
 import sqlite3
+from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.SharedResources.convert_to_meter import convert_to_meter
 from WP5.KU.SharedResources.rotate_image import rotate_image
 
@@ -29,6 +32,9 @@ class SecurityFusionNode:
         self.conn.commit()
         self.c.execute(
             '''Create TABLE IF NOT EXISTS configs(conf_id TEXT, msg TEXT)''')
+        self.conn.commit()
+        self.c.execute(
+            '''Create TABLE IF NOT EXISTS logs(job_id TEXT, time TEXT, log TEXT)''')
         self.conn.commit()
 
     def insert_db(self, c_id, m_id, msg):
@@ -68,6 +74,11 @@ class SecurityFusionNode:
         self.c.execute('''INSERT INTO configs(conf_id, msg) VALUES(?,?)''', (c_id, msg))
         self.conn.commit()
         return log_text
+
+    def insert_log(self, j_id, timestamp, log):
+        """Insert log message"""
+        self.c.execute('''INSERT INTO logs(job_id, time, log) VALUES(?,?,?)''', (j_id, timestamp, log))
+        self.conn.commit()
 
     def delete_db(self, *args):
         try:
@@ -109,15 +120,20 @@ class SecurityFusionNode:
 
     def query_config_db(self, *args):
         """Query the configs database"""
+        conn1 = sqlite3.connect('sfn_database.db', check_same_thread=False)
+        cursor = conn1.cursor()
         try:
             if len(args) == 0:  # No input
-                self.c.execute("select * from configs")
+                cursor.execute("select * from configs")
+                # self.c.execute("select * from configs")
                 self.conn.commit()
             elif len(args) == 1:
-                self.c.execute("SELECT * FROM configs WHERE conf_id=?", (args[0],))
+                cursor.execute("SELECT * FROM configs WHERE conf_id=?", (args[0],))
+                # self.c.execute("SELECT * FROM configs WHERE conf_id=?", (args[0],))
                 self.conn.commit()
 
-            rows = self.c.fetchall()
+            rows = cursor.fetchall()
+            # rows = self.c.fetchall()
             return rows
         except Exception as error:
             print('error executing query, error: {}'.format(error))

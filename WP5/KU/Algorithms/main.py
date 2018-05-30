@@ -27,7 +27,7 @@ def dataset(index):
     return {
         # [Address, Stream, Settings File]
         0: ['rtsp://root:pass@10.144.129.107/axis-media/media.amp', 'Live', 'CAMERA_KU'],
-        # [Location, Image Type, Start Frame, Settings File]
+        # [Location, Start Frame, Settings File]
         1: [(dataset_folder + 'UCSD_Anomaly/UCSDped1/Train/Train001/'), 0],
         2: [(dataset_folder + 'Mall_Dataset/frames/'), 0],
         3: [(dataset_folder + 'EWAP_Dataset/seq_eth/'), 0],
@@ -46,6 +46,14 @@ def dataset(index):
         16: [(dataset_folder + '/MONICA/SAMPLE_VIDEOS/MRK_1/'), 0],
         17: [(dataset_folder + '/MONICA/SAMPLE_VIDEOS/MRK_2/'), 0],
         18: [(dataset_folder + '/Temp/'), 0, 'KFF_CAM_8'],
+        19: [(dataset_folder + '/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_1/'), 0, 'RIF_CAM_1'],
+        20: [(dataset_folder + '/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_2/'), 0, 'RIF_CAM_2'],
+        21: [(dataset_folder + '/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_3/'), 0, 'RIF_CAM_3'],
+        22: [(dataset_folder + '/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_4/'), 0, 'RIF_CAM_4'],
+        23: [(dataset_folder + '/MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_1/'), 0, 'RIF_CAM_1'],
+        24: [(dataset_folder + '/MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_2/'), 0, 'RIF_CAM_2'],
+        25: [(dataset_folder + '/MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_3/'), 0, 'RIF_CAM_3'],
+        26: [(dataset_folder + '/MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_4/'), 0, 'RIF_CAM_4'],
     }.get(index, -1)  # -1 is default if id not found
 
 
@@ -55,7 +63,7 @@ def load_settings(location):
     return entry
 
 
-info = dataset(12)
+info = dataset(22)
 # info = dataset(0)
 print(info)
 
@@ -63,9 +71,9 @@ print(info)
 settings = load_settings(KU_DIR + '/KUConfigTool/' + '/' + info[2])
 
 # CREATE AN analyser OBJECT AND CREATE THE REGISTRATION MESSAGE
-# analyser = GetCrowd('001')
+analyser = GetCrowd('001')
 # analyser = GetPeople('001')
-analyser = GetFlow('001')
+# analyser = GetFlow('001')
 
 linksmart_url = 'http://127.0.0.2:3389/add_config'
 # linksmart_url = 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring'
@@ -108,20 +116,15 @@ else:
             else:
                 print('Obs Message Sent. Response: ' + str(res.status_code) + '. ' + res.text)
 
+            save_folder = str(Path(__file__).absolute().parents[0]) + '/algorithm_output/'
             cv2.putText(frame, json.dumps(message, indent=4), (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                         (255, 255, 255), 1, cv2.LINE_AA)
-            with open(info[2] + '_' + str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
+            cv2.imwrite(save_folder + info[2] + '_Result_' + str(inc.get_incrementer(count, 5)) + '.jpeg', frame)
+            with open(save_folder + info[2] + '_' + str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
                 outfile.write(message)
-
             count = count + 1
             key = cv2.waitKey(1) & 0xFF
             # KEYBINDINGS FOR DISPLAY
-            if key == ord('p'):  # pause
-                while True:
-                    key2 = cv2.waitKey(1) or 0xff
-                    cv2.imshow('frame', frame)
-                    if key2 == ord('p'):  # resume
-                        break
             cv2.imshow('frame', frame)
             if key == 27:  # exit
                 break
@@ -133,26 +136,24 @@ else:
             message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'])
 
             # SEND A HTTP REQUEST OFF
-            try:
-                res = requests.post(sfn_url, json=message)
-            except requests.exceptions.RequestException as e:
-                print(e)
-            else:
-                print('Obs Message Sent. Response: ' + str(res.status_code) + '. ' + res.text)
+            # try:
+            #     res = requests.post(sfn_url, json=message)
+            # except requests.exceptions.RequestException as e:
+            #     print(e)
+            # else:
+            #     print('Obs Message Sent. Response: ' + str(res.status_code) + '. ' + res.text)
+
             # WRITE FILES FOR USE LATER
             # cv2.imwrite(info[2] + '_Frame_' + str(inc.get_incrementer(count, 5)) + '.jpeg', frame)
-            # cv2.imwrite(info[2] + '_Result_' + str(inc.get_incrementer(count, 5)) + '.jpeg', result)
-            with open(info[2] + '_' + str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
+            save_folder = str(Path(__file__).absolute().parents[0]) + '/algorithm_output/'
+            cv2.putText(result, 'Number of People: {}'.format(json.loads(message)['density_count']), (10, 70),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+            cv2.imwrite(save_folder + info[2] + '_Result_' + str(inc.get_incrementer(count, 5)) + '.jpeg', result)
+            with open(save_folder + info[2] + '_' + str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
                 outfile.write(message)
             count = count + 1
             key = cv2.waitKey(1) & 0xFF
             # KEYBINDINGS FOR DISPLAY
-            if key == ord('p'):  # pause
-                while True:
-                    key2 = cv2.waitKey(1) or 0xff
-                    cv2.imshow('frame', frame)
-                    if key2 == ord('p'):  # resume
-                        break
             cv2.imshow('frame', frame)
             if key == 27:  # exit
                 break

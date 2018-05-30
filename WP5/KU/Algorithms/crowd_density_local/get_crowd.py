@@ -79,7 +79,7 @@ class GetCrowd(FrameAnalyser):
         # GET THE NUMERIC OUTPUT (COUNT)
         count = np.sum(density_map)
 
-        # CONVERT BACK TO ORIGINAL SCALE AND GET THE HEAT MAP
+        # CONVERT BACK TO ORIGINAL SCALE
         ratio = 4
         density_map = cv2.resize(density_map, (width, height)) / ratio
 

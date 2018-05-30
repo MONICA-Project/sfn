@@ -12,11 +12,12 @@ import numpy as np
 import cv2
 import json
 import requests
+import sqlite3
 import time
+sys.path.append(str(Path(__file__).absolute().parents[4]))
 import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
 import WP5.KU.SecurityFusionNodeService.SecurityFusionNode.message_processing as mp
-sys.path.append(str(Path(__file__).absolute().parents[4]))
 sys.path.append(str(Path(__file__).absolute()))
 
 

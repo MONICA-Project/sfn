@@ -6,14 +6,15 @@ import requests
 import json
 import datetime
 from flask import Flask, request
+from subprocess import call
+from redis import Redis
+from rq import Queue
+from rq.job import Job
 from pathlib import Path
 import sys
-#from redis import Redis
-#from rq import Queue
-#from rq.job import Job
+sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
 import WP5.KU.SecurityFusionNodeService.SecurityFusionNode.message_processing as mp
-sys.path.append(str(Path(__file__).absolute().parents[4]))
 
 __version__ = '0.2'
 __author__ = 'RoViT (KU)'
@@ -28,9 +29,10 @@ urls = {'dummy_linksmart_url': 'http://127.0.0.2:3389/',
 
 headers = {'content-Type': 'application/json'}
 # QUEUE VARIABLES
-#conn = Redis()
+conn = Redis()
 queue_name = 'default'
-#q = Queue(name=queue_name, connection=conn)
+q = Queue(name=queue_name, connection=conn)
+# call(['python3', str(Path(__file__).absolute().parents[0]) + '/sfn_worker.py'])
 
 
 @app.route("/")
@@ -89,19 +91,26 @@ def add_message():
         wp_module = message['type_module']
 
         # BEGINNING OF QUE INTEGRATION
-        #for i in range(10):
-        #    job = q.enqueue(mp.waste_time, 10, ttl=43)
-        #print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
+        # for i in range(10):
+        #     j = Job.create(func=mp.waste_time, args=(10,), id=str(i), connection=conn, ttl=43)
+        #     job = q.enqueue_job(j)
+        # print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
 
         # BASED ON wp_module PERFORM PROCESSING ON MODULE
         if wp_module == 'crowd_density_local':
+            # job_id = '{}_{}_{}'.format('crowd_density_local', camera_id, message['timestamp_1'])
+            # j = Job.create(func=mp.crowd_density_local,
+            #                args=(sfn_module, camera_id, urls['crowd_density_url'], message, job_id), id=job_id,
+            #                connection=conn, ttl=43)
+            # job = q.enqueue_job(j)
             text, resp_code = mp.crowd_density_local(sfn_module, camera_id, urls['crowd_density_url'], message)
         elif wp_module == 'flow_analysis':
             text, resp_code = mp.flow_analysis(sfn_module, urls['flow_analysis_url'], message)
 
-        log_text = log_text + text
+        # log_text = log_text + text
 
         # UNDER AND IF STATEMENT CHECK IF WE WANT TO AMALGAMATE AND CREATE A NEW MESSAGE
+        # TODO: NEED TO RE ADDRESS WHEN THIS IS RUN (PERSISTENT DB MEANS THIS IS RUN ALL THE TIME!)
         if sfn_module.length_db() > 2:
             text, resp_code = mp.amalgamate_crowd_density_local(sfn_module, urls['crowd_density_url'])
         else:
