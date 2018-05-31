@@ -86,7 +86,6 @@ def add_message():
         message = request.get_json(force=True)
         if type(message) == str:
             message = json.loads(message)
-        print('Function has taken: {}s'.format(time.time() - start))
 
         camera_id = message['camera_ids'][0]
         wp_module = message['type_module']
@@ -108,7 +107,7 @@ def add_message():
         elif wp_module == 'flow_analysis':
             text, resp_code = mp.flow_analysis(sfn_module, urls['flow_analysis_url'], message)
         print('Function has taken: {}s'.format(time.time() - start))
-        # log_text = log_text + text
+        log_text = log_text + text
 
         # UNDER AND IF STATEMENT CHECK IF WE WANT TO AMALGAMATE AND CREATE A NEW MESSAGE
         # TODO: NEED TO RE ADDRESS WHEN THIS IS RUN (PERSISTENT DB MEANS THIS IS RUN ALL THE TIME!)
