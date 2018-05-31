@@ -4,6 +4,7 @@ messages"""
 import numpy as np
 import cv2
 import json
+import time
 import sqlite3
 from pathlib import Path
 import sys
@@ -20,6 +21,8 @@ class SecurityFusionNode:
     def __init__(self, module_id):
         self.module_id = module_id + '_crowd_density_global'
         self.module_type = 'crowd_density_global'
+        self.last_amalgamation = time.time()
+        self.timer = 0
         self.state = 'active'
 
         # Create a data structure
@@ -169,6 +172,19 @@ class SecurityFusionNode:
         }
         message = json.dumps(data)
         return message
+
+    @staticmethod
+    def load_urls(location, file_name):
+        try:
+            json_file = open(location + '/' + file_name + '.txt')
+        except IOError:
+            print('IoError')
+        else:
+            line = json_file.readline()
+            urls = json.loads(line)
+            json_file.close()
+            print('URLS LOADED: ' + file_name)
+            return urls
 
     @staticmethod
     def generate_amalgamated_top_down_map(top_down_maps, config_for_amalgamation):

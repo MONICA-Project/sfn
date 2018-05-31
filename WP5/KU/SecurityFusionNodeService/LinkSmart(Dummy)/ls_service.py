@@ -18,7 +18,11 @@ print(str(Path(__file__).absolute().parents[4]))
 configs = [
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_2_reg', False),
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_4_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_8_reg', False)
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_8_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_1_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_2_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_3_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_4_reg', False),
 ]
 messages = []
 
@@ -109,6 +113,10 @@ def hello_world():
 @app.route("/configs")
 def get_configs():
     print('REQUEST: ALL CONFIGS')
+    cam_names = [i['camera_id'] for i in configs if 'camera_id' in i.keys()]
+    mod_names = [i['module_id'] for i in configs if 'module_id' in i.keys()]
+    cam_names.extend(mod_names)
+    print(cam_names)
     return json.dumps(configs), 200
 
 
@@ -168,7 +176,7 @@ parser = argparse.ArgumentParser(description='Development Server Help')
 parser.add_argument("-d", "--debug", action="store_true", dest="debug_mode",
                     help="run in debug mode (for use with PyCharm)", default=False)
 parser.add_argument("-p", "--port", dest="port",
-                    help="port of server (default:%(default)s)", type=int, default=3389)
+                    help="port of server (default:%(default)s)", type=int, default=3388)
 parser.add_argument("-a", "--address", dest="host",
                     # help="host address of server (default:%(default)s)", type=str, default="0.0.0.0")
                     help="host address of server (default:%(default)s)", type=str, default="127.0.0.2")

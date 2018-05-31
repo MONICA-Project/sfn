@@ -17,9 +17,10 @@ print(str(socket.gethostname()))
 
 # url = 'http://dupre.hopto.org:5000/'
 url = 'http://127.0.0.1:5000/'
-sfn_urls = {'dummy_linksmart_url': 'http://127.0.0.2:3389/',
+
+sfn_urls = {'dummy_linksmart_url': 'http://127.0.0.2:3388/',
             # 'crowd_density_url': 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring',
-            'crowd_density_url': 'http://127.0.0.2:3389/crowd_density',
+            'crowd_density_url': 'http://127.0.0.2:3388/crowd_density',
             }
 
 # HELLO WORLD
@@ -73,8 +74,8 @@ else:
 
 # SEND MESSAGE TO SFN
 try:
-    res = requests.put(url + 'message', json=json.dumps(tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'),
-                                                                            'KFF_CAM_2_00008')))
+    res = requests.put(url + 'message', json=json.dumps(
+        tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'KFF_CAM_2_00008')))
 except requests.exceptions.RequestException as e:
     print(str(e))
 else:
@@ -82,8 +83,8 @@ else:
 
 # SEND MESSAGE TO SFN
 try:
-    res = requests.put(url + 'message', json=json.dumps(tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'),
-                                                                            'KFF_CAM_4_00008')))
+    res = requests.put(url + 'message', json=json.dumps(
+        tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'KFF_CAM_4_00008')))
 except requests.exceptions.RequestException as e:
     print(str(e))
 else:
@@ -91,8 +92,8 @@ else:
 
 # SEND MESSAGE TO SFN
 try:
-    res = requests.put(url + 'message', json=json.dumps(tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'),
-                                                                            'KFF_CAM_8_00008')))
+    res = requests.put(url + 'message', json=json.dumps(
+        tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'KFF_CAM_8_00008')))
 except requests.exceptions.RequestException as e:
     print(str(e))
 else:

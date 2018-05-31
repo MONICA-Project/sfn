@@ -5,6 +5,7 @@ import argparse
 import requests
 import json
 import datetime
+import time
 from flask import Flask, request
 from subprocess import call
 from redis import Redis
@@ -12,20 +13,16 @@ from rq import Queue
 from rq.job import Job
 from pathlib import Path
 import sys
-sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
 import WP5.KU.SecurityFusionNodeService.SecurityFusionNode.message_processing as mp
+sys.path.append(str(Path(__file__).absolute().parents[4]))
 
 __version__ = '0.2'
 __author__ = 'RoViT (KU)'
 
 app = Flask(__name__)
 sfn_module = SecurityFusionNode('001')
-urls = {'dummy_linksmart_url': 'http://127.0.0.2:3389/',
-        # 'crowd_density_url': 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring',
-        'crowd_density_url': 'http://127.0.0.2:3389/crowd_density',
-        'flow_analysis_url': 'http://127.0.0.2:3389/flow_analysis',
-        }
+urls = sfn_module.load_urls(str(Path(__file__).absolute().parents[0]), 'urls')
 
 headers = {'content-Type': 'application/json'}
 # QUEUE VARIABLES
@@ -57,6 +54,7 @@ def update_urls():
                 print('Updating Key ({}) to: {}.'.format(url, url_updates[url]))
             else:
                 print('Key ({}) not found.'.format(url))
+
         return 'SFN urls updated', 201
     else:
         return 'No JSON.', 415
@@ -79,13 +77,16 @@ def register_sfn():
 @app.route('/message', methods=['PUT'])
 def add_message():
     print('REQUEST: ADD MESSAGE')
+    start = time.time()
     if request.is_json:
         log_text = ''
         resp_code = 0
+        print('Function has taken: {}s'.format(time.time() - start))
         # GET THE JSON AND CHECK IF ITS STILL A STRING, IF SO loads JSON FORMAT
         message = request.get_json(force=True)
         if type(message) == str:
             message = json.loads(message)
+        print('Function has taken: {}s'.format(time.time() - start))
 
         camera_id = message['camera_ids'][0]
         wp_module = message['type_module']
@@ -95,7 +96,7 @@ def add_message():
         #     j = Job.create(func=mp.waste_time, args=(10,), id=str(i), connection=conn, ttl=43)
         #     job = q.enqueue_job(j)
         # print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
-
+        print('Function has taken: {}s'.format(time.time() - start))
         # BASED ON wp_module PERFORM PROCESSING ON MODULE
         if wp_module == 'crowd_density_local':
             # job_id = '{}_{}_{}'.format('crowd_density_local', camera_id, message['timestamp_1'])
@@ -106,19 +107,24 @@ def add_message():
             text, resp_code = mp.crowd_density_local(sfn_module, camera_id, urls['crowd_density_url'], message)
         elif wp_module == 'flow_analysis':
             text, resp_code = mp.flow_analysis(sfn_module, urls['flow_analysis_url'], message)
-
+        print('Function has taken: {}s'.format(time.time() - start))
         # log_text = log_text + text
 
         # UNDER AND IF STATEMENT CHECK IF WE WANT TO AMALGAMATE AND CREATE A NEW MESSAGE
         # TODO: NEED TO RE ADDRESS WHEN THIS IS RUN (PERSISTENT DB MEANS THIS IS RUN ALL THE TIME!)
-        if sfn_module.length_db() > 2:
+
+        sfn_module.timer = time.time() - sfn_module.last_amalgamation
+        if sfn_module.length_db() > 2 and sfn_module.timer > 60:
             text, resp_code = mp.amalgamate_crowd_density_local(sfn_module, urls['crowd_density_url'])
+            sfn_module.last_amalgamation = time.time()
         else:
             # NO MESSAGES HELD
-            text = 'NOT ENOUGH MESSAGES in recent_cam_messages. '
+            text = 'MESSAGES in recent_cam_messages {}. Time since last run {} '.\
+                format(sfn_module.length_db(), sfn_module.timer)
 
         log_text = log_text + text
         print(log_text)
+        print('Function has taken: {}s'.format(time.time() - start))
         return log_text, resp_code
     else:
         return 'No JSON.', 415

@@ -52,6 +52,18 @@ def load_json_txt(location, file_name):
         return data
 
 
+def save_json_txt(data, location, file_name):
+    message = json.dumps(data)
+    try:
+        txt_file = open(location + '/' +  file_name + '.txt', 'w')
+    except IOError:
+        print('IoError')
+    else:
+        txt_file.write(message)
+        txt_file.close()
+        print('MESSAGE SAVED: ' + file_name)
+
+
 def decode_image(string, image_dims, print_flag):
     d = base64.b64decode(string)
     rebuilt_frame = np.frombuffer(d, dtype=np.uint8)

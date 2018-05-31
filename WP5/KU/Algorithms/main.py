@@ -62,8 +62,8 @@ def load_settings(location):
     entry = pickle.load(fo, encoding='latin1')
     return entry
 
-
-info = dataset(22)
+display = False
+info = dataset(21)
 # info = dataset(0)
 print(info)
 
@@ -106,7 +106,9 @@ else:
         count = 0
         while cap.open():
             frame = cap.read()
-            message, frame = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'])
+            message, frame = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
+                                                     settings['image_2_ground_plane_matrix'],
+                                                     settings['ground_plane_roi'], settings['ground_plane_size'])
 
             # SEND A HTTP REQUEST OFF
             try:
@@ -123,17 +125,20 @@ else:
             with open(save_folder + info[2] + '_' + str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
                 outfile.write(message)
             count = count + 1
-            key = cv2.waitKey(1) & 0xFF
-            # KEYBINDINGS FOR DISPLAY
-            cv2.imshow('frame', frame)
-            if key == 27:  # exit
-                break
+            if display:
+                key = cv2.waitKey(1) & 0xFF
+                # KEYBINDINGS FOR DISPLAY
+                cv2.imshow('frame', frame)
+                if key == 27:  # exit
+                    break
     else:
         cam = ImageSequenceStreamer(info[0], info[1], (1080, 768), loop_last=False, repeat=True)
         count = 0
         while cam.open():
             frame = cam.read()
-            message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'])
+            message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
+                                                     settings['image_2_ground_plane_matrix'],
+                                                     settings['ground_plane_roi'], settings['ground_plane_size'])
 
             # SEND A HTTP REQUEST OFF
             # try:
@@ -144,16 +149,16 @@ else:
             #     print('Obs Message Sent. Response: ' + str(res.status_code) + '. ' + res.text)
 
             # WRITE FILES FOR USE LATER
-            # cv2.imwrite(info[2] + '_Frame_' + str(inc.get_incrementer(count, 5)) + '.jpeg', frame)
             save_folder = str(Path(__file__).absolute().parents[0]) + '/algorithm_output/'
-            cv2.putText(result, 'Number of People: {}'.format(json.loads(message)['density_count']), (10, 70),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
-            cv2.imwrite(save_folder + info[2] + '_Result_' + str(inc.get_incrementer(count, 5)) + '.jpeg', result)
+            # cv2.putText(result, 'Number of People: {}'.format(json.loads(message)['density_count']), (10, 70),
+            #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+            # cv2.imwrite(save_folder + info[2] + '_Result_' + str(inc.get_incrementer(count, 5)) + '.jpeg', result)
             with open(save_folder + info[2] + '_' + str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
                 outfile.write(message)
             count = count + 1
-            key = cv2.waitKey(1) & 0xFF
-            # KEYBINDINGS FOR DISPLAY
-            cv2.imshow('frame', frame)
-            if key == 27:  # exit
-                break
+            if display:
+                key = cv2.waitKey(1) & 0xFF
+                # KEYBINDINGS FOR DISPLAY
+                cv2.imshow('frame', frame)
+                if key == 27:  # exit
+                    break

@@ -9,6 +9,7 @@ import base64
 import cv2
 import json
 import datetime
+import WP5.KU.SharedResources.get_top_down_heat_map as heat_map_gen
 from WP5.KU.definitions import KU_DIR
 from WP5.KU.Algorithms.frame_analyser import FrameAnalyser
 from WP5.KU.Algorithms.crowd_density_local.C_CNN.src.crowd_count import CrowdCounter
@@ -48,12 +49,12 @@ class GetCrowd(FrameAnalyser):
             print('RUNNING WITHOUT CUDA SUPPORT')
         self.net.eval()
 
-    def process_frame(self, frame, camera_id, roi):
+    def process_frame(self, frame, camera_id, roi, image_2_ground_plane_matrix, ground_plane_roi, ground_plane_size):
         """ Process a given frame using the crowd density analysis algorithm.
         Keyword arguments:
             frame --        MxNx3 RGB image
             camera_id --    The unique string identifier where the frame is sourced
-            roi --          List[x1, y1, x2, y2] integers, defining 2 points used to speficiy a section of the image
+            roi --          List[x1, y1, x2, y2] integers, defining 2 points used to specify a section of the image
                             which will passed to the algorithm.
         Returns:
             message --      the JSON message produced by create_obs_message
@@ -85,8 +86,17 @@ class GetCrowd(FrameAnalyser):
 
         # CREATE THE MESSAGE
         self.cam_id = camera_id
-        # message = self.create_obs_message(count, density_map, datetime.datetime.utcnow().isoformat(), frame=None)
-        message = self.create_obs_message(count, density_map, datetime.datetime.utcnow().isoformat(), frame=frame)
+        timestamp = datetime.datetime.utcnow().isoformat()
+        # CONVERT TO TOP DOWN
+        top_down_density_map, heat_image = heat_map_gen.generate_heat_map(density_map,
+                                                                          image_2_ground_plane_matrix,
+                                                                          ground_plane_roi,
+                                                                          ground_plane_size,
+                                                                          # timestamp=timestamp,
+                                                                          # frame=frame,
+                                                                          )
+        # message = self.create_obs_message(count, top_down_density_map, timestamp)
+        message = self.create_obs_message(count, top_down_density_map, timestamp, frame=frame)
 
         # CONVERT TO IMAGE THAT CAN BE DISPLAYED
         density_map = 255 * density_map / np.max(density_map)
@@ -108,7 +118,7 @@ class GetCrowd(FrameAnalyser):
                 'type_module': self.type_module,
                 'camera_ids': [self.cam_id],
                 'density_count': int(count),
-                'density_map': density_map.tolist(),
+                'density_map': density_map,
                 'frame_byte_array': '',
                 'image_dims': '',
                 'ground_plane_position': '',
