@@ -11,6 +11,8 @@ import sys
 sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.SharedResources.convert_to_meter import convert_to_meter
 from WP5.KU.SharedResources.rotate_image import rotate_image
+# from ...SharedResources.convert_to_meter import convert_to_meter
+# from ...SharedResources.rotate_image import rotate_image
 
 __version__ = '0.1'
 __author__ = 'RoViT (KU)'
@@ -227,7 +229,7 @@ class SecurityFusionNode:
 
         # cv2.imshow('img_amalgamation', cv2.resize(img_amalgamation, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
         # cv2.waitKey(0)
-        cv2.imwrite('Global_density.png',
-                    cv2.resize(img_amalgamation * 255, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
+        # cv2.imwrite('Global_density.png',
+        #             cv2.resize(img_amalgamation * 255, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
         amalgamation_ground_plane_position = [amalgamation_latitude, amalgamation_longitude]
         return img_amalgamation, amalgamation_ground_plane_position

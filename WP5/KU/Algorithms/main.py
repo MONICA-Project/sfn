@@ -1,4 +1,4 @@
-# main.py
+# sfn_service.py
 """A test application designed to mimic (badly) the VCA framework."""
 import datetime
 import json
@@ -63,7 +63,7 @@ def load_settings(location):
     return entry
 
 display = False
-info = dataset(21)
+info = dataset(26)
 # info = dataset(0)
 print(info)
 
@@ -119,9 +119,9 @@ else:
                 print('Obs Message Sent. Response: ' + str(res.status_code) + '. ' + res.text)
 
             save_folder = str(Path(__file__).absolute().parents[0]) + '/algorithm_output/'
-            cv2.putText(frame, json.dumps(message, indent=4), (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                        (255, 255, 255), 1, cv2.LINE_AA)
-            cv2.imwrite(save_folder + info[2] + '_Result_' + str(inc.get_incrementer(count, 5)) + '.jpeg', frame)
+            # cv2.putText(frame, json.dumps(message, indent=4), (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+            #             (255, 255, 255), 1, cv2.LINE_AA)
+            # cv2.imwrite(save_folder + info[2] + '_Result_' + str(inc.get_incrementer(count, 5)) + '.jpeg', frame)
             with open(save_folder + info[2] + '_' + str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
                 outfile.write(message)
             count = count + 1

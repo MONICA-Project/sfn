@@ -16,11 +16,11 @@ __author__ = 'RoViT (KU)'
 print(str(socket.gethostname()))
 
 # url = 'http://dupre.hopto.org:5000/'
-url = 'http://127.0.0.1:5000/'
+url = 'http://0.0.0.0:5000/'
 
-sfn_urls = {'dummy_linksmart_url': 'http://127.0.0.2:3388/',
+sfn_urls = {'dummy_linksmart_url': 'http://0.0.0.0:3389/',
             # 'crowd_density_url': 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring',
-            'crowd_density_url': 'http://127.0.0.2:3388/crowd_density',
+            'crowd_density_url': 'http://0.0.0.0:3389/crowd_density',
             }
 
 # HELLO WORLD
