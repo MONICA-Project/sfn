@@ -13,9 +13,12 @@ from rq import Queue
 from rq.job import Job
 from pathlib import Path
 import sys
-from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
-import WP5.KU.SecurityFusionNodeService.SecurityFusionNode.message_processing as mp
+# from .security_fusion_node import SecurityFusionNode
+# from .message_processing import crowd_density_local, flow_analysis, amalgamate_crowd_density_local
 sys.path.append(str(Path(__file__).absolute().parents[4]))
+from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
+from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.message_processing import crowd_density_local, \
+    flow_analysis, amalgamate_crowd_density_local
 
 __version__ = '0.2'
 __author__ = 'RoViT (KU)'
@@ -29,7 +32,6 @@ headers = {'content-Type': 'application/json'}
 conn = Redis()
 queue_name = 'default'
 q = Queue(name=queue_name, connection=conn)
-# call(['python3', str(Path(__file__).absolute().parents[0]) + '/sfn_worker.py'])
 
 
 @app.route("/")
@@ -103,9 +105,9 @@ def add_message():
             #                args=(sfn_module, camera_id, urls['crowd_density_url'], message, job_id), id=job_id,
             #                connection=conn, ttl=43)
             # job = q.enqueue_job(j)
-            text, resp_code = mp.crowd_density_local(sfn_module, camera_id, urls['crowd_density_url'], message)
+            text, resp_code = crowd_density_local(sfn_module, camera_id, urls['crowd_density_url'], message)
         elif wp_module == 'flow_analysis':
-            text, resp_code = mp.flow_analysis(sfn_module, urls['flow_analysis_url'], message)
+            text, resp_code = flow_analysis(sfn_module, urls['flow_analysis_url'], message)
         print('Function has taken: {}s'.format(time.time() - start))
         log_text = log_text + text
 
@@ -114,7 +116,7 @@ def add_message():
 
         sfn_module.timer = time.time() - sfn_module.last_amalgamation
         if sfn_module.length_db() > 2 and sfn_module.timer > 60:
-            text, resp_code = mp.amalgamate_crowd_density_local(sfn_module, urls['crowd_density_url'])
+            text, resp_code = amalgamate_crowd_density_local(sfn_module, urls['crowd_density_url'])
             sfn_module.last_amalgamation = time.time()
         else:
             # NO MESSAGES HELD
@@ -216,8 +218,8 @@ parser.add_argument("-d", "--debug", action="store_true", dest="debug_mode",
 parser.add_argument("-p", "--port", dest="port",
                     help="port of server (default:%(default)s)", type=int, default=5000)
 parser.add_argument("-a", "--address", dest="host",
-                    # help="host address of server (default:%(default)s)", type=str, default="0.0.0.0")
-                    help="host address of server (default:%(default)s)", type=str, default="127.0.0.1")
+                    help="host address of server (default:%(default)s)", type=str, default="0.0.0.0")
+                    # help="host address of server (default:%(default)s)", type=str, default="127.0.0.1")
 
 cmd_args = parser.parse_args()
 app_options = {"port": cmd_args.port,
@@ -228,6 +230,7 @@ if cmd_args.debug_mode:
     app_options["use_debugger"] = False
     app_options["use_reloader"] = False
 
-app.run(**app_options)
+if __name__ == '__main__':
+    app.run(**app_options)
 
 # TODO: ADD ON EXIT FUNCTIONALITY, CLOSE DBS etc

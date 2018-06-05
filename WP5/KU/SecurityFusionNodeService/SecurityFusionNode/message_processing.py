@@ -1,17 +1,10 @@
 # message_processing.py
 """Functions to process the incoming messages to the SFN"""
 
-import numpy as np
-import cv2
 import json
 import requests
 import time
-from pathlib import Path
-import sys
-import time
-sys.path.append(str(Path(__file__).absolute().parents[4]))
-import WP5.KU.SecurityFusionNodeService.loader_tools as tools
-
+# from ...SecurityFusionNodeService.loader_tools import decode_image
 
 __version__ = '0.2'
 __author__ = 'RoViT (KU)'
