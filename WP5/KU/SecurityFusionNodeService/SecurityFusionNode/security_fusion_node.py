@@ -41,6 +41,8 @@ class SecurityFusionNode:
         self.c.execute(
             '''Create TABLE IF NOT EXISTS logs(job_id TEXT, time TEXT, log TEXT)''')
         self.conn.commit()
+        self.c.close()
+        self.conn.close()
 
     def insert_db(self, c_id, m_id, msg):
         """Insert for recent camera messages"""
@@ -58,8 +60,12 @@ class SecurityFusionNode:
             # THIS IS THE FIRST INSTANCE OF THIS camera_id AND wp_module PAIR
             log_text = log_text + 'THIS IS A NEW MESSAGE FROM {}, ({}). '.format(m_id, c_id)
 
+        self.conn = sqlite3.connect('sfn_database.db')
+        self.c = self.conn.cursor()
         self.c.execute('''INSERT INTO messages(cam_id, module_id, msg) VALUES(?,?,?)''', (c_id, m_id, msg))
         self.conn.commit()
+        self.c.close()
+        self.conn.close()
         return log_text
 
     def insert_config_db(self, c_id, msg):
@@ -76,23 +82,37 @@ class SecurityFusionNode:
         else:
             # THIS IS THE FIRST INSTANCE OF THIS camera_id AND wp_module PAIR
             log_text = log_text + 'THIS IS A NEW CONFIG ({}). '.format(c_id)
+        self.conn = sqlite3.connect('sfn_database.db')
+        self.c = self.conn.cursor()
         self.c.execute('''INSERT INTO configs(conf_id, msg) VALUES(?,?)''', (c_id, msg))
         self.conn.commit()
+        self.c.close()
+        self.conn.close()
         return log_text
 
     def insert_log(self, j_id, timestamp, log):
         """Insert log message"""
+        self.conn = sqlite3.connect('sfn_database.db')
+        self.c = self.conn.cursor()
         self.c.execute('''INSERT INTO logs(job_id, time, log) VALUES(?,?,?)''', (j_id, timestamp, log))
         self.conn.commit()
+        self.c.close()
+        self.conn.close()
 
-    def delete_db(self, *args):
+    @staticmethod
+    def delete_db(*args):
         try:
+            conn = sqlite3.connect('sfn_database.db')
+            c = conn.cursor()
             if len(args) == 1:  # """Delete for configs""" # c_id
-                self.c.execute("DELETE FROM configs WHERE conf_id=?", (args[0],))
-                self.conn.commit()
+                c.execute("DELETE FROM configs WHERE conf_id=?", (args[0],))
+                conn.commit()
             elif len(args) == 2:  # """Delete for recent camera messages"""  # c_id, m_id
-                self.c.execute("DELETE FROM messages WHERE cam_id=? AND module_id=?", (args[0], args[1]))
-                self.conn.commit()
+                c.execute("DELETE FROM messages WHERE cam_id=? AND module_id=?", (args[0], args[1]))
+                conn.commit()
+
+            c.close()
+            conn.close()
         except Exception as error:
             print('error executing deleting from db, error: {}'.format(error))
             return None
@@ -100,45 +120,50 @@ class SecurityFusionNode:
     def length_db(self):
         return len(self.query_db())
 
-    def query_db(self, *args):
+    @staticmethod
+    def query_db(*args):
         """Query the recent camera messages database"""
         try:
+            conn = sqlite3.connect('sfn_database.db', check_same_thread=False)
+            c = conn.cursor()
             if len(args) == 0:  # No input
-                self.c.execute("select * from messages")
-                self.conn.commit()
+                c.execute("select * from messages")
+                conn.commit()
             elif len(args) == 2:
                 if args[0] is None:
-                    self.c.execute("SELECT * FROM messages WHERE module_id=?", (args[1],))
-                    self.conn.commit()
+                    c.execute("SELECT * FROM messages WHERE module_id=?", (args[1],))
+                    conn.commit()
                 elif args[1] is None:
-                    self.c.execute("SELECT * FROM messages WHERE cam_id=?", (args[0],))
-                    self.conn.commit()
+                    c.execute("SELECT * FROM messages WHERE cam_id=?", (args[0],))
+                    conn.commit()
                 else:
-                    self.c.execute("SELECT * FROM messages WHERE cam_id=? AND module_id=?", (args[0], args[1]))
-                    self.conn.commit()
+                    c.execute("SELECT * FROM messages WHERE cam_id=? AND module_id=?", (args[0], args[1]))
+                    conn.commit()
 
-            rows = self.c.fetchall()
+            rows = c.fetchall()
+            c.close()
+            conn.close()
             return rows
         except Exception as error:
             print('error executing query, error: {}'.format(error))
             return None
 
-    def query_config_db(self, *args):
+    @staticmethod
+    def query_config_db(*args):
         """Query the configs database"""
-        conn1 = sqlite3.connect('sfn_database.db', check_same_thread=False)
-        cursor = conn1.cursor()
+        conn = sqlite3.connect('sfn_database.db', check_same_thread=False)
+        c = conn.cursor()
         try:
             if len(args) == 0:  # No input
-                cursor.execute("select * from configs")
-                # self.c.execute("select * from configs")
-                self.conn.commit()
+                c.execute("select * from configs")
+                conn.commit()
             elif len(args) == 1:
-                cursor.execute("SELECT * FROM configs WHERE conf_id=?", (args[0],))
-                # self.c.execute("SELECT * FROM configs WHERE conf_id=?", (args[0],))
-                self.conn.commit()
+                c.execute("SELECT * FROM configs WHERE conf_id=?", (args[0],))
+                conn.commit()
 
-            rows = cursor.fetchall()
-            # rows = self.c.fetchall()
+            rows = c.fetchall()
+            c.close()
+            conn.close()
             return rows
         except Exception as error:
             print('error executing query, error: {}'.format(error))

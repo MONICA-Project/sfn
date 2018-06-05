@@ -62,8 +62,8 @@ def load_settings(location):
     entry = pickle.load(fo, encoding='latin1')
     return entry
 
-display = False
-info = dataset(26)
+display = True
+info = dataset(12)
 # info = dataset(0)
 print(info)
 
