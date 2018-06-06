@@ -13,12 +13,10 @@ from rq import Queue
 from rq.job import Job
 from pathlib import Path
 import sys
-# from .security_fusion_node import SecurityFusionNode
-# from .message_processing import crowd_density_local, flow_analysis, amalgamate_crowd_density_local
-sys.path.append(str(Path(__file__).absolute().parents[4]))
-from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
-from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.message_processing import crowd_density_local, \
-    flow_analysis, amalgamate_crowd_density_local
+sys.path.append(str(Path(__file__).absolute().parents[3]))
+from KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
+from KU.SecurityFusionNodeService.SecurityFusionNode.message_processing import crowd_density_local,  flow_analysis, \
+    amalgamate_crowd_density_local, fighting_detection, object_detection
 
 __version__ = '0.2'
 __author__ = 'RoViT (KU)'
@@ -83,7 +81,6 @@ def add_message():
     if request.is_json:
         log_text = ''
         resp_code = 0
-        print('Function has taken: {}s'.format(time.time() - start))
         # GET THE JSON AND CHECK IF ITS STILL A STRING, IF SO loads JSON FORMAT
         message = request.get_json(force=True)
         if type(message) == str:
@@ -97,23 +94,20 @@ def add_message():
         #     j = Job.create(func=mp.waste_time, args=(10,), id=str(i), connection=conn, ttl=43)
         #     job = q.enqueue_job(j)
         # print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
-        print('Function has taken: {}s'.format(time.time() - start))
+        # print('Function has taken: {}s'.format(time.time() - start))
         # BASED ON wp_module PERFORM PROCESSING ON MODULE
         if wp_module == 'crowd_density_local':
-            # job_id = '{}_{}_{}'.format('crowd_density_local', camera_id, message['timestamp_1'])
-            # j = Job.create(func=mp.crowd_density_local,
-            #                args=(sfn_module, camera_id, urls['crowd_density_url'], message, job_id), id=job_id,
-            #                connection=conn, ttl=43)
-            # job = q.enqueue_job(j)
             text, resp_code = crowd_density_local(sfn_module, camera_id, urls['crowd_density_url'], message)
-        elif wp_module == 'flow_analysis':
-            text, resp_code = flow_analysis(sfn_module, urls['flow_analysis_url'], message)
-        print('Function has taken: {}s'.format(time.time() - start))
+        elif wp_module == 'flow':
+            text, resp_code = flow_analysis(sfn_module, camera_id, urls['flow_analysis_url'], message)
+        elif wp_module == 'fighting_detection':
+            text, resp_code = fighting_detection(sfn_module, camera_id, urls['flow_analysis_url'], message)
+        elif wp_module == 'object_detection':
+            text, resp_code = object_detection(sfn_module, camera_id, urls['flow_analysis_url'], message)
+        # print('Function has taken: {}s'.format(time.time() - start))
         log_text = log_text + text
 
         # UNDER AND IF STATEMENT CHECK IF WE WANT TO AMALGAMATE AND CREATE A NEW MESSAGE
-        # TODO: NEED TO RE ADDRESS WHEN THIS IS RUN (PERSISTENT DB MEANS THIS IS RUN ALL THE TIME!)
-
         sfn_module.timer = time.time() - sfn_module.last_amalgamation
         if sfn_module.length_db() > 2 and sfn_module.timer > 60:
             text, resp_code = amalgamate_crowd_density_local(sfn_module, urls['crowd_density_url'])
@@ -230,7 +224,6 @@ if cmd_args.debug_mode:
     app_options["use_debugger"] = False
     app_options["use_reloader"] = False
 
-if __name__ == '__main__':
-    app.run(**app_options)
+app.run(**app_options)
 
 # TODO: ADD ON EXIT FUNCTIONALITY, CLOSE DBS etc

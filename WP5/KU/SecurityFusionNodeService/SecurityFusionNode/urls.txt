@@ -1,0 +1,1 @@
+{"dummy_linksmart_url": "http://0.0.0.0:3389/", "crowd_density_url": "http://0.0.0.0:3389/crowd_density", "flow_analysis_url": "http://0.0.0.0:3389/flow_analysis"}

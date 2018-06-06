@@ -8,11 +8,9 @@ import time
 import sqlite3
 from pathlib import Path
 import sys
-sys.path.append(str(Path(__file__).absolute().parents[4]))
-from WP5.KU.SharedResources.convert_to_meter import convert_to_meter
-from WP5.KU.SharedResources.rotate_image import rotate_image
-# from ...SharedResources.convert_to_meter import convert_to_meter
-# from ...SharedResources.rotate_image import rotate_image
+sys.path.append(str(Path(__file__).absolute().parents[3]))
+from KU.SharedResources.convert_to_meter import convert_to_meter
+from KU.SharedResources.rotate_image import rotate_image
 
 __version__ = '0.1'
 __author__ = 'RoViT (KU)'
@@ -28,21 +26,24 @@ class SecurityFusionNode:
         self.state = 'active'
 
         # Create a data structure
-        self.conn = sqlite3.connect('sfn_database.db')
-        self.c = self.conn.cursor()
+        conn = sqlite3.connect('sfn_database.db', check_same_thread=False)
+        c = conn.cursor()
 
         # Create table
-        self.c.execute(
-            '''Create TABLE IF NOT EXISTS messages(cam_id TEXT, module_id TEXT, msg TEXT)''')
-        self.conn.commit()
-        self.c.execute(
-            '''Create TABLE IF NOT EXISTS configs(conf_id TEXT, msg TEXT)''')
-        self.conn.commit()
-        self.c.execute(
-            '''Create TABLE IF NOT EXISTS logs(job_id TEXT, time TEXT, log TEXT)''')
-        self.conn.commit()
-        self.c.close()
-        self.conn.close()
+        c.execute('''Create TABLE IF NOT EXISTS messages(cam_id TEXT, module_id TEXT, msg TEXT)''')
+        c.execute('''Delete from messages''')
+        conn.commit()
+        c.execute('''Create TABLE IF NOT EXISTS configs(conf_id TEXT, msg TEXT)''')
+        conn.commit()
+        c.close()
+        conn.close()
+
+        conn = sqlite3.connect('sfn_log.db', check_same_thread=False)
+        c = conn.cursor()
+        c.execute('''Create TABLE IF NOT EXISTS logs(job_id TEXT, time TEXT, log TEXT)''')
+        conn.commit()
+        c.close()
+        conn.close()
 
     def insert_db(self, c_id, m_id, msg):
         """Insert for recent camera messages"""
@@ -60,12 +61,12 @@ class SecurityFusionNode:
             # THIS IS THE FIRST INSTANCE OF THIS camera_id AND wp_module PAIR
             log_text = log_text + 'THIS IS A NEW MESSAGE FROM {}, ({}). '.format(m_id, c_id)
 
-        self.conn = sqlite3.connect('sfn_database.db')
-        self.c = self.conn.cursor()
-        self.c.execute('''INSERT INTO messages(cam_id, module_id, msg) VALUES(?,?,?)''', (c_id, m_id, msg))
-        self.conn.commit()
-        self.c.close()
-        self.conn.close()
+        conn = sqlite3.connect('sfn_database.db')
+        c = conn.cursor()
+        c.execute('''INSERT INTO messages(cam_id, module_id, msg) VALUES(?,?,?)''', (c_id, m_id, msg))
+        conn.commit()
+        c.close()
+        conn.close()
         return log_text
 
     def insert_config_db(self, c_id, msg):
@@ -82,27 +83,28 @@ class SecurityFusionNode:
         else:
             # THIS IS THE FIRST INSTANCE OF THIS camera_id AND wp_module PAIR
             log_text = log_text + 'THIS IS A NEW CONFIG ({}). '.format(c_id)
-        self.conn = sqlite3.connect('sfn_database.db')
-        self.c = self.conn.cursor()
-        self.c.execute('''INSERT INTO configs(conf_id, msg) VALUES(?,?)''', (c_id, msg))
-        self.conn.commit()
-        self.c.close()
-        self.conn.close()
+        conn = sqlite3.connect('sfn_database.db', check_same_thread=False)
+        c = conn.cursor()
+        c.execute('''INSERT INTO configs(conf_id, msg) VALUES(?,?)''', (c_id, msg))
+        conn.commit()
+        c.close()
+        conn.close()
         return log_text
 
-    def insert_log(self, j_id, timestamp, log):
+    @staticmethod
+    def insert_log(j_id, timestamp, log):
         """Insert log message"""
-        self.conn = sqlite3.connect('sfn_database.db')
-        self.c = self.conn.cursor()
-        self.c.execute('''INSERT INTO logs(job_id, time, log) VALUES(?,?,?)''', (j_id, timestamp, log))
-        self.conn.commit()
-        self.c.close()
-        self.conn.close()
+        conn = sqlite3.connect('sfn_log.db', check_same_thread=False)
+        c = conn.cursor()
+        c.execute('''INSERT INTO logs(job_id, time, log) VALUES(?,?,?)''', (j_id, timestamp, log))
+        conn.commit()
+        c.close()
+        conn.close()
 
     @staticmethod
     def delete_db(*args):
         try:
-            conn = sqlite3.connect('sfn_database.db')
+            conn = sqlite3.connect('sfn_database.db', check_same_thread=False)
             c = conn.cursor()
             if len(args) == 1:  # """Delete for configs""" # c_id
                 c.execute("DELETE FROM configs WHERE conf_id=?", (args[0],))
@@ -168,10 +170,6 @@ class SecurityFusionNode:
         except Exception as error:
             print('error executing query, error: {}'.format(error))
             return None
-
-    def __del__(self):
-        self.conn.close()
-        # self.c.close()
 
     def create_reg_message(self, timestamp):
         data = {

@@ -73,28 +73,28 @@ else:
     print(resp.text, resp.status_code)
 
 # SEND MESSAGE TO SFN
-try:
-    res = requests.put(url + 'message', json=json.dumps(
-        tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'KFF_CAM_2_00008')))
-except requests.exceptions.RequestException as e:
-    print(str(e))
-else:
-    print(res.text, res.status_code)
+# try:
+#     res = requests.put(url + 'message', json=json.dumps(
+#         tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'KFF_CAM_2_00008')))
+# except requests.exceptions.RequestException as e:
+#     print(str(e))
+# else:
+#     print(res.text, res.status_code)
 
 # SEND MESSAGE TO SFN
-try:
-    res = requests.put(url + 'message', json=json.dumps(
-        tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'KFF_CAM_4_00008')))
-except requests.exceptions.RequestException as e:
-    print(str(e))
-else:
-    print(res.text, res.status_code)
+# try:
+#     res = requests.put(url + 'message', json=json.dumps(
+#         tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'KFF_CAM_4_00008')))
+# except requests.exceptions.RequestException as e:
+#     print(str(e))
+# else:
+#     print(res.text, res.status_code)
 
 # SEND MESSAGE TO SFN
-try:
-    res = requests.put(url + 'message', json=json.dumps(
-        tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'KFF_CAM_8_00008')))
-except requests.exceptions.RequestException as e:
-    print(str(e))
-else:
-    print(res.text, res.status_code)
+# try:
+#     res = requests.put(url + 'message', json=json.dumps(
+#         tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'KFF_CAM_8_00008')))
+# except requests.exceptions.RequestException as e:
+#     print(str(e))
+# else:
+#     print(res.text, res.status_code)

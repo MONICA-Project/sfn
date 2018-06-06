@@ -1,10 +1,8 @@
 # message_processing.py
 """Functions to process the incoming messages to the SFN"""
-
 import json
 import requests
 import time
-# from ...SecurityFusionNodeService.loader_tools import decode_image
 
 __version__ = '0.2'
 __author__ = 'RoViT (KU)'
@@ -24,33 +22,25 @@ def crowd_density_local(sfn_instance, camera_id, url, message, j_id=0):
         """
     log_text = ''
     resp_code = 0
-    start = time.time()
-
-    # GET THE CONFIG WITH MATCHING camera_id
-    config = sfn_instance.query_config_db(camera_id)
-    if len(config) == 1:
-        # config = json.loads(config[0][1])
-
-        # print('Function has taken: {}s'.format(time.time() - start))
-        # REMOVE THE FRAME AND IMAGE SIZE AS ITS NOT NEEDED
-        message['frame_byte_array'] = ''
-        message['image_dims'] = ''
-        # SAVE TO THE DATABASE OF MESSAGES AND FORWARD THE NEW MESSAGE
-        log_text = log_text + sfn_instance.insert_db(camera_id, 'crowd_density_local', json.dumps(message))
-        text, resp_code = forward_message(json.dumps(message), url)
-        log_text = log_text + text
-    else:
-        log_text = log_text + 'EITHER NO CONFIG WAS FOUND OR > 1 WAS LOCATED AND CONFUSED THINGS. '
+    # start = time.time()
+    # REMOVE THE FRAME AND IMAGE SIZE AS ITS NOT NEEDED
+    message['frame_byte_array'] = ''
+    message['image_dims'] = ''
+    # SAVE TO THE DATABASE OF MESSAGES AND FORWARD THE NEW MESSAGE
+    log_text = log_text + sfn_instance.insert_db(camera_id, 'crowd_density_local', json.dumps(message))
+    text, resp_code = forward_message(json.dumps(message), url)
+    log_text = log_text + text
     # LOG THE OUTPUT OF THIS MESSAGE OPERATION
     sfn_instance.insert_log(j_id, message['timestamp_1'], log_text)
     # print('Function has taken: {}s'.format(time.time() - start))
     return log_text, resp_code
 
 
-def flow_analysis(sfn_instance, url, message):
+def flow_analysis(sfn_instance, camera_id, url, message):
     """ Message process function to be used when messages of type flow_analysis are sent to the sfn_service
         Keyword arguments:
             sfn_instance --     The instance of the SFN module, handling all database interactions
+            camera_id --        Used to pull back the correct config data from the SFN database
             url --              The url to forward the message to once processing has been completed
             message --          The original decoded JSON message in Dictionary form
         Returns:
@@ -59,7 +49,68 @@ def flow_analysis(sfn_instance, url, message):
         """
     log_text = ''
     resp_code = 0
-    print('DO SOMETHING FLOW-ISH')
+    # start = time.time()
+    # FORWARD THE NEW MESSAGE
+
+    if camera_id is not '':
+        text, resp_code = forward_message(json.dumps(message), url)
+        log_text = log_text + text
+        # LOG THE OUTPUT OF THIS MESSAGE OPERATION
+        log_text = log_text + sfn_instance.insert_db(camera_id, 'flow_analysis', json.dumps(message))
+        sfn_instance.insert_log(1, message['timestamp'], log_text)
+        # print('Function has taken: {}s'.format(time.time() - start))
+    else:
+        log_text = log_text + 'THIS IS THE FIRST flow MESSAGE AND IS THEREFORE BLANK.'
+        sfn_instance.insert_log(1, message['timestamp'], log_text)
+        resp_code = 200
+    return log_text, resp_code
+
+
+def fighting_detection(sfn_instance, camera_id, url, message):
+    """ Message process function to be used when messages of type fighting_detection are sent to the sfn_service
+        Keyword arguments:
+            sfn_instance --     The instance of the SFN module, handling all database interactions
+            camera_id --        Used to pull back the correct config data from the SFN database
+            url --              The url to forward the message to once processing has been completed
+            message --          The original decoded JSON message in Dictionary form
+        Returns:
+            log_text --         A trace text outlining the path the message has taken
+            resp_code --        A code which can be used in the SFN_Service response
+        """
+    log_text = ''
+    resp_code = 0
+    # start = time.time()
+    # FORWARD THE NEW MESSAGE
+    text, resp_code = forward_message(json.dumps(message), url)
+    log_text = log_text + text
+    # LOG THE OUTPUT OF THIS MESSAGE OPERATION
+    log_text = log_text + sfn_instance.insert_db(camera_id, 'fighting_detection', json.dumps(message))
+    sfn_instance.insert_log(1, message['timestamp'], log_text)
+    # print('Function has taken: {}s'.format(time.time() - start))
+    return log_text, resp_code
+
+
+def object_detection(sfn_instance, camera_id, url, message):
+    """ Message process function to be used when messages of type object_detection are sent to the sfn_service
+        Keyword arguments:
+            sfn_instance --     The instance of the SFN module, handling all database interactions
+            camera_id --        Used to pull back the correct config data from the SFN database
+            url --              The url to forward the message to once processing has been completed
+            message --          The original decoded JSON message in Dictionary form
+        Returns:
+            log_text --         A trace text outlining the path the message has taken
+            resp_code --        A code which can be used in the SFN_Service response
+        """
+    log_text = ''
+    resp_code = 0
+    # start = time.time()
+    # FORWARD THE NEW MESSAGE
+    text, resp_code = forward_message(json.dumps(message), url)
+    log_text = log_text + text
+    # LOG THE OUTPUT OF THIS MESSAGE OPERATION
+    log_text = log_text + sfn_instance.insert_db(camera_id, 'object_detection', json.dumps(message))
+    sfn_instance.insert_log(1, message['timestamp'], log_text)
+    # print('Function has taken: {}s'.format(time.time() - start))
     return log_text, resp_code
 
 
@@ -116,6 +167,7 @@ def amalgamate_crowd_density_local(sfn_instance, url):
     log_text = log_text + 'crowd_density_global MESSAGE CREATED. '
 
     # SEND crowd_density_global MESSAGE TO LINKSMART
+    log_text = log_text + sfn_instance.insert_db('GLOBAL', 'crowd_density_global', json.dumps(crowd_density_global))
     text, resp_code = forward_message(crowd_density_global, url)
     log_text = log_text + text
     return log_text, resp_code

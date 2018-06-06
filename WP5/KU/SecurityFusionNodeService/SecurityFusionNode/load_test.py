@@ -17,9 +17,9 @@ __author__ = 'RoViT (KU)'
 
 print(str(socket.gethostname()))
 
-url = 'http://127.0.0.1:5000/'
+url = 'http://0.0.0.0:5000/'
 num_requests = 500
-sleep_counter = 0.01
+sleep_counter = 0.5
 
 
 def call_sfn(payload, n):
