@@ -82,6 +82,7 @@ reg_message = analyser.create_reg_message(datetime.datetime.utcnow().isoformat()
 with open(KU_DIR + '/Algorithms/registration_messages/' + analyser.module_id + '_' + analyser.type_module + '_reg.txt',
           'w') as outfile:
     outfile.write(reg_message)
+reg_message = json.loads(reg_message)
 
 try:
     res = requests.post(linksmart_url, data=reg_message, headers={'content-Type': 'application/json'})
@@ -122,8 +123,10 @@ else:
             save_folder = str(Path(__file__).absolute().parents[0]) + '/algorithm_output/'
             # cv2.putText(frame, json.dumps(message, indent=4), (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
             #             (255, 255, 255), 1, cv2.LINE_AA)
-            # cv2.imwrite(save_folder + info[2] + '_Result_' + str(inc.get_incrementer(count, 5)) + '.jpeg', frame)
-            with open(save_folder + info[2] + '_' + str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
+            # cv2.imwrite(save_folder + info[2] + '_' + reg_message['type_module'] + '_Result_' +
+            #             str(inc.get_incrementer(count, 5)) + '.jpeg', frame)
+            with open(save_folder + info[2] + '_' + reg_message['type_module'] + '_' +
+                      str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
                 outfile.write(message)
             count = count + 1
             if display:
@@ -153,8 +156,10 @@ else:
             save_folder = str(Path(__file__).absolute().parents[0]) + '/algorithm_output/'
             # cv2.putText(result, 'Number of People: {}'.format(json.loads(message)['density_count']), (10, 70),
             #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
-            # cv2.imwrite(save_folder + info[2] + '_Result_' + str(inc.get_incrementer(count, 5)) + '.jpeg', result)
-            with open(save_folder + info[2] + '_' + str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
+            cv2.imwrite(save_folder + info[2] + '_' + reg_message['type_module'] + '_Result_' +
+                        str(inc.get_incrementer(count, 5)) + '.jpeg', result)
+            with open(save_folder + info[2] + '_' + reg_message['type_module'] + '_' +
+                      str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
                 outfile.write(message)
             count = count + 1
             if display:
