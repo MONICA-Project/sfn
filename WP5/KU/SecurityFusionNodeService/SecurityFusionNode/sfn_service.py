@@ -5,34 +5,35 @@ import argparse
 import requests
 import json
 import datetime
+import time
 from flask import Flask, request
-from subprocess import call
+from flask_sqlalchemy import SQLAlchemy
 from redis import Redis
 from rq import Queue
 from rq.job import Job
 from pathlib import Path
 import sys
-sys.path.append(str(Path(__file__).absolute().parents[4]))
-from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
-import WP5.KU.SecurityFusionNodeService.SecurityFusionNode.message_processing as mp
+sys.path.append(str(Path(__file__).absolute().parents[3]))
+from KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
+from KU.SecurityFusionNodeService.SecurityFusionNode.message_processing import crowd_density_local,  flow_analysis, \
+    amalgamate_crowd_density_local, fighting_detection, object_detection
 
 __version__ = '0.2'
 __author__ = 'RoViT (KU)'
 
 app = Flask(__name__)
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sfn_database.db'
+# sfn_db = SQLAlchemy(app)
 sfn_module = SecurityFusionNode('001')
-urls = {'dummy_linksmart_url': 'http://127.0.0.2:3389/',
-        # 'crowd_density_url': 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring',
-        'crowd_density_url': 'http://127.0.0.2:3389/crowd_density',
-        'flow_analysis_url': 'http://127.0.0.2:3389/flow_analysis',
-        }
+urls = sfn_module.load_urls(str(Path(__file__).absolute().parents[0]), 'urls')
 
 headers = {'content-Type': 'application/json'}
 # QUEUE VARIABLES
 conn = Redis()
 queue_name = 'default'
 q = Queue(name=queue_name, connection=conn)
-# call(['python3', str(Path(__file__).absolute().parents[0]) + '/sfn_worker.py'])
+
+# TODO: SEND THE REGISTRATION MESSAGE
 
 
 @app.route("/")
@@ -57,6 +58,7 @@ def update_urls():
                 print('Updating Key ({}) to: {}.'.format(url, url_updates[url]))
             else:
                 print('Key ({}) not found.'.format(url))
+
         return 'SFN urls updated', 201
     else:
         return 'No JSON.', 415
@@ -79,6 +81,7 @@ def register_sfn():
 @app.route('/message', methods=['PUT'])
 def add_message():
     print('REQUEST: ADD MESSAGE')
+    start = time.time()
     if request.is_json:
         log_text = ''
         resp_code = 0
@@ -95,30 +98,33 @@ def add_message():
         #     j = Job.create(func=mp.waste_time, args=(10,), id=str(i), connection=conn, ttl=43)
         #     job = q.enqueue_job(j)
         # print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
-
+        # print('Function has taken: {}s'.format(time.time() - start))
         # BASED ON wp_module PERFORM PROCESSING ON MODULE
+        text = ''
         if wp_module == 'crowd_density_local':
-            # job_id = '{}_{}_{}'.format('crowd_density_local', camera_id, message['timestamp_1'])
-            # j = Job.create(func=mp.crowd_density_local,
-            #                args=(sfn_module, camera_id, urls['crowd_density_url'], message, job_id), id=job_id,
-            #                connection=conn, ttl=43)
-            # job = q.enqueue_job(j)
-            text, resp_code = mp.crowd_density_local(sfn_module, camera_id, urls['crowd_density_url'], message)
-        elif wp_module == 'flow_analysis':
-            text, resp_code = mp.flow_analysis(sfn_module, urls['flow_analysis_url'], message)
-
-        # log_text = log_text + text
+            text, resp_code = crowd_density_local(sfn_module, camera_id, urls['crowd_density_url'], message, start)
+        elif wp_module == 'flow':
+            text, resp_code = flow_analysis(sfn_module, camera_id, urls['flow_analysis_url'], message, start)
+        elif wp_module == 'fighting_detection':
+            text, resp_code = fighting_detection(sfn_module, camera_id, urls['flow_analysis_url'], message, start)
+        elif wp_module == 'object_detection':
+            text, resp_code = object_detection(sfn_module, camera_id, urls['flow_analysis_url'], message, start)
+        # print('Function has taken: {}s'.format(time.time() - start))
+        log_text = log_text + text
 
         # UNDER AND IF STATEMENT CHECK IF WE WANT TO AMALGAMATE AND CREATE A NEW MESSAGE
-        # TODO: NEED TO RE ADDRESS WHEN THIS IS RUN (PERSISTENT DB MEANS THIS IS RUN ALL THE TIME!)
-        if sfn_module.length_db() > 2:
-            text, resp_code = mp.amalgamate_crowd_density_local(sfn_module, urls['crowd_density_url'])
+        sfn_module.timer = time.time() - sfn_module.last_amalgamation
+        if sfn_module.length_db(module_id='crowd_density_local') > 2 and sfn_module.timer > 10:
+            text, resp_code = amalgamate_crowd_density_local(sfn_module, urls['crowd_density_url'], start)
+            sfn_module.last_amalgamation = time.time()
         else:
             # NO MESSAGES HELD
-            text = 'NOT ENOUGH MESSAGES in recent_cam_messages. '
+            text = 'MESSAGES in recent_cam_messages {}. Time since last run {} '.\
+                format(sfn_module.length_db(), sfn_module.timer)
 
         log_text = log_text + text
         print(log_text)
+        print('Function has taken: {}s'.format(time.time() - start))
         return log_text, resp_code
     else:
         return 'No JSON.', 415
@@ -133,19 +139,15 @@ def update_configs():
         # CHECK IF ITS STILL A STRING AND IF SO LOAD FROM JSON FORMAT
         if type(new_configs) == str:
             new_configs = json.loads(new_configs)
-        # TODO: ADD CHECKS TO THE AMOUNT OF CONFIGS BEING UPDATED WITH THE AMOUNT IN THE DB
-        # TODO: RETURN USEFUL INFO ON TEH UPDATES
-        # TODO: CHECK THE DB FOR EXISTING VERSION OF THE CONFIG
-        # GET A LIST OF CONFIG DICTS, LOOP THROUGH AND ADD TO DB
-        for config in new_configs:
-            # CHECK IF CONFIG ALREADY EXISTS
-            if new_configs:
 
-                sfn_module.insert_config_db(c_id=config['camera_id'], msg=config)
-            else:
-                print('THIS IS A NEW CONFIG... WHY?')
-                sfn_module.insert_config_db(c_id=config['camera_id'], msg=config)
-        return 'UPDATED THE CONFIGS ON THE DB:', 200
+        log_text = ''
+        for config in new_configs:
+            if 'camera_id' in config:
+                log_text = sfn_module.insert_config_db(c_id=config['camera_id'], msg=json.dumps(config))
+            elif 'module_id' in config:
+                log_text = sfn_module.insert_config_db(c_id=config['module_id'], msg=json.dumps(config))
+            print(log_text)
+        return log_text, 200
     else:
         return 'No JSON.', 415
 
@@ -193,6 +195,7 @@ def get_configs_linksmart():
     else:
         global cam_configs
         cam_configs = resp.json()
+        text = ''
         # GET A LIST OF CONFIG DICTS, LOOP THROUGH AND ADD TO DB
         for config in cam_configs:
             if 'camera_id' in config:
@@ -200,7 +203,7 @@ def get_configs_linksmart():
             elif 'module_id' in config:
                 text = sfn_module.insert_config_db(c_id=config['module_id'], msg=json.dumps(config))
 
-        print('NUMBER OF CONFIGS RETURNED = {}, {}'.format(str(len(sfn_module.query_config_db())), resp.status_code))
+        print('{} NUM CONFIGS RETURNED = {}, {}'.format(text, len(sfn_module.query_config_db()), resp.status_code))
         return 'OBTAINED CONFIGS VIA SECURITY FUSION NODE: ' + str(sfn_module.query_config_db()), 200
 
 
@@ -211,8 +214,8 @@ parser.add_argument("-d", "--debug", action="store_true", dest="debug_mode",
 parser.add_argument("-p", "--port", dest="port",
                     help="port of server (default:%(default)s)", type=int, default=5000)
 parser.add_argument("-a", "--address", dest="host",
-                    # help="host address of server (default:%(default)s)", type=str, default="0.0.0.0")
-                    help="host address of server (default:%(default)s)", type=str, default="127.0.0.1")
+                    help="host address of server (default:%(default)s)", type=str, default="0.0.0.0")
+                    # help="host address of server (default:%(default)s)", type=str, default="127.0.0.1")
 
 cmd_args = parser.parse_args()
 app_options = {"port": cmd_args.port,

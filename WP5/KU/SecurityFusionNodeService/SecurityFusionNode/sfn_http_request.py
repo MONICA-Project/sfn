@@ -16,11 +16,24 @@ __author__ = 'RoViT (KU)'
 print(str(socket.gethostname()))
 
 # url = 'http://dupre.hopto.org:5000/'
-url = 'http://127.0.0.1:5000/'
-sfn_urls = {'dummy_linksmart_url': 'http://127.0.0.2:3389/',
+url = 'http://0.0.0.0:5000/'
+
+sfn_urls = {'dummy_linksmart_url': 'http://0.0.0.0:3389/',
             # 'crowd_density_url': 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring',
-            'crowd_density_url': 'http://127.0.0.2:3389/crowd_density',
+            'crowd_density_url': 'http://0.0.0.0:3389/crowd_density',
+            'object_detection_url': 'http://0.0.0.0:3389/object_detection',
+            'fighting_detection_url': 'http://0.0.0.0:3389/fighting_detection',
             }
+
+configs = [
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_2_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_4_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_8_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_1_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_2_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_3_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_4_reg', False),
+]
 
 # HELLO WORLD
 try:
@@ -63,9 +76,9 @@ except requests.exceptions.RequestException as e:
 else:
     print(resp.text, resp.status_code)
 
-# GET THE CONFIGS FROM LINKSMART VIA SFN
+# SEND THE CONFIGS AS IF VCA WERE UPDATING THE SFN
 try:
-    resp = requests.get(url + 'linksmart/get_configs')
+    resp = requests.post(url + 'configs', json=json.dumps(configs))
 except requests.exceptions.RequestException as e:
     print('WOO THERE, Something went wrong, error:' + str(e))
 else:
@@ -73,8 +86,8 @@ else:
 
 # SEND MESSAGE TO SFN
 try:
-    res = requests.put(url + 'message', json=json.dumps(tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'),
-                                                                            'KFF_CAM_2_00008')))
+    res = requests.put(url + 'message', json=json.dumps(
+        tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_1_00000')))
 except requests.exceptions.RequestException as e:
     print(str(e))
 else:
@@ -82,8 +95,8 @@ else:
 
 # SEND MESSAGE TO SFN
 try:
-    res = requests.put(url + 'message', json=json.dumps(tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'),
-                                                                            'KFF_CAM_4_00008')))
+    res = requests.put(url + 'message', json=json.dumps(
+        tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_1_00000')))
 except requests.exceptions.RequestException as e:
     print(str(e))
 else:
@@ -91,8 +104,8 @@ else:
 
 # SEND MESSAGE TO SFN
 try:
-    res = requests.put(url + 'message', json=json.dumps(tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/'),
-                                                                            'KFF_CAM_8_00008')))
+    res = requests.put(url + 'message', json=json.dumps(
+        tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_2_00000')))
 except requests.exceptions.RequestException as e:
     print(str(e))
 else:

@@ -2,17 +2,50 @@
 """The class that handles the storage of current messages on the sfn_service and contains the functions to process those
 messages"""
 import numpy as np
-import cv2
 import json
-import sqlite3
+import time
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import scoped_session
+from sqlalchemy import and_
+from sqlalchemy import create_engine
 from pathlib import Path
 import sys
-sys.path.append(str(Path(__file__).absolute().parents[4]))
-from WP5.KU.SharedResources.convert_to_meter import convert_to_meter
-from WP5.KU.SharedResources.rotate_image import rotate_image
+sys.path.append(str(Path(__file__).absolute().parents[3]))
+from KU.SharedResources.convert_to_meter import convert_to_meter
+from KU.SharedResources.rotate_image import rotate_image
 
 __version__ = '0.1'
 __author__ = 'RoViT (KU)'
+
+sfn_base = declarative_base()
+log_base = declarative_base()
+
+
+class Messages(sfn_base):
+    __tablename__ = 'messages'
+    # Here we define columns for the table messages
+    id = Column(String, primary_key=True)
+    cam_id = Column(String, nullable=True)
+    module_id = Column(String, nullable=False)
+    msg = Column(String, nullable=False)
+
+
+class Configs(sfn_base):
+    __tablename__ = 'configs'
+    # Here we define columns for the table configs
+    conf_id = Column(String, primary_key=True)
+    msg = Column(String, nullable=False)
+
+
+class Logs(log_base):
+    __tablename__ = 'logs'
+    # Here we define columns for the table configs
+    job_id = Column(String, primary_key=True)
+    time = Column(String, nullable=False)
+    log = Column(String, nullable=False)
 
 
 class SecurityFusionNode:
@@ -20,128 +53,147 @@ class SecurityFusionNode:
     def __init__(self, module_id):
         self.module_id = module_id + '_crowd_density_global'
         self.module_type = 'crowd_density_global'
+        self.last_amalgamation = time.time()
+        self.timer = 0
         self.state = 'active'
 
-        # Create a data structure
-        self.conn = sqlite3.connect('sfn_database.db')
-        self.c = self.conn.cursor()
+        self.sfn_engine = create_engine('sqlite:///sfn_database.db')
+        sfn_base.metadata.drop_all(self.sfn_engine)
+        sfn_base.metadata.create_all(self.sfn_engine)
+        sfn_session_factory = sessionmaker(bind=self.sfn_engine)
+        self.sfn_db_session = scoped_session(sfn_session_factory)
 
-        # Create table
-        self.c.execute(
-            '''Create TABLE IF NOT EXISTS messages(cam_id TEXT, module_id TEXT, msg TEXT)''')
-        self.conn.commit()
-        self.c.execute(
-            '''Create TABLE IF NOT EXISTS configs(conf_id TEXT, msg TEXT)''')
-        self.conn.commit()
-        self.c.execute(
-            '''Create TABLE IF NOT EXISTS logs(job_id TEXT, time TEXT, log TEXT)''')
-        self.conn.commit()
+        self.log_engine = create_engine('sqlite:///log_database.db')
+        log_base.metadata.drop_all(self.log_engine)
+        log_base.metadata.create_all(self.log_engine)
+        log_factory_session = sessionmaker(bind=self.log_engine)
+        self.log_db_session = scoped_session(log_factory_session)
 
-    def insert_db(self, c_id, m_id, msg):
+    def get_session(self, log=False):
+        if log is False:
+            session = self.sfn_db_session()
+        else:
+            session = self.log_db_session()
+        return session
+
+    def insert_db(self, c_id, m_id, msg, session=None):
         """Insert for recent camera messages"""
+        if session is None:
+            session = self.get_session()
 
         # MESSAGE SORTING CODE: FIND THE CAMERA ID AND MODULE AND UPDATE recent_cam_messages
         log_text = ''
         # row: the index of previous message for this camera and module
-        row = self.query_db(c_id, m_id)
+        row = self.query_db(session, c_id, m_id)
 
         # IF AN ENTRY IS FOUND:
-        if len(row) != 0:
+        if row is not None and len(row) != 0:
             log_text = log_text + 'PREVIOUS MESSAGE FROM {}, FROM {}, ALREADY STORED, REPLACING. '.format(m_id, c_id)
-            self.delete_db(c_id, m_id)  # Delete the previous message from the database
+            self.delete_db(session, c_id, m_id)  # Delete the previous message from the database
         else:
             # THIS IS THE FIRST INSTANCE OF THIS camera_id AND wp_module PAIR
             log_text = log_text + 'THIS IS A NEW MESSAGE FROM {}, ({}). '.format(m_id, c_id)
 
-        self.c.execute('''INSERT INTO messages(cam_id, module_id, msg) VALUES(?,?,?)''', (c_id, m_id, msg))
-        self.conn.commit()
+        session.add(Messages(id=time.time(), cam_id=c_id, module_id=m_id, msg=msg))
+        try:
+            session.commit()
+        except SQLAlchemyError as error:
+            session.rollback()
+            print(error)
         return log_text
 
-    def insert_config_db(self, c_id, msg):
+    def insert_config_db(self, c_id, msg, session=None):
         """Insert for configs"""
+        if session is None:
+            session = self.get_session()
         # MESSAGE SORTING CODE: FIND THE CAMERA ID AND MODULE AND UPDATE recent_cam_messages
         log_text = ''
         # row: the index of previous message for this camera and module
-        row = self.query_config_db(c_id)
+        row = self.query_config_db(session, c_id)
 
         # IF AN ENTRY IS FOUND:
-        if len(row) != 0:
+        if row is not None and len(row) != 0:
             log_text = log_text + 'PREVIOUS CONFIG FOUND ({}), REPLACING. '.format(c_id)
-            self.delete_db(c_id)  # Delete the previous message from the database
+            self.delete_db(session, c_id)  # Delete the previous message from the database
         else:
             # THIS IS THE FIRST INSTANCE OF THIS camera_id AND wp_module PAIR
             log_text = log_text + 'THIS IS A NEW CONFIG ({}). '.format(c_id)
-        self.c.execute('''INSERT INTO configs(conf_id, msg) VALUES(?,?)''', (c_id, msg))
-        self.conn.commit()
+
+        session.add(Configs(conf_id=c_id, msg=msg))
+        try:
+            session.commit()
+        except SQLAlchemyError as error:
+            session.rollback()
+            print(error)
         return log_text
 
     def insert_log(self, j_id, timestamp, log):
         """Insert log message"""
-        self.c.execute('''INSERT INTO logs(job_id, time, log) VALUES(?,?,?)''', (j_id, timestamp, log))
-        self.conn.commit()
+        log_session = self.log_db_session()
+        log_session.add(Logs(job_id=j_id, time=timestamp, log=log))
+        try:
+            log_session.commit()
+        except SQLAlchemyError as error:
+            log_session.rollback()
+            print(error)
 
-    def delete_db(self, *args):
+    @staticmethod
+    def delete_db(sfn_session, *args):
         try:
             if len(args) == 1:  # """Delete for configs""" # c_id
-                self.c.execute("DELETE FROM configs WHERE conf_id=?", (args[0],))
-                self.conn.commit()
+                sfn_session.query(Configs).filter(Configs.conf_id == args[0]).delete()
             elif len(args) == 2:  # """Delete for recent camera messages"""  # c_id, m_id
-                self.c.execute("DELETE FROM messages WHERE cam_id=? AND module_id=?", (args[0], args[1]))
-                self.conn.commit()
+                sfn_session.query(Messages).filter(and_(Messages.cam_id == args[0], Messages.module_id == args[1]))\
+                    .delete()
         except Exception as error:
             print('error executing deleting from db, error: {}'.format(error))
             return None
 
-    def length_db(self):
-        return len(self.query_db())
+    def length_db(self, module_id=None):
+        if module_id is None:
+            qr = self.query_db(self.get_session())
+        else:
+            qr = self.query_db(self.get_session(), None, module_id)
+        if qr is None:
+            return 0
+        else:
+            return len(qr)
 
-    def query_db(self, *args):
+    def query_db(self, sfn_session, *args):
         """Query the recent camera messages database"""
+        if sfn_session is None:
+            sfn_session = self.get_session()
+        rows = []
         try:
             if len(args) == 0:  # No input
-                self.c.execute("select * from messages")
-                self.conn.commit()
+                rows = sfn_session.query(Messages).all()
             elif len(args) == 2:
                 if args[0] is None:
-                    self.c.execute("SELECT * FROM messages WHERE module_id=?", (args[1],))
-                    self.conn.commit()
+                    rows = sfn_session.query(Messages).filter(Messages.module_id == args[1]).all()
                 elif args[1] is None:
-                    self.c.execute("SELECT * FROM messages WHERE cam_id=?", (args[0],))
-                    self.conn.commit()
+                    rows = sfn_session.query(Messages).filter(Messages.cam_id == args[0]).all()
                 else:
-                    self.c.execute("SELECT * FROM messages WHERE cam_id=? AND module_id=?", (args[0], args[1]))
-                    self.conn.commit()
-
-            rows = self.c.fetchall()
+                    rows = sfn_session.query(Messages).filter(and_(Messages.cam_id == args[0],
+                                                                   Messages.module_id == args[1])).all()
             return rows
         except Exception as error:
             print('error executing query, error: {}'.format(error))
             return None
 
-    def query_config_db(self, *args):
+    def query_config_db(self, sfn_session, *args):
         """Query the configs database"""
-        conn1 = sqlite3.connect('sfn_database.db', check_same_thread=False)
-        cursor = conn1.cursor()
+        if sfn_session is None:
+            sfn_session = self.get_session()
+        rows = []
         try:
             if len(args) == 0:  # No input
-                cursor.execute("select * from configs")
-                # self.c.execute("select * from configs")
-                self.conn.commit()
+                rows = sfn_session.query(Configs).all()
             elif len(args) == 1:
-                cursor.execute("SELECT * FROM configs WHERE conf_id=?", (args[0],))
-                # self.c.execute("SELECT * FROM configs WHERE conf_id=?", (args[0],))
-                self.conn.commit()
-
-            rows = cursor.fetchall()
-            # rows = self.c.fetchall()
+                rows = sfn_session.query(Configs).filter(Configs.conf_id == args[0]).all()
             return rows
         except Exception as error:
             print('error executing query, error: {}'.format(error))
             return None
-
-    def __del__(self):
-        self.conn.close()
-        # self.c.close()
 
     def create_reg_message(self, timestamp):
         data = {
@@ -151,6 +203,8 @@ class SecurityFusionNode:
                 'state': self.state,
         }
         message = json.dumps(data)
+        # ADD THE REG MESSAGE TO THE DB
+        self.insert_config_db(self.module_id, message)
         # message = json.loads(message)
         return message
 
@@ -169,6 +223,19 @@ class SecurityFusionNode:
         }
         message = json.dumps(data)
         return message
+
+    @staticmethod
+    def load_urls(location, file_name):
+        try:
+            json_file = open(location + '/' + file_name + '.txt')
+        except IOError:
+            print('IoError')
+        else:
+            line = json_file.readline()
+            urls = json.loads(line)
+            json_file.close()
+            print('URLS LOADED: ' + file_name)
+            return urls
 
     @staticmethod
     def generate_amalgamated_top_down_map(top_down_maps, config_for_amalgamation):
@@ -211,7 +278,7 @@ class SecurityFusionNode:
 
         # cv2.imshow('img_amalgamation', cv2.resize(img_amalgamation, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
         # cv2.waitKey(0)
-        cv2.imwrite('Global_density.png',
-                    cv2.resize(img_amalgamation * 255, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
+        # cv2.imwrite('Global_density.png',
+        #             cv2.resize(img_amalgamation * 255, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
         amalgamation_ground_plane_position = [amalgamation_latitude, amalgamation_longitude]
         return img_amalgamation, amalgamation_ground_plane_position

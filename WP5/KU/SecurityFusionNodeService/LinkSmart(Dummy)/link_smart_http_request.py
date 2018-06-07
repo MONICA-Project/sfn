@@ -7,7 +7,7 @@ sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.definitions import KU_DIR
 import WP5.KU.SecurityFusionNodeService.loader_tools as tools
 
-url = 'http://127.0.0.2:3389/'
+url = 'http://0.0.0.0:3389/'
 
 # HELLO WORLD
 try:
@@ -31,7 +31,7 @@ else:
 # ADD AN OBSERVATION
 try:
     res = requests.put(url + 'crowd_density', data=json.dumps(tools.load_json_txt(
-        os.path.join(KU_DIR, 'Algorithms/'), 'KFF_CAM_8_00000')), headers={'content-Type': 'application/json'})
+        os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'KFF_CAM_8_00000')), headers={'content-Type': 'application/json'})
 except requests.exceptions.RequestException as e:  # This is the correct syntax
     print(e)
 else:
