@@ -7,7 +7,7 @@ import json
 import datetime
 import time
 from flask import Flask, request
-from subprocess import call
+from flask_sqlalchemy import SQLAlchemy
 from redis import Redis
 from rq import Queue
 from rq.job import Job
@@ -22,6 +22,8 @@ __version__ = '0.2'
 __author__ = 'RoViT (KU)'
 
 app = Flask(__name__)
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sfn_database.db'
+# sfn_db = SQLAlchemy(app)
 sfn_module = SecurityFusionNode('001')
 urls = sfn_module.load_urls(str(Path(__file__).absolute().parents[0]), 'urls')
 
@@ -30,6 +32,8 @@ headers = {'content-Type': 'application/json'}
 conn = Redis()
 queue_name = 'default'
 q = Queue(name=queue_name, connection=conn)
+
+# TODO: SEND THE REGISTRATION MESSAGE
 
 
 @app.route("/")
@@ -96,21 +100,22 @@ def add_message():
         # print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
         # print('Function has taken: {}s'.format(time.time() - start))
         # BASED ON wp_module PERFORM PROCESSING ON MODULE
+        text = ''
         if wp_module == 'crowd_density_local':
-            text, resp_code = crowd_density_local(sfn_module, camera_id, urls['crowd_density_url'], message)
+            text, resp_code = crowd_density_local(sfn_module, camera_id, urls['crowd_density_url'], message, start)
         elif wp_module == 'flow':
-            text, resp_code = flow_analysis(sfn_module, camera_id, urls['flow_analysis_url'], message)
+            text, resp_code = flow_analysis(sfn_module, camera_id, urls['flow_analysis_url'], message, start)
         elif wp_module == 'fighting_detection':
-            text, resp_code = fighting_detection(sfn_module, camera_id, urls['flow_analysis_url'], message)
+            text, resp_code = fighting_detection(sfn_module, camera_id, urls['flow_analysis_url'], message, start)
         elif wp_module == 'object_detection':
-            text, resp_code = object_detection(sfn_module, camera_id, urls['flow_analysis_url'], message)
+            text, resp_code = object_detection(sfn_module, camera_id, urls['flow_analysis_url'], message, start)
         # print('Function has taken: {}s'.format(time.time() - start))
         log_text = log_text + text
 
         # UNDER AND IF STATEMENT CHECK IF WE WANT TO AMALGAMATE AND CREATE A NEW MESSAGE
         sfn_module.timer = time.time() - sfn_module.last_amalgamation
-        if sfn_module.length_db() > 2 and sfn_module.timer > 60:
-            text, resp_code = amalgamate_crowd_density_local(sfn_module, urls['crowd_density_url'])
+        if sfn_module.length_db(module_id='crowd_density_local') > 2 and sfn_module.timer > 10:
+            text, resp_code = amalgamate_crowd_density_local(sfn_module, urls['crowd_density_url'], start)
             sfn_module.last_amalgamation = time.time()
         else:
             # NO MESSAGES HELD
@@ -134,19 +139,15 @@ def update_configs():
         # CHECK IF ITS STILL A STRING AND IF SO LOAD FROM JSON FORMAT
         if type(new_configs) == str:
             new_configs = json.loads(new_configs)
-        # TODO: ADD CHECKS TO THE AMOUNT OF CONFIGS BEING UPDATED WITH THE AMOUNT IN THE DB
-        # TODO: RETURN USEFUL INFO ON TEH UPDATES
-        # TODO: CHECK THE DB FOR EXISTING VERSION OF THE CONFIG
-        # GET A LIST OF CONFIG DICTS, LOOP THROUGH AND ADD TO DB
-        for config in new_configs:
-            # CHECK IF CONFIG ALREADY EXISTS
-            if new_configs:
 
-                sfn_module.insert_config_db(c_id=config['camera_id'], msg=config)
-            else:
-                print('THIS IS A NEW CONFIG... WHY?')
-                sfn_module.insert_config_db(c_id=config['camera_id'], msg=config)
-        return 'UPDATED THE CONFIGS ON THE DB:', 200
+        log_text = ''
+        for config in new_configs:
+            if 'camera_id' in config:
+                log_text = sfn_module.insert_config_db(c_id=config['camera_id'], msg=json.dumps(config))
+            elif 'module_id' in config:
+                log_text = sfn_module.insert_config_db(c_id=config['module_id'], msg=json.dumps(config))
+            print(log_text)
+        return log_text, 200
     else:
         return 'No JSON.', 415
 
@@ -194,6 +195,7 @@ def get_configs_linksmart():
     else:
         global cam_configs
         cam_configs = resp.json()
+        text = ''
         # GET A LIST OF CONFIG DICTS, LOOP THROUGH AND ADD TO DB
         for config in cam_configs:
             if 'camera_id' in config:
@@ -201,7 +203,7 @@ def get_configs_linksmart():
             elif 'module_id' in config:
                 text = sfn_module.insert_config_db(c_id=config['module_id'], msg=json.dumps(config))
 
-        print('NUMBER OF CONFIGS RETURNED = {}, {}'.format(str(len(sfn_module.query_config_db())), resp.status_code))
+        print('{} NUM CONFIGS RETURNED = {}, {}'.format(text, len(sfn_module.query_config_db()), resp.status_code))
         return 'OBTAINED CONFIGS VIA SECURITY FUSION NODE: ' + str(sfn_module.query_config_db()), 200
 
 

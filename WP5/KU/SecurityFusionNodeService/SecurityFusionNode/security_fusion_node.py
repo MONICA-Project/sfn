@@ -2,10 +2,15 @@
 """The class that handles the storage of current messages on the sfn_service and contains the functions to process those
 messages"""
 import numpy as np
-import cv2
 import json
 import time
-import sqlite3
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import scoped_session
+from sqlalchemy import and_
+from sqlalchemy import create_engine
 from pathlib import Path
 import sys
 sys.path.append(str(Path(__file__).absolute().parents[3]))
@@ -14,6 +19,33 @@ from KU.SharedResources.rotate_image import rotate_image
 
 __version__ = '0.1'
 __author__ = 'RoViT (KU)'
+
+sfn_base = declarative_base()
+log_base = declarative_base()
+
+
+class Messages(sfn_base):
+    __tablename__ = 'messages'
+    # Here we define columns for the table messages
+    id = Column(String, primary_key=True)
+    cam_id = Column(String, nullable=True)
+    module_id = Column(String, nullable=False)
+    msg = Column(String, nullable=False)
+
+
+class Configs(sfn_base):
+    __tablename__ = 'configs'
+    # Here we define columns for the table configs
+    conf_id = Column(String, primary_key=True)
+    msg = Column(String, nullable=False)
+
+
+class Logs(log_base):
+    __tablename__ = 'logs'
+    # Here we define columns for the table configs
+    job_id = Column(String, primary_key=True)
+    time = Column(String, nullable=False)
+    log = Column(String, nullable=False)
 
 
 class SecurityFusionNode:
@@ -25,147 +57,139 @@ class SecurityFusionNode:
         self.timer = 0
         self.state = 'active'
 
-        # Create a data structure
-        conn = sqlite3.connect('sfn_database.db', check_same_thread=False)
-        c = conn.cursor()
+        self.sfn_engine = create_engine('sqlite:///sfn_database.db')
+        sfn_base.metadata.drop_all(self.sfn_engine)
+        sfn_base.metadata.create_all(self.sfn_engine)
+        sfn_session_factory = sessionmaker(bind=self.sfn_engine)
+        self.sfn_db_session = scoped_session(sfn_session_factory)
 
-        # Create table
-        c.execute('''Create TABLE IF NOT EXISTS messages(cam_id TEXT, module_id TEXT, msg TEXT)''')
-        c.execute('''Delete from messages''')
-        conn.commit()
-        c.execute('''Create TABLE IF NOT EXISTS configs(conf_id TEXT, msg TEXT)''')
-        conn.commit()
-        c.close()
-        conn.close()
+        self.log_engine = create_engine('sqlite:///log_database.db')
+        log_base.metadata.drop_all(self.log_engine)
+        log_base.metadata.create_all(self.log_engine)
+        log_factory_session = sessionmaker(bind=self.log_engine)
+        self.log_db_session = scoped_session(log_factory_session)
 
-        conn = sqlite3.connect('sfn_log.db', check_same_thread=False)
-        c = conn.cursor()
-        c.execute('''Create TABLE IF NOT EXISTS logs(job_id TEXT, time TEXT, log TEXT)''')
-        conn.commit()
-        c.close()
-        conn.close()
+    def get_session(self, log=False):
+        if log is False:
+            session = self.sfn_db_session()
+        else:
+            session = self.log_db_session()
+        return session
 
-    def insert_db(self, c_id, m_id, msg):
+    def insert_db(self, c_id, m_id, msg, session=None):
         """Insert for recent camera messages"""
+        if session is None:
+            session = self.get_session()
 
         # MESSAGE SORTING CODE: FIND THE CAMERA ID AND MODULE AND UPDATE recent_cam_messages
         log_text = ''
         # row: the index of previous message for this camera and module
-        row = self.query_db(c_id, m_id)
+        row = self.query_db(session, c_id, m_id)
 
         # IF AN ENTRY IS FOUND:
-        if len(row) != 0:
+        if row is not None and len(row) != 0:
             log_text = log_text + 'PREVIOUS MESSAGE FROM {}, FROM {}, ALREADY STORED, REPLACING. '.format(m_id, c_id)
-            self.delete_db(c_id, m_id)  # Delete the previous message from the database
+            self.delete_db(session, c_id, m_id)  # Delete the previous message from the database
         else:
             # THIS IS THE FIRST INSTANCE OF THIS camera_id AND wp_module PAIR
             log_text = log_text + 'THIS IS A NEW MESSAGE FROM {}, ({}). '.format(m_id, c_id)
 
-        conn = sqlite3.connect('sfn_database.db')
-        c = conn.cursor()
-        c.execute('''INSERT INTO messages(cam_id, module_id, msg) VALUES(?,?,?)''', (c_id, m_id, msg))
-        conn.commit()
-        c.close()
-        conn.close()
+        session.add(Messages(id=time.time(), cam_id=c_id, module_id=m_id, msg=msg))
+        try:
+            session.commit()
+        except SQLAlchemyError as error:
+            session.rollback()
+            print(error)
         return log_text
 
-    def insert_config_db(self, c_id, msg):
+    def insert_config_db(self, c_id, msg, session=None):
         """Insert for configs"""
+        if session is None:
+            session = self.get_session()
         # MESSAGE SORTING CODE: FIND THE CAMERA ID AND MODULE AND UPDATE recent_cam_messages
         log_text = ''
         # row: the index of previous message for this camera and module
-        row = self.query_config_db(c_id)
+        row = self.query_config_db(session, c_id)
 
         # IF AN ENTRY IS FOUND:
-        if len(row) != 0:
+        if row is not None and len(row) != 0:
             log_text = log_text + 'PREVIOUS CONFIG FOUND ({}), REPLACING. '.format(c_id)
-            self.delete_db(c_id)  # Delete the previous message from the database
+            self.delete_db(session, c_id)  # Delete the previous message from the database
         else:
             # THIS IS THE FIRST INSTANCE OF THIS camera_id AND wp_module PAIR
             log_text = log_text + 'THIS IS A NEW CONFIG ({}). '.format(c_id)
-        conn = sqlite3.connect('sfn_database.db', check_same_thread=False)
-        c = conn.cursor()
-        c.execute('''INSERT INTO configs(conf_id, msg) VALUES(?,?)''', (c_id, msg))
-        conn.commit()
-        c.close()
-        conn.close()
+
+        session.add(Configs(conf_id=c_id, msg=msg))
+        try:
+            session.commit()
+        except SQLAlchemyError as error:
+            session.rollback()
+            print(error)
         return log_text
 
-    @staticmethod
-    def insert_log(j_id, timestamp, log):
+    def insert_log(self, j_id, timestamp, log):
         """Insert log message"""
-        conn = sqlite3.connect('sfn_log.db', check_same_thread=False)
-        c = conn.cursor()
-        c.execute('''INSERT INTO logs(job_id, time, log) VALUES(?,?,?)''', (j_id, timestamp, log))
-        conn.commit()
-        c.close()
-        conn.close()
+        log_session = self.log_db_session()
+        log_session.add(Logs(job_id=j_id, time=timestamp, log=log))
+        try:
+            log_session.commit()
+        except SQLAlchemyError as error:
+            log_session.rollback()
+            print(error)
 
     @staticmethod
-    def delete_db(*args):
+    def delete_db(sfn_session, *args):
         try:
-            conn = sqlite3.connect('sfn_database.db', check_same_thread=False)
-            c = conn.cursor()
             if len(args) == 1:  # """Delete for configs""" # c_id
-                c.execute("DELETE FROM configs WHERE conf_id=?", (args[0],))
-                conn.commit()
+                sfn_session.query(Configs).filter(Configs.conf_id == args[0]).delete()
             elif len(args) == 2:  # """Delete for recent camera messages"""  # c_id, m_id
-                c.execute("DELETE FROM messages WHERE cam_id=? AND module_id=?", (args[0], args[1]))
-                conn.commit()
-
-            c.close()
-            conn.close()
+                sfn_session.query(Messages).filter(and_(Messages.cam_id == args[0], Messages.module_id == args[1]))\
+                    .delete()
         except Exception as error:
             print('error executing deleting from db, error: {}'.format(error))
             return None
 
-    def length_db(self):
-        return len(self.query_db())
+    def length_db(self, module_id=None):
+        if module_id is None:
+            qr = self.query_db(self.get_session())
+        else:
+            qr = self.query_db(self.get_session(), None, module_id)
+        if qr is None:
+            return 0
+        else:
+            return len(qr)
 
-    @staticmethod
-    def query_db(*args):
+    def query_db(self, sfn_session, *args):
         """Query the recent camera messages database"""
+        if sfn_session is None:
+            sfn_session = self.get_session()
+        rows = []
         try:
-            conn = sqlite3.connect('sfn_database.db', check_same_thread=False)
-            c = conn.cursor()
             if len(args) == 0:  # No input
-                c.execute("select * from messages")
-                conn.commit()
+                rows = sfn_session.query(Messages).all()
             elif len(args) == 2:
                 if args[0] is None:
-                    c.execute("SELECT * FROM messages WHERE module_id=?", (args[1],))
-                    conn.commit()
+                    rows = sfn_session.query(Messages).filter(Messages.module_id == args[1]).all()
                 elif args[1] is None:
-                    c.execute("SELECT * FROM messages WHERE cam_id=?", (args[0],))
-                    conn.commit()
+                    rows = sfn_session.query(Messages).filter(Messages.cam_id == args[0]).all()
                 else:
-                    c.execute("SELECT * FROM messages WHERE cam_id=? AND module_id=?", (args[0], args[1]))
-                    conn.commit()
-
-            rows = c.fetchall()
-            c.close()
-            conn.close()
+                    rows = sfn_session.query(Messages).filter(and_(Messages.cam_id == args[0],
+                                                                   Messages.module_id == args[1])).all()
             return rows
         except Exception as error:
             print('error executing query, error: {}'.format(error))
             return None
 
-    @staticmethod
-    def query_config_db(*args):
+    def query_config_db(self, sfn_session, *args):
         """Query the configs database"""
-        conn = sqlite3.connect('sfn_database.db', check_same_thread=False)
-        c = conn.cursor()
+        if sfn_session is None:
+            sfn_session = self.get_session()
+        rows = []
         try:
             if len(args) == 0:  # No input
-                c.execute("select * from configs")
-                conn.commit()
+                rows = sfn_session.query(Configs).all()
             elif len(args) == 1:
-                c.execute("SELECT * FROM configs WHERE conf_id=?", (args[0],))
-                conn.commit()
-
-            rows = c.fetchall()
-            c.close()
-            conn.close()
+                rows = sfn_session.query(Configs).filter(Configs.conf_id == args[0]).all()
             return rows
         except Exception as error:
             print('error executing query, error: {}'.format(error))
@@ -179,6 +203,8 @@ class SecurityFusionNode:
                 'state': self.state,
         }
         message = json.dumps(data)
+        # ADD THE REG MESSAGE TO THE DB
+        self.insert_config_db(self.module_id, message)
         # message = json.loads(message)
         return message
 

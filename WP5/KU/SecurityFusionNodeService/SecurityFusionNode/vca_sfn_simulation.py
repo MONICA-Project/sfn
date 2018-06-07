@@ -19,7 +19,17 @@ print(str(socket.gethostname()))
 
 url = 'http://0.0.0.0:5000/'
 sleep_counter = 0.8
+threaded = False
 
+configs = [
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_2_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_4_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_8_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_1_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_2_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_3_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_4_reg', False),
+]
 
 dataset_folder = '/ocean/datasets'
 message_locations = [
@@ -81,6 +91,13 @@ except requests.exceptions.RequestException as e:
 else:
     print(resp.text, resp.status_code)
     if resp.ok:
+        # SEND THE CONFIGS AS IF VCA WERE UPDATING THE SFN
+        try:
+            resp = requests.post(url + 'configs', json=json.dumps(configs))
+        except requests.exceptions.RequestException as e:
+            print('WOO THERE, Something went wrong, error:' + str(e))
+        else:
+            print(resp.text, resp.status_code)
 
         # LOAD TEST WITH LOTS OF MESSAGES
         for i in range(0, len(cam_1_crowd_density)):
@@ -96,18 +113,6 @@ else:
             cam_2_od_mess = tools.load_json_txt(message_locations[-1][0], message_locations[-1][1])
             cam_3_od_mess = tools.load_json_txt(message_locations[-1][0], message_locations[-1][1])
             cam_4_od_mess = tools.load_json_txt(message_locations[-1][0], message_locations[-1][1])
-            # call_sfn(cam_1_cd_mess, i, 'CD')
-            # call_sfn(cam_2_cd_mess, i, 'CD')
-            # call_sfn(cam_3_cd_mess, i, 'CD')
-            # call_sfn(cam_4_cd_mess, i, 'CD')
-            # call_sfn(cam_1_fa_mess, i, 'FA')
-            # call_sfn(cam_2_fa_mess, i, 'FA')
-            # call_sfn(cam_3_fa_mess, i, 'FA')
-            # call_sfn(cam_4_fa_mess, i, 'FA')
-            # call_sfn(cam_1_od_mess, i, 'OD')
-            # call_sfn(cam_2_od_mess, i, 'OD')
-            # call_sfn(cam_3_od_mess, i, 'OD')
-            # call_sfn(cam_4_od_mess, i, 'OD')
 
             if i % 60 == 0:
                 cam_3_fd_mess = tools.load_json_txt(message_locations[-2][0], message_locations[-2][1])
@@ -116,43 +121,58 @@ else:
                 t.daemon = True
                 t.start()
 
-            t = Thread(target=call_sfn, args=(cam_1_cd_mess, i, 'CD',))
-            t.daemon = True
-            t.start()
-            t = Thread(target=call_sfn, args=(cam_2_cd_mess, i, 'CD',))
-            t.daemon = True
-            t.start()
-            t = Thread(target=call_sfn, args=(cam_3_cd_mess, i, 'CD',))
-            t.daemon = True
-            t.start()
-            t = Thread(target=call_sfn, args=(cam_4_cd_mess, i, 'CD',))
-            t.daemon = True
-            t.start()
-            t = Thread(target=call_sfn, args=(cam_1_fa_mess, i, 'FA',))
-            t.daemon = True
-            t.start()
-            t = Thread(target=call_sfn, args=(cam_2_fa_mess, i, 'FA',))
-            t.daemon = True
-            t.start()
-            t = Thread(target=call_sfn, args=(cam_3_fa_mess, i, 'FA',))
-            t.daemon = True
-            t.start()
-            t = Thread(target=call_sfn, args=(cam_4_fa_mess, i, 'FA',))
-            t.daemon = True
-            t.start()
-            t = Thread(target=call_sfn, args=(cam_1_od_mess, i, 'OD',))
-            t.daemon = True
-            t.start()
-            t = Thread(target=call_sfn, args=(cam_2_od_mess, i, 'OD',))
-            t.daemon = True
-            t.start()
-            t = Thread(target=call_sfn, args=(cam_3_od_mess, i, 'OD',))
-            t.daemon = True
-            t.start()
-            t = Thread(target=call_sfn, args=(cam_4_od_mess, i, 'OD',))
-            t.daemon = True
-            t.start()
-            time.sleep(sleep_counter)
+            if threaded:
+                t = Thread(target=call_sfn, args=(cam_1_cd_mess, i, 'CD',))
+                t.daemon = True
+                t.start()
+                t = Thread(target=call_sfn, args=(cam_2_cd_mess, i, 'CD',))
+                t.daemon = True
+                t.start()
+                t = Thread(target=call_sfn, args=(cam_3_cd_mess, i, 'CD',))
+                t.daemon = True
+                t.start()
+                t = Thread(target=call_sfn, args=(cam_4_cd_mess, i, 'CD',))
+                t.daemon = True
+                t.start()
+                t = Thread(target=call_sfn, args=(cam_1_fa_mess, i, 'FA',))
+                t.daemon = True
+                t.start()
+                t = Thread(target=call_sfn, args=(cam_2_fa_mess, i, 'FA',))
+                t.daemon = True
+                t.start()
+                t = Thread(target=call_sfn, args=(cam_3_fa_mess, i, 'FA',))
+                t.daemon = True
+                t.start()
+                t = Thread(target=call_sfn, args=(cam_4_fa_mess, i, 'FA',))
+                t.daemon = True
+                t.start()
+                t = Thread(target=call_sfn, args=(cam_1_od_mess, i, 'OD',))
+                t.daemon = True
+                t.start()
+                t = Thread(target=call_sfn, args=(cam_2_od_mess, i, 'OD',))
+                t.daemon = True
+                t.start()
+                t = Thread(target=call_sfn, args=(cam_3_od_mess, i, 'OD',))
+                t.daemon = True
+                t.start()
+                t = Thread(target=call_sfn, args=(cam_4_od_mess, i, 'OD',))
+                t.daemon = True
+                t.start()
+                time.sleep(sleep_counter)
+            else:
+                call_sfn(cam_1_cd_mess, i, 'CD')
+                call_sfn(cam_2_cd_mess, i, 'CD')
+                call_sfn(cam_3_cd_mess, i, 'CD')
+                call_sfn(cam_4_cd_mess, i, 'CD')
+                call_sfn(cam_1_fa_mess, i, 'FA')
+                call_sfn(cam_2_fa_mess, i, 'FA')
+                call_sfn(cam_3_fa_mess, i, 'FA')
+                call_sfn(cam_4_fa_mess, i, 'FA')
+                call_sfn(cam_1_od_mess, i, 'OD')
+                call_sfn(cam_2_od_mess, i, 'OD')
+                call_sfn(cam_3_od_mess, i, 'OD')
+                call_sfn(cam_4_od_mess, i, 'OD')
+
 
 
 

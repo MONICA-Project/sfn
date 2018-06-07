@@ -16,6 +16,7 @@ def crowd_density_local(sfn_instance, camera_id, url, message, j_id=0):
             camera_id --        Used to pull back the correct config data from the SFN database
             url --              The url to forward the message to once processing has been completed
             message --          The original decoded JSON message in Dictionary form
+            j_id --             A Unique identifier serving as a primary key in the log db
         Returns:
             log_text --         A trace text outlining the path the message has taken
             resp_code --        A code which can be used in the SFN_Service response
@@ -36,13 +37,14 @@ def crowd_density_local(sfn_instance, camera_id, url, message, j_id=0):
     return log_text, resp_code
 
 
-def flow_analysis(sfn_instance, camera_id, url, message):
+def flow_analysis(sfn_instance, camera_id, url, message, j_id=0):
     """ Message process function to be used when messages of type flow_analysis are sent to the sfn_service
         Keyword arguments:
             sfn_instance --     The instance of the SFN module, handling all database interactions
             camera_id --        Used to pull back the correct config data from the SFN database
             url --              The url to forward the message to once processing has been completed
             message --          The original decoded JSON message in Dictionary form
+            j_id --             A Unique identifier serving as a primary key in the log db
         Returns:
             log_text --         A trace text outlining the path the message has taken
             resp_code --        A code which can be used in the SFN_Service response
@@ -57,22 +59,23 @@ def flow_analysis(sfn_instance, camera_id, url, message):
         log_text = log_text + text
         # LOG THE OUTPUT OF THIS MESSAGE OPERATION
         log_text = log_text + sfn_instance.insert_db(camera_id, 'flow_analysis', json.dumps(message))
-        sfn_instance.insert_log(1, message['timestamp'], log_text)
+        sfn_instance.insert_log(j_id, message['timestamp'], log_text)
         # print('Function has taken: {}s'.format(time.time() - start))
     else:
         log_text = log_text + 'THIS IS THE FIRST flow MESSAGE AND IS THEREFORE BLANK.'
-        sfn_instance.insert_log(1, message['timestamp'], log_text)
+        sfn_instance.insert_log(j_id, message['timestamp'], log_text)
         resp_code = 200
     return log_text, resp_code
 
 
-def fighting_detection(sfn_instance, camera_id, url, message):
+def fighting_detection(sfn_instance, camera_id, url, message, j_id=0):
     """ Message process function to be used when messages of type fighting_detection are sent to the sfn_service
         Keyword arguments:
             sfn_instance --     The instance of the SFN module, handling all database interactions
             camera_id --        Used to pull back the correct config data from the SFN database
             url --              The url to forward the message to once processing has been completed
             message --          The original decoded JSON message in Dictionary form
+            j_id --             A Unique identifier serving as a primary key in the log db
         Returns:
             log_text --         A trace text outlining the path the message has taken
             resp_code --        A code which can be used in the SFN_Service response
@@ -85,18 +88,19 @@ def fighting_detection(sfn_instance, camera_id, url, message):
     log_text = log_text + text
     # LOG THE OUTPUT OF THIS MESSAGE OPERATION
     log_text = log_text + sfn_instance.insert_db(camera_id, 'fighting_detection', json.dumps(message))
-    sfn_instance.insert_log(1, message['timestamp'], log_text)
+    sfn_instance.insert_log(j_id, message['timestamp'], log_text)
     # print('Function has taken: {}s'.format(time.time() - start))
     return log_text, resp_code
 
 
-def object_detection(sfn_instance, camera_id, url, message):
+def object_detection(sfn_instance, camera_id, url, message, j_id=0):
     """ Message process function to be used when messages of type object_detection are sent to the sfn_service
         Keyword arguments:
             sfn_instance --     The instance of the SFN module, handling all database interactions
             camera_id --        Used to pull back the correct config data from the SFN database
             url --              The url to forward the message to once processing has been completed
             message --          The original decoded JSON message in Dictionary form
+            j_id --             A Unique identifier serving as a primary key in the log db
         Returns:
             log_text --         A trace text outlining the path the message has taken
             resp_code --        A code which can be used in the SFN_Service response
@@ -109,7 +113,7 @@ def object_detection(sfn_instance, camera_id, url, message):
     log_text = log_text + text
     # LOG THE OUTPUT OF THIS MESSAGE OPERATION
     log_text = log_text + sfn_instance.insert_db(camera_id, 'object_detection', json.dumps(message))
-    sfn_instance.insert_log(1, message['timestamp'], log_text)
+    sfn_instance.insert_log(j_id, message['timestamp'], log_text)
     # print('Function has taken: {}s'.format(time.time() - start))
     return log_text, resp_code
 
@@ -125,7 +129,7 @@ def forward_message(message, url):
         return 'MESSAGE HAS BEEN FORWARDED (' + resp.text + '). ', 201
 
 
-def amalgamate_crowd_density_local(sfn_instance, url):
+def amalgamate_crowd_density_local(sfn_instance, url, j_id=0):
     sfn_module = sfn_instance
     log_text = ''
 
@@ -136,8 +140,8 @@ def amalgamate_crowd_density_local(sfn_instance, url):
     amalgamation_timestamp_1 = 0
     amalgamation_timestamp_2 = 0
     # FIND THE ENTRY FROM THIS CAM_ID FROM THIS MODULE AND REPLACE
-    recent_cam_messages = sfn_module.query_db(None, 'crowd_density_local')  # Search for a specific module_id
-    recent_cam_messages = [json.loads(item[2]) for item in recent_cam_messages]
+    recent_cam_messages = sfn_module.query_db(None, None, 'crowd_density_local')  # Search for a specific module_id
+    recent_cam_messages = [json.loads(item.msg) for item in recent_cam_messages]
 
     for i, item in enumerate(recent_cam_messages):
 
@@ -151,8 +155,11 @@ def amalgamate_crowd_density_local(sfn_instance, url):
         amalgamation_density_count += recent_cam_messages[i]['density_count']
         top_down_maps.append(recent_cam_messages[i]['density_map'])
 
-        config = sfn_module.query_config_db(recent_cam_messages[i]['camera_ids'][0])
-        config = json.loads(config[0][1])
+        config = sfn_module.query_config_db(None, recent_cam_messages[i]['camera_ids'][0])
+        if config is not None and len(config) == 1:
+            config = json.loads(config[0].msg)
+        else:
+            print('NONE OR MORE THAN ONE CONFIG WAS RETURNED')
         config_for_amalgamation.append(config['ground_plane_position'] + [config['camera_tilt']])
 
     # RUN THE AMALGAMATION
@@ -170,6 +177,7 @@ def amalgamate_crowd_density_local(sfn_instance, url):
     log_text = log_text + sfn_instance.insert_db('GLOBAL', 'crowd_density_global', json.dumps(crowd_density_global))
     text, resp_code = forward_message(crowd_density_global, url)
     log_text = log_text + text
+    sfn_instance.insert_log(j_id, j_id, log_text)
     return log_text, resp_code
 
 

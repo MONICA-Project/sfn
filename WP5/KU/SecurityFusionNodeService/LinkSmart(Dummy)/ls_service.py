@@ -146,7 +146,7 @@ def add_message_flow():
         return 'No JSON.', 415
 
 
-@app.route('/fight_detection', methods=['POST'])
+@app.route('/fighting_detection', methods=['POST'])
 def add_config_fight():
     print('REQUEST: ADD CONFIG')
     if request.is_json:
@@ -161,7 +161,7 @@ def add_config_fight():
         return 'No JSON.', 415
 
 
-@app.route('/fight_detection', methods=['PUT'])
+@app.route('/fighting_detection', methods=['PUT'])
 def add_message_fight():
     print('REQUEST: ADD MESSAGE FD')
     if request.is_json:
@@ -204,6 +204,7 @@ def add_message_object():
         return 'Added Message.', 201
     else:
         return 'No JSON.', 415
+
 
 # DEBUG FUNCTIONS
 # HELLO WORLD
