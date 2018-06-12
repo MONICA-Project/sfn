@@ -64,8 +64,8 @@ class GetFlow(FrameAnalyser):
         flow_uv = cv2.resize(flow_uv, (width, height))
 
         # VISUALIZE THE OPTICAL FLOW AND SAVE IT
-        flow_image = None
-        # flow_image = flow_to_image(flow_uv)
+        # flow_image = None
+        flow_image = flow_to_image(flow_uv)
 
         ave_flow_mag = []
         ave_flow_dir = []

@@ -4,6 +4,7 @@ import datetime
 import json
 import pickle
 import cv2
+from random import randrange
 import requests
 from pathlib import Path
 import sys
@@ -55,6 +56,9 @@ settings3 = load_settings(KU_DIR + '/KUConfigTool/' + '/' + info3[2])
 info4 = dataset(22)
 settings4 = load_settings(KU_DIR + '/KUConfigTool/' + '/' + info4[2])
 
+settings = [settings1, settings2, settings3, settings4]
+info = [info1, info2, info3, info4]
+
 # CREATE AN analyser OBJECT AND CREATE THE REGISTRATION MESSAGE
 # analyser = GetCrowd('001')
 # analyser = GetPeople('001')
@@ -81,25 +85,23 @@ cam1 = ImageSequenceStreamer(info1[0], info1[1], (1080, 768), loop_last=False, r
 cam2 = ImageSequenceStreamer(info2[0], info2[1], (1080, 768), loop_last=False, repeat=True)
 cam3 = ImageSequenceStreamer(info3[0], info3[1], (1080, 768), loop_last=False, repeat=True)
 cam4 = ImageSequenceStreamer(info4[0], info4[1], (1080, 768), loop_last=False, repeat=True)
+cam = [cam1, cam2, cam3, cam4]
 
 count = 0
-while cam1.open():
-    frame1 = cam1.read()
-    frame2 = cam2.read()
-    frame3 = cam3.read()
-    frame4 = cam4.read()
+while cam1.open() & cam2.open() & cam3.open() & cam4.open():
 
-    # choose random frame
-    frame = frame1
-    settings = settings1
+    # choose random camera
+    random_index = randrange(0, len(cam))
+    frame = cam[random_index].read()
+
+    setting = settings[random_index]
 
     if analyser.type_module == 'flow':
-        message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
-                                                         settings['flow_rois'])
+        message, result = analyser.process_frame(frame, setting['camera_id'], setting['frame_roi'], setting['flow_rois'])
     elif analyser.type_module == 'crowd_density_local':
-        message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
-                                                 settings['image_2_ground_plane_matrix'],
-                                                 settings['ground_plane_roi'], settings['ground_plane_size'])
+        message, result = analyser.process_frame(frame, setting['camera_id'], setting['frame_roi'],
+                                                 setting['image_2_ground_plane_matrix'],
+                                                 setting['ground_plane_roi'], setting['ground_plane_size'])
 
     # SEND A HTTP REQUEST OFF
     # try:
@@ -114,10 +116,10 @@ while cam1.open():
     # cv2.putText(result, 'Number of People: {}'.format(json.loads(message)['density_count']), (10, 70),
     #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
     if result != []:
-        cv2.imwrite(save_folder + info1[2] + '_' + reg_message['type_module'] + '_Result_' +
+        cv2.imwrite(save_folder + info[random_index][2] + '_' + reg_message['type_module'] + '_Result_' +
                     str(inc.get_incrementer(count, 5)) + '.jpeg', result)
 
-        with open(save_folder + info1[2] + '_' + reg_message['type_module'] + '_' +
+        with open(save_folder + info[random_index][2] + '_' + reg_message['type_module'] + '_' +
                       str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
             outfile.write(message)
         count = count + 1

@@ -85,7 +85,6 @@ with open(KU_DIR + '/Algorithms/registration_messages/' + analyser.module_id + '
 outfile.close()
 reg_message = json.loads(reg_message)
 
-
 sfn_url = 'http://127.0.0.1:5000/message'
 if info == -1:
     print('NO DATA SET SELECTED')
