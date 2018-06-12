@@ -32,7 +32,7 @@ def crowd_density_local(sfn_instance, camera_id, url, message, j_id=0):
     text, resp_code = forward_message(json.dumps(message), url)
     log_text = log_text + text
     # LOG THE OUTPUT OF THIS MESSAGE OPERATION
-    sfn_instance.insert_log(j_id, message['timestamp_1'], log_text)
+    sfn_instance.insert_log(time.time(), message['timestamp_1'], log_text)
     # print('Function has taken: {}s'.format(time.time() - start))
     return log_text, resp_code
 
@@ -58,12 +58,12 @@ def flow_analysis(sfn_instance, camera_id, url, message, j_id=0):
         text, resp_code = forward_message(json.dumps(message), url)
         log_text = log_text + text
         # LOG THE OUTPUT OF THIS MESSAGE OPERATION
-        log_text = log_text + sfn_instance.insert_db(camera_id, 'flow_analysis', json.dumps(message))
-        sfn_instance.insert_log(j_id, message['timestamp'], log_text)
+        # log_text = log_text + sfn_instance.insert_db(camera_id, 'flow_analysis', json.dumps(message))
+        sfn_instance.insert_log(time.time(), message['timestamp'], log_text)
         # print('Function has taken: {}s'.format(time.time() - start))
     else:
         log_text = log_text + 'THIS IS THE FIRST flow MESSAGE AND IS THEREFORE BLANK.'
-        sfn_instance.insert_log(j_id, message['timestamp'], log_text)
+        # sfn_instance.insert_log(time.time(), message['timestamp'], log_text)
         resp_code = 200
     return log_text, resp_code
 
@@ -88,7 +88,7 @@ def fighting_detection(sfn_instance, camera_id, url, message, j_id=0):
     log_text = log_text + text
     # LOG THE OUTPUT OF THIS MESSAGE OPERATION
     log_text = log_text + sfn_instance.insert_db(camera_id, 'fighting_detection', json.dumps(message))
-    sfn_instance.insert_log(j_id, message['timestamp'], log_text)
+    # sfn_instance.insert_log(time.time(), message['timestamp'], log_text)
     # print('Function has taken: {}s'.format(time.time() - start))
     return log_text, resp_code
 
@@ -113,7 +113,7 @@ def object_detection(sfn_instance, camera_id, url, message, j_id=0):
     log_text = log_text + text
     # LOG THE OUTPUT OF THIS MESSAGE OPERATION
     log_text = log_text + sfn_instance.insert_db(camera_id, 'object_detection', json.dumps(message))
-    sfn_instance.insert_log(j_id, message['timestamp'], log_text)
+    # sfn_instance.insert_log(time.time(), message['timestamp'], log_text)
     # print('Function has taken: {}s'.format(time.time() - start))
     return log_text, resp_code
 
@@ -125,11 +125,11 @@ def forward_message(message, url):
         print(e)
         return 'Connection Failed: ' + str(e), 450
     else:
-        print(resp.text)
-        return 'MESSAGE HAS BEEN FORWARDED (' + resp.text + '). ', 201
+        print('RESPONSE: ' + resp.text + str(resp.status_code))
+        return 'MESSAGE HAS BEEN FORWARDED (' + resp.text + str(resp.status_code) + '). ', resp.status_code
 
 
-def amalgamate_crowd_density_local(sfn_instance, url, j_id=0):
+def amalgamate_crowd_density_local(sfn_instance, url):
     sfn_module = sfn_instance
     log_text = ''
 
@@ -177,7 +177,7 @@ def amalgamate_crowd_density_local(sfn_instance, url, j_id=0):
     log_text = log_text + sfn_instance.insert_db('GLOBAL', 'crowd_density_global', json.dumps(crowd_density_global))
     text, resp_code = forward_message(crowd_density_global, url)
     log_text = log_text + text
-    sfn_instance.insert_log(j_id, j_id, log_text)
+    sfn_instance.insert_log(time.time(), time.time(), log_text)
     return log_text, resp_code
 
 

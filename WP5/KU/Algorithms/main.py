@@ -1,10 +1,12 @@
 # sfn_service.py
 """A test application designed to mimic (badly) the VCA framework."""
 import datetime
+import arrow
 import json
 import pickle
 import cv2
 import requests
+import uuid
 from pathlib import Path
 import sys
 sys.path.append(str(Path(__file__).absolute().parents[4]))
@@ -64,7 +66,7 @@ def load_settings(location):
 
 
 display = True
-info = dataset(26)
+info = dataset(12)
 # info = dataset(0)
 print(info)
 
@@ -72,24 +74,16 @@ print(info)
 settings = load_settings(KU_DIR + '/KUConfigTool/' + '/' + info[2])
 
 # CREATE AN analyser OBJECT AND CREATE THE REGISTRATION MESSAGE
-# analyser = GetCrowd('001')
-# analyser = GetPeople('001')
-analyser = GetFlow('001')
+analyser = GetCrowd(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'crowd_density_local')))
+# analyser = GetFlow('001')
+# analyser = GetFlow(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'flow')))
 
-linksmart_url = 'http://127.0.0.2:3389/add_config'
-# linksmart_url = 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring'
-reg_message = analyser.create_reg_message(datetime.datetime.utcnow().isoformat())
+reg_message = analyser.create_reg_message(arrow.utcnow())
 with open(KU_DIR + '/Algorithms/registration_messages/' + analyser.module_id + '_' + analyser.type_module + '_reg.txt',
           'w') as outfile:
     outfile.write(reg_message)
+outfile.close()
 reg_message = json.loads(reg_message)
-
-try:
-    res = requests.post(linksmart_url, data=reg_message, headers={'content-Type': 'application/json'})
-except requests.exceptions.RequestException as e:
-    print(e)
-else:
-    print('Registration Message has been Sent. Response: ' + str(res.status_code) + '. ' + res.text)
 
 
 sfn_url = 'http://127.0.0.1:5000/message'

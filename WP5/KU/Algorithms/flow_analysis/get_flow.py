@@ -1,18 +1,15 @@
 # get_flow.py
-import numpy as np
 import pickle
 from WP5.KU.Algorithms.frame_analyser import FrameAnalyser
 from WP5.KU.Algorithms.flow_analysis.FlowNet2_src.flow_2img import flow_2img
 import json
 import cv2
 import math
-import datetime
+import arrow
 from WP5.KU.Algorithms.flow_analysis.FlowNet2_src import flow_to_image
 
 __version__ = '0.1'
 __author__ = 'Hajar Sadeghi (KU)'
-
-
 
 
 class GetFlow(FrameAnalyser):
@@ -42,9 +39,8 @@ class GetFlow(FrameAnalyser):
         # CHECK WHETHER THIS IS THE FIRST FRAME OF THIS CAMERA ID
         if camera_id not in self.previous_frames_dictionary:
             self.previous_frames_dictionary[camera_id] = frame
-            message = self.create_obs_message([], [], datetime.datetime.utcnow().isoformat())
-            return (message, [])
-
+            message = self.create_obs_message([], [], arrow.utcnow())
+            return message, []
 
         # USES ONLY THE REGION OF INTEREST DEFINED IN THE SETTINGS
         frame1 = self.previous_frames_dictionary[camera_id]
@@ -59,18 +55,20 @@ class GetFlow(FrameAnalyser):
         # DO SOME SCALE TO OPTIMAL MODEL INPUT, MAYBE SPLIT IMAGE IF ITS TOO LARGE?
         fr1 = cv2.resize(frame1, (self.scale_height, self.scale_width))
         # cv2.resize(frame1, (0, 0), fx=self.scale, fy=self.scale)
-        fr2 = cv2.resize(frame2, (self.scale_height, self.scale_width)) # cv2.resize(frame2, (0, 0), fx=self.scale, fy=self.scale)
+        fr2 = cv2.resize(frame2, (self.scale_height, self.scale_width))
+        # cv2.resize(frame2, (0, 0), fx=self.scale, fy=self.scale)
 
         flow_uv = flow_2img(fr1, fr2)
 
         # CONVERT BACK TO ORIGINAL SCALE
         flow_uv = cv2.resize(flow_uv, (width, height))
 
-        # vISUALIZE THE OPTICAL FLOW AND SAVE IT
-        flow_image = flow_to_image(flow_uv)
+        # VISUALIZE THE OPTICAL FLOW AND SAVE IT
+        flow_image = None
+        # flow_image = flow_to_image(flow_uv)
 
         ave_flow_mag = []
-        ave_flow_dir =[]
+        ave_flow_dir = []
         for i in range(len(rois)):
             roi_current = rois[i]
             flow_uv_current = flow_uv[roi_current[1]:roi_current[3], roi_current[0]:roi_current[2], :]
@@ -91,7 +89,7 @@ class GetFlow(FrameAnalyser):
 
         # CREATE THE MESSAGE
         self.cam_id = camera_id
-        message = self.create_obs_message(ave_flow_mag, ave_flow_dir, datetime.datetime.utcnow().isoformat())
+        message = self.create_obs_message(ave_flow_mag, ave_flow_dir, arrow.utcnow())
 
         return message, flow_image
 
@@ -112,7 +110,7 @@ class GetFlow(FrameAnalyser):
             'average_flow_magnitude': average_flow_mag,
             'average_flow_direction': average_flow_dir,
             'flow_frame_byte_array': '',
-            'timestamp': timestamp,
+            'timestamp': str(timestamp),
         }
 
         message = json.dumps(data)
@@ -122,7 +120,7 @@ class GetFlow(FrameAnalyser):
         data = {
                 'module_id': self.module_id,
                 'type_module': self.type_module,
-                'timestamp': timestamp,
+                'timestamp': str(timestamp),
                 'state': self.state,
         }
         message = json.dumps(data)

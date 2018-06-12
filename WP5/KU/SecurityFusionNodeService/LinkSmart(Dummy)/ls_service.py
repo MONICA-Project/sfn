@@ -69,7 +69,7 @@ def process_message(mes):
     messages.append(mes)
     try:
         if 'module_id' in mes:
-            outfile = open(mes['module_id'] + '_' + mes['camera_ids'][0] + '.txt', 'w')
+            outfile = open(mes['type_module'] + '_' + mes['camera_ids'][0] + '.txt', 'w')
         else:
             outfile = open(mes['camera_ids'][0] + '.txt', 'w')
     except IOError:
@@ -87,9 +87,9 @@ def process_message(mes):
 
 
 # REPLICATED FUNCTIONS OF THE REAL SCRAL
-@app.route('/crowd_density', methods=['POST'])
-def add_config_crowd():
-    print('REQUEST: ADD CONFIG')
+@app.route('/scral/sfn/camera', methods=['POST'])
+def add_camera():
+    print('REQUEST: ADD CAMERA CONFIG')
     if request.is_json:
         config = request.get_json(force=True)
         # CHECK IF ITS STILL A STRING AND IF SO LOAD FROM JSON FORMAT
@@ -101,7 +101,21 @@ def add_config_crowd():
         return 'No JSON.', 415
 
 
-@app.route('/crowd_density', methods=['PUT'])
+@app.route('/scral/sfn/crowd_monitoring', methods=['POST'])
+def add_config_crowd():
+    print('REQUEST: ADD CROWD COUNTING CONFIG')
+    if request.is_json:
+        config = request.get_json(force=True)
+        # CHECK IF ITS STILL A STRING AND IF SO LOAD FROM JSON FORMAT
+        if type(config) == str:
+            config = json.loads(config)
+        return process_config(config)
+        # return log, response_code
+    else:
+        return 'No JSON.', 415
+
+
+@app.route('/scral/sfn/crowd_monitoring', methods=['PUT'])
 def add_message_crowd():
     print('REQUEST: ADD MESSAGE CD')
     if request.is_json:
@@ -116,9 +130,9 @@ def add_message_crowd():
         return 'No JSON.', 415
 
 
-@app.route('/flow_analysis', methods=['POST'])
+@app.route('/scral/sfn/flow_analysis', methods=['POST'])
 def add_config_flow():
-    print('REQUEST: ADD CONFIG')
+    print('REQUEST: ADD FLOW ANALYSIS CONFIG')
     if request.is_json:
         config = request.get_json(force=True)
         # CHECK IF ITS STILL A STRING AND IF SO LOAD FROM JSON FORMAT
@@ -131,7 +145,7 @@ def add_config_flow():
         return 'No JSON.', 415
 
 
-@app.route('/flow_analysis', methods=['PUT'])
+@app.route('/scral/sfn/flow_analysis', methods=['PUT'])
 def add_message_flow():
     print('REQUEST: ADD MESSAGE FA')
     if request.is_json:
@@ -146,9 +160,9 @@ def add_message_flow():
         return 'No JSON.', 415
 
 
-@app.route('/fighting_detection', methods=['POST'])
+@app.route('/scral/sfn/fight_detection', methods=['POST'])
 def add_config_fight():
-    print('REQUEST: ADD CONFIG')
+    print('REQUEST: ADD FIGHT DETECTION CONFIG')
     if request.is_json:
         config = request.get_json(force=True)
         # CHECK IF ITS STILL A STRING AND IF SO LOAD FROM JSON FORMAT
@@ -161,7 +175,7 @@ def add_config_fight():
         return 'No JSON.', 415
 
 
-@app.route('/fighting_detection', methods=['PUT'])
+@app.route('/scral/sfn/fight_detection', methods=['PUT'])
 def add_message_fight():
     print('REQUEST: ADD MESSAGE FD')
     if request.is_json:
@@ -176,9 +190,9 @@ def add_message_fight():
         return 'No JSON.', 415
 
 
-@app.route('/object_detection', methods=['POST'])
+@app.route('/scral/sfn/object_detection', methods=['POST'])
 def add_config_object():
-    print('REQUEST: ADD CONFIG')
+    print('REQUEST: ADD OBJECT DETECTION CONFIG')
     if request.is_json:
         config = request.get_json(force=True)
         # CHECK IF ITS STILL A STRING AND IF SO LOAD FROM JSON FORMAT
@@ -191,7 +205,7 @@ def add_config_object():
         return 'No JSON.', 415
 
 
-@app.route('/object_detection', methods=['PUT'])
+@app.route('/scral/sfn/object_detection', methods=['PUT'])
 def add_message_object():
     print('REQUEST: ADD MESSAGE OD')
     if request.is_json:
@@ -208,7 +222,7 @@ def add_message_object():
 
 # DEBUG FUNCTIONS
 # HELLO WORLD
-@app.route("/")
+@app.route("/scral/sfn")
 def hello_world():
     print('REQUEST: HELLO WORLD')
     return "Dummy LinkSmart: Hello World!"

@@ -8,7 +8,7 @@ import numpy as np
 import base64
 import cv2
 import json
-import datetime
+import arrow
 import WP5.KU.SharedResources.get_top_down_heat_map as heat_map_gen
 from WP5.KU.definitions import KU_DIR
 from WP5.KU.Algorithms.frame_analyser import FrameAnalyser
@@ -86,7 +86,7 @@ class GetCrowd(FrameAnalyser):
 
         # CREATE THE MESSAGE
         self.cam_id = camera_id
-        timestamp = datetime.datetime.utcnow().isoformat()
+        timestamp = arrow.utcnow()
         # CONVERT TO TOP DOWN
         top_down_density_map, heat_image = heat_map_gen.generate_heat_map(density_map,
                                                                           image_2_ground_plane_matrix,
@@ -122,8 +122,8 @@ class GetCrowd(FrameAnalyser):
                 'frame_byte_array': '',
                 'image_dims': '',
                 'ground_plane_position': '',
-                'timestamp_1': timestamp,
-                'timestamp_2': timestamp,
+                'timestamp_1': str(timestamp),
+                'timestamp_2': str(timestamp),
         }
         if frame is not None:
             # RESIZE THE IMAGE AND MAKE IT BLACK AND WHITE
@@ -150,7 +150,7 @@ class GetCrowd(FrameAnalyser):
         data = {
                 'module_id': self.module_id,
                 'type_module': self.type_module,
-                'timestamp': timestamp,
+                'timestamp': str(timestamp),
                 'zone_id': self.zone_id,
                 'state': self.state,
         }

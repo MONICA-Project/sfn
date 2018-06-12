@@ -4,10 +4,11 @@ linksmart"""
 import argparse
 import requests
 import json
-import datetime
+import arrow
 import time
+import datetime
+import uuid
 from flask import Flask, request
-from flask_sqlalchemy import SQLAlchemy
 from redis import Redis
 from rq import Queue
 from rq.job import Job
@@ -22,9 +23,8 @@ __version__ = '0.2'
 __author__ = 'RoViT (KU)'
 
 app = Flask(__name__)
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sfn_database.db'
-# sfn_db = SQLAlchemy(app)
-sfn_module = SecurityFusionNode('001')
+print('SFN STARTING. MODULE ID: {}'.format(uuid.uuid5(uuid.NAMESPACE_DNS, 'SFN')))
+sfn_module = SecurityFusionNode(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'SFN')))
 urls = sfn_module.load_urls(str(Path(__file__).absolute().parents[0]), 'urls')
 
 headers = {'content-Type': 'application/json'}
@@ -32,8 +32,6 @@ headers = {'content-Type': 'application/json'}
 conn = Redis()
 queue_name = 'default'
 q = Queue(name=queue_name, connection=conn)
-
-# TODO: SEND THE REGISTRATION MESSAGE
 
 
 @app.route("/")
@@ -102,20 +100,20 @@ def add_message():
         # BASED ON wp_module PERFORM PROCESSING ON MODULE
         text = ''
         if wp_module == 'crowd_density_local':
-            text, resp_code = crowd_density_local(sfn_module, camera_id, urls['crowd_density_url'], message, start)
+            text, resp_code = crowd_density_local(sfn_module, camera_id, urls['crowd_density_url'], message)
         elif wp_module == 'flow':
-            text, resp_code = flow_analysis(sfn_module, camera_id, urls['flow_analysis_url'], message, start)
+            text, resp_code = flow_analysis(sfn_module, camera_id, urls['flow_analysis_url'], message)
         elif wp_module == 'fighting_detection':
-            text, resp_code = fighting_detection(sfn_module, camera_id, urls['flow_analysis_url'], message, start)
+            text, resp_code = fighting_detection(sfn_module, camera_id, urls['fighting_detection_url'], message)
         elif wp_module == 'object_detection':
-            text, resp_code = object_detection(sfn_module, camera_id, urls['flow_analysis_url'], message, start)
+            text, resp_code = object_detection(sfn_module, camera_id, urls['object_detection_url'], message)
         # print('Function has taken: {}s'.format(time.time() - start))
         log_text = log_text + text
 
         # UNDER AND IF STATEMENT CHECK IF WE WANT TO AMALGAMATE AND CREATE A NEW MESSAGE
         sfn_module.timer = time.time() - sfn_module.last_amalgamation
         if sfn_module.length_db(module_id='crowd_density_local') > 2 and sfn_module.timer > 10:
-            text, resp_code = amalgamate_crowd_density_local(sfn_module, urls['crowd_density_url'], start)
+            text, resp_code = amalgamate_crowd_density_local(sfn_module, urls['crowd_density_url'])
             sfn_module.last_amalgamation = time.time()
         else:
             # NO MESSAGES HELD
@@ -141,12 +139,39 @@ def update_configs():
             new_configs = json.loads(new_configs)
 
         log_text = ''
+        # UPDATE THE SFN REG MESSAGE
+        config = json.loads(sfn_module.create_reg_message(arrow.utcnow()))
+        log_text = sfn_module.insert_config_db(c_id=config['module_id'], msg=json.dumps(config))
+        print(log_text)
         for config in new_configs:
             if 'camera_id' in config:
                 log_text = sfn_module.insert_config_db(c_id=config['camera_id'], msg=json.dumps(config))
             elif 'module_id' in config:
                 log_text = sfn_module.insert_config_db(c_id=config['module_id'], msg=json.dumps(config))
             print(log_text)
+
+        configs = sfn_module.query_config_db(None)
+        configs = [json.loads(item.msg) for item in configs]
+        for config in configs:
+            if 'camera_id' in config:
+                sfn_module.send_reg_message(json.dumps(config), urls['camera_reg_url'])
+            elif 'module_id' in config:
+                if config['type_module'] == 'crowd_density_local':
+                    print('SENDING CONFIG crowd_density_local')
+                    sfn_module.send_reg_message(json.dumps(config), urls['crowd_density_url'])
+                elif config['type_module'] == 'crowd_density_global':
+                    print('SENDING CONFIG crowd_density_global')
+                    sfn_module.send_reg_message(json.dumps(config), urls['crowd_density_url'])
+                elif config['type_module'] == 'flow':
+                    print('SENDING CONFIG flow')
+                    sfn_module.send_reg_message(json.dumps(config), urls['flow_analysis_url'])
+                elif config['type_module'] == 'fighting_detection':
+                    print('SENDING CONFIG fighting_detection')
+                    sfn_module.send_reg_message(json.dumps(config), urls['fighting_detection_url'])
+                elif config['type_module'] == 'object_detection':
+                    print('SENDING CONFIG object_detection')
+                    sfn_module.send_reg_message(json.dumps(config), urls['object_detection_url'])
+
         return log_text, 200
     else:
         return 'No JSON.', 415

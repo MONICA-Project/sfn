@@ -17,12 +17,16 @@ print(str(socket.gethostname()))
 
 # url = 'http://dupre.hopto.org:5000/'
 url = 'http://0.0.0.0:5000/'
+scral_url = 'http://monappdwp3.monica-cloud.eu:8000/'
+scral_url = 'http://0.0.0.0:3389/'
 
-sfn_urls = {'dummy_linksmart_url': 'http://0.0.0.0:3389/',
+sfn_urls = {'dummy_linksmart_url': scral_url,
             # 'crowd_density_url': 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring',
-            'crowd_density_url': 'http://0.0.0.0:3389/crowd_density',
-            'object_detection_url': 'http://0.0.0.0:3389/object_detection',
-            'fighting_detection_url': 'http://0.0.0.0:3389/fighting_detection',
+            'crowd_density_url': scral_url + 'scral/sfn/crowd_monitoring',
+            'flow_analysis_url': scral_url + 'scral/sfn/flow_analysis',
+            'object_detection_url': scral_url + 'scral/sfn/object_detection',
+            'fighting_detection_url': scral_url + 'scral/sfn/fight_detection',
+            'camera_reg_url': scral_url + 'scral/sfn/camera',
             }
 
 configs = [
@@ -33,6 +37,10 @@ configs = [
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_2_reg', False),
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_3_reg', False),
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_4_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '002_crowd_density_local_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '001_flow_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6506F977-6868-4E78-B02D-8C516B8469F3_object_detection_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6789pwrl123dc_fighting_detection_reg', False),
 ]
 
 # HELLO WORLD
@@ -53,24 +61,7 @@ else:
 
 # HELLO LINKSMART VIA SFN
 try:
-    resp = requests.get(url + 'linksmart')
-except requests.exceptions.RequestException as e:
-    print('WOO THERE, Something went wrong, error:' + str(e))
-else:
-    print(resp.text, resp.status_code)
-
-
-# REGISTER SFN ON LINKSMART
-try:
-    resp = requests.get(url + 'register')
-except requests.exceptions.RequestException as e:
-    print('WOO THERE, Something went wrong, error:' + str(e))
-else:
-    print(resp.text, resp.status_code)
-
-# REGISTER THE SAME SFN ON LINKSMART
-try:
-    resp = requests.get(url + 'register')
+    resp = requests.get(url + 'scral/sfn')
 except requests.exceptions.RequestException as e:
     print('WOO THERE, Something went wrong, error:' + str(e))
 else:

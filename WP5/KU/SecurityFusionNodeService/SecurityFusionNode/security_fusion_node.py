@@ -4,14 +4,16 @@ messages"""
 import numpy as np
 import json
 import time
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, OperationalError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
 from sqlalchemy import and_
 from sqlalchemy import create_engine
 from pathlib import Path
+import requests
 import sys
 sys.path.append(str(Path(__file__).absolute().parents[3]))
 from KU.SharedResources.convert_to_meter import convert_to_meter
@@ -27,43 +29,53 @@ log_base = declarative_base()
 class Messages(sfn_base):
     __tablename__ = 'messages'
     # Here we define columns for the table messages
-    id = Column(String, primary_key=True)
-    cam_id = Column(String, nullable=True)
-    module_id = Column(String, nullable=False)
-    msg = Column(String, nullable=False)
+    id = Column(String(300), primary_key=True)
+    cam_id = Column(String(100), nullable=True)
+    module_id = Column(String(300), nullable=False)
+    msg = Column(MEDIUMTEXT, nullable=False)
 
 
 class Configs(sfn_base):
     __tablename__ = 'configs'
     # Here we define columns for the table configs
-    conf_id = Column(String, primary_key=True)
-    msg = Column(String, nullable=False)
+    conf_id = Column(String(300), primary_key=True)
+    msg = Column(MEDIUMTEXT, nullable=False)
 
 
 class Logs(log_base):
     __tablename__ = 'logs'
     # Here we define columns for the table configs
-    job_id = Column(String, primary_key=True)
-    time = Column(String, nullable=False)
-    log = Column(String, nullable=False)
+    job_id = Column(String(100), primary_key=True)
+    time = Column(String(100), nullable=False)
+    log = Column(String(1000), nullable=False)
 
 
 class SecurityFusionNode:
 
     def __init__(self, module_id):
-        self.module_id = module_id + '_crowd_density_global'
+        self.module_id = module_id
         self.module_type = 'crowd_density_global'
         self.last_amalgamation = time.time()
         self.timer = 0
         self.state = 'active'
 
-        self.sfn_engine = create_engine('sqlite:///sfn_database.db')
+        try:
+            # self.sfn_engine = create_engine('sqlite:///sfn_database.db')
+            self.sfn_engine = create_engine('mysql://root:root@localhost:3307/sfn_database')
+        except OperationalError as error:
+            print(error)
+            self.sfn_engine = create_engine('mysql://root:root@localhost:3307/')
+            self.sfn_engine.execute('CREATE DATABASE sfn_database')
+            self.sfn_engine.execute('USE sfn_database')
+
         sfn_base.metadata.drop_all(self.sfn_engine)
         sfn_base.metadata.create_all(self.sfn_engine)
         sfn_session_factory = sessionmaker(bind=self.sfn_engine)
         self.sfn_db_session = scoped_session(sfn_session_factory)
 
-        self.log_engine = create_engine('sqlite:///log_database.db')
+        # self.log_engine = create_engine('sqlite:///log_database.db')
+        self.log_engine = create_engine('mysql://root:root@localhost:3307/log_database')
+
         log_base.metadata.drop_all(self.log_engine)
         log_base.metadata.create_all(self.log_engine)
         log_factory_session = sessionmaker(bind=self.log_engine)
@@ -100,6 +112,8 @@ class SecurityFusionNode:
         except SQLAlchemyError as error:
             session.rollback()
             print(error)
+
+        session.close()
         return log_text
 
     def insert_config_db(self, c_id, msg, session=None):
@@ -125,6 +139,8 @@ class SecurityFusionNode:
         except SQLAlchemyError as error:
             session.rollback()
             print(error)
+
+        session.close()
         return log_text
 
     def insert_log(self, j_id, timestamp, log):
@@ -136,6 +152,8 @@ class SecurityFusionNode:
         except SQLAlchemyError as error:
             log_session.rollback()
             print(error)
+
+        log_session.close()
 
     @staticmethod
     def delete_db(sfn_session, *args):
@@ -150,10 +168,12 @@ class SecurityFusionNode:
             return None
 
     def length_db(self, module_id=None):
+        session = self.get_session()
         if module_id is None:
-            qr = self.query_db(self.get_session())
+            qr = self.query_db(session)
         else:
-            qr = self.query_db(self.get_session(), None, module_id)
+            qr = self.query_db(session, None, module_id)
+        session.close()
         if qr is None:
             return 0
         else:
@@ -161,8 +181,10 @@ class SecurityFusionNode:
 
     def query_db(self, sfn_session, *args):
         """Query the recent camera messages database"""
+        session_created = False
         if sfn_session is None:
             sfn_session = self.get_session()
+            session_created = True
         rows = []
         try:
             if len(args) == 0:  # No input
@@ -175,31 +197,42 @@ class SecurityFusionNode:
                 else:
                     rows = sfn_session.query(Messages).filter(and_(Messages.cam_id == args[0],
                                                                    Messages.module_id == args[1])).all()
+
+            if session_created:
+                sfn_session.close()
             return rows
         except Exception as error:
             print('error executing query, error: {}'.format(error))
+            if session_created:
+                sfn_session.close()
             return None
 
     def query_config_db(self, sfn_session, *args):
         """Query the configs database"""
+        session_created = False
         if sfn_session is None:
             sfn_session = self.get_session()
+            session_created = True
         rows = []
         try:
             if len(args) == 0:  # No input
                 rows = sfn_session.query(Configs).all()
             elif len(args) == 1:
                 rows = sfn_session.query(Configs).filter(Configs.conf_id == args[0]).all()
+            if session_created:
+                sfn_session.close()
             return rows
         except Exception as error:
             print('error executing query, error: {}'.format(error))
+            if session_created:
+                sfn_session.close()
             return None
 
     def create_reg_message(self, timestamp):
         data = {
                 'module_id': self.module_id,
-                'module_type': self.module_type,
-                'timestamp': timestamp,
+                'type_module': self.module_type,
+                'timestamp': str(timestamp),
                 'state': self.state,
         }
         message = json.dumps(data)
@@ -207,6 +240,17 @@ class SecurityFusionNode:
         self.insert_config_db(self.module_id, message)
         # message = json.loads(message)
         return message
+
+    @staticmethod
+    def send_reg_message(message, url):
+        try:
+            resp = requests.post(url, data=message, headers={'content-Type': 'application/json'})
+        except requests.exceptions.RequestException as e:
+            print(e)
+            return 'Connection Failed: ' + str(e), 450
+        else:
+            print('RESPONSE: ' + resp.text + ' ' + str(resp.status_code))
+            return 'REG MESSAGE SENT (' + resp.text + str(resp.status_code) + '). ', resp.status_code
 
     def create_obs_message(self, camera_ids, count, heat_map, timestamp_oldest, timestamp_newest, ground_plane_pos):
         data = {

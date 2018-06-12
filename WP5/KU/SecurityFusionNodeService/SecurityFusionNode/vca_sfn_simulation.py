@@ -4,7 +4,9 @@ import json
 import requests
 from threading import Thread
 import time
+import arrow
 import os
+import uuid
 import socket
 from pathlib import Path
 import sys
@@ -18,8 +20,20 @@ __author__ = 'RoViT (KU)'
 print(str(socket.gethostname()))
 
 url = 'http://0.0.0.0:5000/'
-sleep_counter = 0.8
-threaded = False
+scral_url = 'http://monappdwp3.monica-cloud.eu:8000/'
+# scral_url = 'http://0.0.0.0:3389/'
+
+sfn_urls = {'dummy_linksmart_url': scral_url,
+            # 'crowd_density_url': 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring',
+            'crowd_density_url': scral_url + 'scral/sfn/crowd_monitoring',
+            'flow_analysis_url': scral_url + 'scral/sfn/flow_analysis',
+            'object_detection_url': scral_url + 'scral/sfn/object_detection',
+            'fighting_detection_url': scral_url + 'scral/sfn/fight_detection',
+            'camera_reg_url': scral_url + 'scral/sfn/camera',
+            }
+
+sleep_counter = 0.3
+threaded = True
 
 configs = [
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_2_reg', False),
@@ -29,6 +43,11 @@ configs = [
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_2_reg', False),
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_3_reg', False),
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_4_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_4_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '002_crowd_density_local_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '001_flow_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6506F977-6868-4E78-B02D-8C516B8469F3_object_detection_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6789pwrl123dc_fighting_detection_reg', False),
 ]
 
 dataset_folder = '/ocean/datasets'
@@ -91,6 +110,13 @@ except requests.exceptions.RequestException as e:
 else:
     print(resp.text, resp.status_code)
     if resp.ok:
+        # UPDATE URLS
+        try:
+            resp = requests.post(url + 'urls', json=json.dumps(sfn_urls))
+        except requests.exceptions.RequestException as e:
+            print('WOO THERE, Something went wrong, error:' + str(e))
+        else:
+            print(resp.text, resp.status_code)
         # SEND THE CONFIGS AS IF VCA WERE UPDATING THE SFN
         try:
             resp = requests.post(url + 'configs', json=json.dumps(configs))
@@ -102,24 +128,48 @@ else:
         # LOAD TEST WITH LOTS OF MESSAGES
         for i in range(0, len(cam_1_crowd_density)):
             cam_1_cd_mess = tools.load_json_txt(cam_1_crowd_density[i][0], cam_1_crowd_density[i][1])
+            cam_1_cd_mess['timestamp_1'] = str(arrow.utcnow())
+            cam_1_cd_mess['timestamp_2'] = str(arrow.utcnow())
+            cam_1_cd_mess['module_id'] = '002'
             cam_2_cd_mess = tools.load_json_txt(cam_2_crowd_density[i][0], cam_2_crowd_density[i][1])
+            cam_2_cd_mess['timestamp_1'] = str(arrow.utcnow())
+            cam_2_cd_mess['timestamp_2'] = str(arrow.utcnow())
+            cam_2_cd_mess['module_id'] = '002'
             cam_3_cd_mess = tools.load_json_txt(cam_3_crowd_density[i][0], cam_3_crowd_density[i][1])
+            cam_3_cd_mess['timestamp_1'] = str(arrow.utcnow())
+            cam_3_cd_mess['timestamp_2'] = str(arrow.utcnow())
+            cam_3_cd_mess['module_id'] = '002'
             cam_4_cd_mess = tools.load_json_txt(cam_4_crowd_density[i][0], cam_4_crowd_density[i][1])
+            cam_4_cd_mess['timestamp_1'] = str(arrow.utcnow())
+            cam_4_cd_mess['timestamp_2'] = str(arrow.utcnow())
+            cam_4_cd_mess['module_id'] = '002'
             cam_1_fa_mess = tools.load_json_txt(cam_1_flow_analysis[i][0], cam_1_flow_analysis[i][1])
+            cam_1_fa_mess['timestamp'] = str(arrow.utcnow())
             cam_2_fa_mess = tools.load_json_txt(cam_2_flow_analysis[i][0], cam_2_flow_analysis[i][1])
+            cam_2_fa_mess['timestamp'] = str(arrow.utcnow())
             cam_3_fa_mess = tools.load_json_txt(cam_3_flow_analysis[i][0], cam_3_flow_analysis[i][1])
+            cam_3_fa_mess['timestamp'] = str(arrow.utcnow())
             cam_4_fa_mess = tools.load_json_txt(cam_4_flow_analysis[i][0], cam_4_flow_analysis[i][1])
+            cam_4_fa_mess['timestamp'] = str(arrow.utcnow())
             cam_1_od_mess = tools.load_json_txt(message_locations[-1][0], message_locations[-1][1])
+            cam_1_od_mess['timestamp'] = str(arrow.utcnow())
             cam_2_od_mess = tools.load_json_txt(message_locations[-1][0], message_locations[-1][1])
+            cam_2_od_mess['timestamp'] = str(arrow.utcnow())
             cam_3_od_mess = tools.load_json_txt(message_locations[-1][0], message_locations[-1][1])
+            cam_3_od_mess['timestamp'] = str(arrow.utcnow())
             cam_4_od_mess = tools.load_json_txt(message_locations[-1][0], message_locations[-1][1])
+            cam_4_od_mess['timestamp'] = str(arrow.utcnow())
 
             if i % 60 == 0:
                 cam_3_fd_mess = tools.load_json_txt(message_locations[-2][0], message_locations[-2][1])
-                # call_sfn(cam_3_fd_mess, i, 'FD')
-                t = Thread(target=call_sfn, args=(cam_3_fd_mess, i, 'FD',))
-                t.daemon = True
-                t.start()
+                cam_3_fd_mess['timestamp'] = str(arrow.utcnow())
+
+                if threaded:
+                    t = Thread(target=call_sfn, args=(cam_3_fd_mess, i, 'FD',))
+                    t.daemon = True
+                    t.start()
+                else:
+                    call_sfn(cam_3_fd_mess, i, 'FD')
 
             if threaded:
                 t = Thread(target=call_sfn, args=(cam_1_cd_mess, i, 'CD',))
