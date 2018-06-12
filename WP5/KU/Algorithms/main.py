@@ -64,7 +64,7 @@ def load_settings(location):
 
 
 display = True
-info = dataset(12)
+info = dataset(26)
 # info = dataset(0)
 print(info)
 
@@ -72,9 +72,9 @@ print(info)
 settings = load_settings(KU_DIR + '/KUConfigTool/' + '/' + info[2])
 
 # CREATE AN analyser OBJECT AND CREATE THE REGISTRATION MESSAGE
-analyser = GetCrowd('001')
+# analyser = GetCrowd('001')
 # analyser = GetPeople('001')
-# analyser = GetFlow('001')
+analyser = GetFlow('001')
 
 linksmart_url = 'http://127.0.0.2:3389/add_config'
 # linksmart_url = 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring'
@@ -108,9 +108,13 @@ else:
         count = 0
         while cap.open():
             frame = cap.read()
-            message, frame = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
-                                                     settings['image_2_ground_plane_matrix'],
-                                                     settings['ground_plane_roi'], settings['ground_plane_size'])
+            if analyser.type_module == 'flow':
+                message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
+                                                         settings['flow_rois'])
+            elif analyser.type_module == 'crowd_density_local':
+                message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
+                                                         settings['image_2_ground_plane_matrix'],
+                                                         settings['ground_plane_roi'], settings['ground_plane_size'])
 
             # SEND A HTTP REQUEST OFF
             try:
@@ -140,9 +144,13 @@ else:
         count = 0
         while cam.open():
             frame = cam.read()
-            message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
-                                                     settings['image_2_ground_plane_matrix'],
-                                                     settings['ground_plane_roi'], settings['ground_plane_size'])
+            if analyser.type_module == 'flow':
+                message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
+                                                         settings['flow_rois'])
+            elif analyser.type_module == 'crowd_density_local':
+                message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
+                                                         settings['image_2_ground_plane_matrix'],
+                                                         settings['ground_plane_roi'], settings['ground_plane_size'])
 
             # SEND A HTTP REQUEST OFF
             # try:
@@ -156,15 +164,16 @@ else:
             save_folder = str(Path(__file__).absolute().parents[0]) + '/algorithm_output/'
             # cv2.putText(result, 'Number of People: {}'.format(json.loads(message)['density_count']), (10, 70),
             #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
-            cv2.imwrite(save_folder + info[2] + '_' + reg_message['type_module'] + '_Result_' +
+            if result != []:
+                cv2.imwrite(save_folder + info[2] + '_' + reg_message['type_module'] + '_Result_' +
                         str(inc.get_incrementer(count, 5)) + '.jpeg', result)
-            with open(save_folder + info[2] + '_' + reg_message['type_module'] + '_' +
+                with open(save_folder + info[2] + '_' + reg_message['type_module'] + '_' +
                       str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
-                outfile.write(message)
-            count = count + 1
-            if display:
-                key = cv2.waitKey(1) & 0xFF
-                # KEYBINDINGS FOR DISPLAY
-                cv2.imshow('frame', frame)
-                if key == 27:  # exit
-                    break
+                    outfile.write(message)
+                count = count + 1
+                if display:
+                    key = cv2.waitKey(1) & 0xFF
+                    # KEYBINDINGS FOR DISPLAY
+                    cv2.imshow('frame', frame)
+                    if key == 27:  # exit
+                        break
