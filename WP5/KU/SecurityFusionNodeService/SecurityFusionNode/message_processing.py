@@ -59,7 +59,7 @@ def flow_analysis(sfn_instance, camera_id, url, message, j_id=0):
         log_text = log_text + text
         # LOG THE OUTPUT OF THIS MESSAGE OPERATION
         # log_text = log_text + sfn_instance.insert_db(camera_id, 'flow_analysis', json.dumps(message))
-        sfn_instance.insert_log(time.time(), message['timestamp'], log_text)
+        # sfn_instance.insert_log(time.time(), message['timestamp'], log_text)
         # print('Function has taken: {}s'.format(time.time() - start))
     else:
         log_text = log_text + 'THIS IS THE FIRST flow MESSAGE AND IS THEREFORE BLANK.'
@@ -87,7 +87,7 @@ def fighting_detection(sfn_instance, camera_id, url, message, j_id=0):
     text, resp_code = forward_message(json.dumps(message), url)
     log_text = log_text + text
     # LOG THE OUTPUT OF THIS MESSAGE OPERATION
-    log_text = log_text + sfn_instance.insert_db(camera_id, 'fighting_detection', json.dumps(message))
+    # log_text = log_text + sfn_instance.insert_db(camera_id, 'fighting_detection', json.dumps(message))
     # sfn_instance.insert_log(time.time(), message['timestamp'], log_text)
     # print('Function has taken: {}s'.format(time.time() - start))
     return log_text, resp_code
@@ -112,7 +112,7 @@ def object_detection(sfn_instance, camera_id, url, message, j_id=0):
     text, resp_code = forward_message(json.dumps(message), url)
     log_text = log_text + text
     # LOG THE OUTPUT OF THIS MESSAGE OPERATION
-    log_text = log_text + sfn_instance.insert_db(camera_id, 'object_detection', json.dumps(message))
+    # log_text = log_text + sfn_instance.insert_db(camera_id, 'object_detection', json.dumps(message))
     # sfn_instance.insert_log(time.time(), message['timestamp'], log_text)
     # print('Function has taken: {}s'.format(time.time() - start))
     return log_text, resp_code
@@ -160,12 +160,16 @@ def amalgamate_crowd_density_local(sfn_instance, url):
             config = json.loads(config[0].msg)
         else:
             print('NONE OR MORE THAN ONE CONFIG WAS RETURNED')
-        config_for_amalgamation.append(config['ground_plane_position'] + [config['camera_tilt']])
 
+        config_for_amalgamation.append(config['ground_plane_position'] + [config['camera_tilt']])
     # RUN THE AMALGAMATION
-    amalgamated_top_down_map, amalgamation_ground_plane_position = sfn_module.generate_amalgamated_top_down_map(
-        top_down_maps, config_for_amalgamation)
-    log_text = log_text + 'CURRENTLY HELD MESSAGES HAVE BEEN AMALGAMATED INTO THE crowd_density_global VIEW. '
+    if len(recent_cam_messages) == len(config_for_amalgamation):
+        amalgamated_top_down_map, amalgamation_ground_plane_position = sfn_module.generate_amalgamated_top_down_map(
+            top_down_maps, config_for_amalgamation)
+        log_text = log_text + 'CURRENTLY HELD MESSAGES HAVE BEEN AMALGAMATED INTO THE crowd_density_global VIEW. '
+    else:
+        log_text = log_text + 'NOT EQUAL CAM MESSAGES AND CONFIGS. '
+
 
     # Create new message
     crowd_density_global = sfn_module.create_obs_message(amalgamation_cam_ids, amalgamation_density_count,

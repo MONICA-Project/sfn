@@ -15,13 +15,11 @@ __author__ = 'RoViT (KU)'
 
 print(str(socket.gethostname()))
 
-# url = 'http://dupre.hopto.org:5000/'
 url = 'http://0.0.0.0:5000/'
-scral_url = 'http://monappdwp3.monica-cloud.eu:8000/'
+# scral_url = 'http://monappdwp3.monica-cloud.eu:8000/'
 scral_url = 'http://0.0.0.0:3389/'
 
-sfn_urls = {'dummy_linksmart_url': scral_url,
-            # 'crowd_density_url': 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring',
+sfn_urls = {'scral_url': scral_url,
             'crowd_density_url': scral_url + 'scral/sfn/crowd_monitoring',
             'flow_analysis_url': scral_url + 'scral/sfn/flow_analysis',
             'object_detection_url': scral_url + 'scral/sfn/object_detection',
@@ -61,7 +59,7 @@ else:
 
 # HELLO LINKSMART VIA SFN
 try:
-    resp = requests.get(url + 'scral/sfn')
+    resp = requests.get(url + 'scral')
 except requests.exceptions.RequestException as e:
     print('WOO THERE, Something went wrong, error:' + str(e))
 else:

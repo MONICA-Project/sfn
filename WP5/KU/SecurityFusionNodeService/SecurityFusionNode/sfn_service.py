@@ -9,9 +9,6 @@ import time
 import datetime
 import uuid
 from flask import Flask, request
-from redis import Redis
-from rq import Queue
-from rq.job import Job
 from pathlib import Path
 import sys
 sys.path.append(str(Path(__file__).absolute().parents[3]))
@@ -28,10 +25,6 @@ sfn_module = SecurityFusionNode(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'SFN')))
 urls = sfn_module.load_urls(str(Path(__file__).absolute().parents[0]), 'urls')
 
 headers = {'content-Type': 'application/json'}
-# QUEUE VARIABLES
-conn = Redis()
-queue_name = 'default'
-q = Queue(name=queue_name, connection=conn)
 
 
 @app.route("/")
@@ -91,12 +84,6 @@ def add_message():
         camera_id = message['camera_ids'][0]
         wp_module = message['type_module']
 
-        # BEGINNING OF QUE INTEGRATION
-        # for i in range(10):
-        #     j = Job.create(func=mp.waste_time, args=(10,), id=str(i), connection=conn, ttl=43)
-        #     job = q.enqueue_job(j)
-        # print('Current Number of Jobs = {}'.format(len(q.get_job_ids())))
-        # print('Function has taken: {}s'.format(time.time() - start))
         # BASED ON wp_module PERFORM PROCESSING ON MODULE
         text = ''
         if wp_module == 'crowd_density_local':
@@ -112,9 +99,9 @@ def add_message():
 
         # UNDER AND IF STATEMENT CHECK IF WE WANT TO AMALGAMATE AND CREATE A NEW MESSAGE
         sfn_module.timer = time.time() - sfn_module.last_amalgamation
-        if sfn_module.length_db(module_id='crowd_density_local') > 2 and sfn_module.timer > 10:
-            text, resp_code = amalgamate_crowd_density_local(sfn_module, urls['crowd_density_url'])
+        if sfn_module.length_db(module_id='crowd_density_local') > 2 and sfn_module.timer > 20:
             sfn_module.last_amalgamation = time.time()
+            text, resp_code = amalgamate_crowd_density_local(sfn_module, urls['crowd_density_url'])
         else:
             # NO MESSAGES HELD
             text = 'MESSAGES in recent_cam_messages {}. Time since last run {} '.\
@@ -138,7 +125,6 @@ def update_configs():
         if type(new_configs) == str:
             new_configs = json.loads(new_configs)
 
-        log_text = ''
         # UPDATE THE SFN REG MESSAGE
         config = json.loads(sfn_module.create_reg_message(arrow.utcnow()))
         log_text = sfn_module.insert_config_db(c_id=config['module_id'], msg=json.dumps(config))
@@ -177,33 +163,15 @@ def update_configs():
         return 'No JSON.', 415
 
 
-# JOB ID CHECK
-@app.route('/result', methods=['POST'])
-def get_result():
-    print('REQUEST: CHECK JOB STATUS')
-    if request.is_json:
-        # GET THE JSON AND CHECK IF ITS STILL A STRING, IF SO loads JSON FORMAT
-        message = request.get_json(force=True)
-        if type(message) == str:
-            message = json.loads(message)
-        job = Job.fetch(message['job_key'], connection=conn)
-        if job.is_finished:
-            return str(job.result), 206
-        else:
-            return 'Job not Finished', 406
-    else:
-        return 'No JSON.', 499
-
-
 # ROUTES FOR THE DUMMY LINKSMART ONLY
-@app.route("/linksmart")
+@app.route("/scral")
 def hello_linksmart():
-    print('REQUEST: HELLO LINKSMART')
+    print('REQUEST: HELLO SCRAL')
     try:
-        resp = requests.get(urls['dummy_linksmart_url'])
+        resp = requests.get(urls['dummy_linksmart_url'] + 'scral/sfn')
     except requests.exceptions.RequestException as e:
         print(e)
-        return 'Dummy Linksmart Connection Failed: ' + str(e), 502
+        return 'SCRAL Connection Failed: ' + str(e), 502
     else:
         print(resp.text, resp.status_code)
         return resp.text + ' VIA SECURITY FUSION NODE', 200
@@ -240,7 +208,6 @@ parser.add_argument("-p", "--port", dest="port",
                     help="port of server (default:%(default)s)", type=int, default=5000)
 parser.add_argument("-a", "--address", dest="host",
                     help="host address of server (default:%(default)s)", type=str, default="0.0.0.0")
-                    # help="host address of server (default:%(default)s)", type=str, default="127.0.0.1")
 
 cmd_args = parser.parse_args()
 app_options = {"port": cmd_args.port,

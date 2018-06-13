@@ -59,14 +59,9 @@ class SecurityFusionNode:
         self.timer = 0
         self.state = 'active'
 
-        try:
-            # self.sfn_engine = create_engine('sqlite:///sfn_database.db')
-            self.sfn_engine = create_engine('mysql://root:root@localhost:3307/sfn_database')
-        except OperationalError as error:
-            print(error)
-            self.sfn_engine = create_engine('mysql://root:root@localhost:3307/')
-            self.sfn_engine.execute('CREATE DATABASE sfn_database')
-            self.sfn_engine.execute('USE sfn_database')
+
+        # self.sfn_engine = create_engine('sqlite:///sfn_database.db')
+        self.sfn_engine = create_engine('mysql://root:root@127.0.0.1:3306/sfn_database')
 
         sfn_base.metadata.drop_all(self.sfn_engine)
         sfn_base.metadata.create_all(self.sfn_engine)

@@ -225,7 +225,7 @@ def add_message_object():
 @app.route("/scral/sfn")
 def hello_world():
     print('REQUEST: HELLO WORLD')
-    return "Dummy LinkSmart: Hello World!"
+    return "Dummy SCRAL: Hello World!"
 
 
 # CAMERA CONFIG ROUTES
