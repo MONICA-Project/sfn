@@ -74,9 +74,9 @@ print(info)
 settings = load_settings(KU_DIR + '/KUConfigTool/' + '/' + info[2])
 
 # CREATE AN analyser OBJECT AND CREATE THE REGISTRATION MESSAGE
-analyser = GetCrowd(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'crowd_density_local')))
+# analyser = GetCrowd(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'crowd_density_local')))
 # analyser = GetFlow('001')
-# analyser = GetFlow(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'flow')))
+analyser = GetFlow(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'flow')))
 
 reg_message = analyser.create_reg_message(arrow.utcnow())
 with open(KU_DIR + '/Algorithms/registration_messages/' + analyser.module_id + '_' + analyser.type_module + '_reg.txt',
@@ -155,11 +155,11 @@ else:
 
             # WRITE FILES FOR USE LATER
             save_folder = str(Path(__file__).absolute().parents[0]) + '/algorithm_output/'
-            # cv2.putText(result, 'Number of People: {}'.format(json.loads(message)['density_count']), (10, 70),
-            #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
-            if result != []:
-                cv2.imwrite(save_folder + info[2] + '_' + reg_message['type_module'] + '_Result_' +
-                        str(inc.get_incrementer(count, 5)) + '.jpeg', result)
+            if result != []:  # result == [], IF WE ARE IN THE FIRST FRAME OF THE CURRENT CAMERA
+                if result is not None:  # result is None, IF WE DO NOT NEED TO VISUALIZE
+                    cv2.imwrite(save_folder + info[2] + '_' + reg_message['type_module'] + '_Result_' +
+                                str(inc.get_incrementer(count, 5)) + '.jpeg', result)
+
                 with open(save_folder + info[2] + '_' + reg_message['type_module'] + '_' +
                       str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
                     outfile.write(message)

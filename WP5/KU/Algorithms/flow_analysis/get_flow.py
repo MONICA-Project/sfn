@@ -1,12 +1,16 @@
 # get_flow.py
 import pickle
 from WP5.KU.Algorithms.frame_analyser import FrameAnalyser
-from WP5.KU.Algorithms.flow_analysis.FlowNet2_src.flow_2img import flow_2img
+
 import json
 import cv2
 import math
 import arrow
+import numpy as np
+import torch
+from torch.autograd import Variable
 from WP5.KU.Algorithms.flow_analysis.FlowNet2_src import flow_to_image
+from WP5.KU.Algorithms.flow_analysis.FlowNet2_src import FlowNet2
 
 __version__ = '0.1'
 __author__ = 'Hajar Sadeghi (KU)'
@@ -31,6 +35,8 @@ class GetFlow(FrameAnalyser):
         # self.load_settings(settings_location)
 
         # ALGORITHM VARIABLES
+        self.model = None
+        self.load_settings()
         self.cuda = False
         self.scale_height = 384  # TO SCALE THE INPUT IMAGE IF IT IS TOO LARGE FOR FLOWNET
         self.scale_width = 512
@@ -54,11 +60,15 @@ class GetFlow(FrameAnalyser):
 
         # DO SOME SCALE TO OPTIMAL MODEL INPUT, MAYBE SPLIT IMAGE IF ITS TOO LARGE?
         fr1 = cv2.resize(frame1, (self.scale_height, self.scale_width))
-        # cv2.resize(frame1, (0, 0), fx=self.scale, fy=self.scale)
         fr2 = cv2.resize(frame2, (self.scale_height, self.scale_width))
-        # cv2.resize(frame2, (0, 0), fx=self.scale, fy=self.scale)
 
-        flow_uv = flow_2img(fr1, fr2)
+        ims = np.array([[fr1, fr2]]).transpose((0, 4, 1, 2, 3)).astype(np.float32)
+        ims = torch.from_numpy(ims)
+        ims_v = Variable(ims.cuda(), requires_grad=False)
+
+        flownet_2 = self.model
+        flow_uv = flownet_2(ims_v).cpu().data
+        flow_uv = flow_uv[0].numpy().transpose((1, 2, 0))
 
         # CONVERT BACK TO ORIGINAL SCALE
         flow_uv = cv2.resize(flow_uv, (width, height))
@@ -126,11 +136,14 @@ class GetFlow(FrameAnalyser):
         message = json.dumps(data)
         return message
 
-    def load_settings(self, settings_location):
-        fo = open((settings_location + str(self.cam_id) + '.pk'), 'rb')
-        entry = pickle.load(fo, encoding='latin1')
-
-        self.roi = entry['roi']
-        self.weights_path = './C_CNN/final_models/cmtl_shtechA_204.h5'
-        self.cuda = True
-        print('SETTINGS LOADED FOR CAMERA: ' + self.module_id)
+    def load_settings(self):
+        # Build model
+        flownet2 = FlowNet2()
+        path = '/home/hajar/MONICA_repo/WP5/KU/Algorithms/flow_analysis/FlowNet2_src/pretrained/FlowNet2_checkpoint.pth.tar'
+        pretrained_dict = torch.load(path)['state_dict']
+        model_dict = flownet2.state_dict()
+        pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+        model_dict.update(pretrained_dict)
+        flownet2.load_state_dict(model_dict)
+        flownet2.cuda()
+        self.model = flownet2
