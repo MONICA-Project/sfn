@@ -1,9 +1,21 @@
+DRIVERS
 1. Nvidia Driver. (should be already installed by supplier)
 2. Nvidia CUDA & CuDNN. Follow https://medium.com/@zhanwenchen/install-cuda-and-cudnn-for-tensorflow-gpu-on-ubuntu-79306e4ac04e
-3. mkdir /home/<USERNAME>/Monica_repo
-4. install git and configure for the Monica repo
-5. cd to Monica_repo and git init
-6. Clone the FIT repo. git clone -b KU_dev https://scm.fit.fraunhofer.de/scm/git/monica
 
-5. install Docker CE. Follow https://docs.docker.com/install/linux/docker-ce/ubuntu/
-6. build docker SFN image
+GIT
+1. Install git.
+2. Clone the FIT repo. git clone -b KU_dev https://scm.fit.fraunhofer.de/scm/git/monica
+
+MYSQL
+1. Install mysql, with username root and password root (TODO: THIS SHOULD BE MORE SECURE).
+2. Start the service and ensure it starts on boot
+3. Run DB initialisation. mysql -u root -p < monica/WP5/KU/SecurityFusionNodeService/SecurityFusionNode/mysql_setup_db.sql
+
+DOCKER
+1. install Docker CE. Follow https://docs.docker.com/install/linux/docker-ce/ubuntu/
+2. build docker SFN image. sudo docker build -f Dockerfile_sfn -t sfn .
+3. Run the Docker Image. sudo docker run --net="host" -t sfn
+4. Test with sfn_http_request.py
+
+
+

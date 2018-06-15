@@ -3,7 +3,6 @@
 files"""
 import pickle
 import numpy as np
-import cv2
 import json
 import base64
 
@@ -69,8 +68,7 @@ def decode_image(string, image_dims, print_flag):
     rebuilt_frame = np.frombuffer(d, dtype=np.uint8)
     frame = np.reshape(rebuilt_frame, (image_dims[0], image_dims[1]))
     if print_flag:
+        import cv2
         cv2.imshow('RECONSTRUCTED_FRAME', frame)
         cv2.waitKey(0)
-    # TODO: THIS IS TO RESCALE THE IMAGE BACK UP TO ORIGINAL SIZE
-    frame = cv2.resize(frame, (0, 0), fx=4, fy=4)
     return frame
