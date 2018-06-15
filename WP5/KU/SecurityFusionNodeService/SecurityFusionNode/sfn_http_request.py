@@ -49,6 +49,14 @@ except requests.exceptions.RequestException as e:
 else:
     print(resp.text, resp.status_code)
 
+# RELOAD SETTINGS
+try:
+    resp = requests.get(url + 'settings')
+except requests.exceptions.RequestException as e:
+    print('WOO THERE, Something went wrong, error:' + str(e))
+else:
+    print(resp.text, resp.status_code)
+
 # UPDATE URLS
 try:
     resp = requests.post(url + 'urls', json=json.dumps(sfn_urls))

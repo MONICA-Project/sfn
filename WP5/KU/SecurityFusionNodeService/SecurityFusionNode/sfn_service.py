@@ -11,9 +11,9 @@ import uuid
 from flask import Flask, request
 from pathlib import Path
 import sys
-sys.path.append(str(Path(__file__).absolute().parents[3]))
-from KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
-from KU.SecurityFusionNodeService.SecurityFusionNode.message_processing import crowd_density_local,  flow_analysis, \
+sys.path.append(str(Path(__file__).absolute().parents[4]))
+from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
+from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.message_processing import crowd_density_local, flow_analysis,\
     amalgamate_crowd_density_local, fighting_detection, object_detection
 
 __version__ = '0.2'
@@ -22,7 +22,6 @@ __author__ = 'RoViT (KU)'
 app = Flask(__name__)
 print('SFN STARTING. MODULE ID: {}'.format(uuid.uuid5(uuid.NAMESPACE_DNS, 'SFN')))
 sfn_module = SecurityFusionNode(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'SFN')))
-urls = sfn_module.load_urls(str(Path(__file__).absolute().parents[0]), 'urls')
 
 headers = {'content-Type': 'application/json'}
 
@@ -42,10 +41,9 @@ def update_urls():
         if type(url_updates) == str:
             url_updates = json.loads(url_updates)
 
-        global urls
-        for url in urls:
+        for url in sfn_module.urls:
             if url in url_updates:
-                urls[url] = url_updates[url]
+                sfn_module.urls[url] = url_updates[url]
                 print('Updating Key ({}) to: {}.'.format(url, url_updates[url]))
             else:
                 print('Key ({}) not found.'.format(url))
@@ -55,12 +53,19 @@ def update_urls():
         return 'No JSON.', 415
 
 
+@app.route("/settings")
+def update_settings():
+    print('REQUEST: UPDATE SETTINGS')
+    sfn_module.load_settings(str(Path(__file__).absolute().parents[0]), 'settings', update_urls=False)
+    return "SECURITY FUSION NODE SETTINGS UPDATED"
+
+
 @app.route("/register")
 def register_sfn():
     print('REQUEST: SEND SFN REGISTRATION')
     data = sfn_module.create_reg_message(datetime.datetime.utcnow().isoformat())
     try:
-        resp = requests.post(urls['crowd_density_url'], data=data, headers=headers)
+        resp = requests.post(sfn_module.urls['crowd_density_url'], data=data, headers=headers)
     except requests.exceptions.RequestException as e:
         print(e)
         return 'Linksmart Connection Failed: ' + str(e), 450
@@ -71,47 +76,46 @@ def register_sfn():
 
 @app.route('/message', methods=['PUT'])
 def add_message():
-    print('REQUEST: ADD MESSAGE')
+    log_text = 'REQUEST: ADD MESSAGE. '
     start = time.time()
     if request.is_json:
-        log_text = ''
         resp_code = 0
         # GET THE JSON AND CHECK IF ITS STILL A STRING, IF SO loads JSON FORMAT
         message = request.get_json(force=True)
         if type(message) == str:
             message = json.loads(message)
 
-        camera_id = message['camera_ids'][0]
+        cam_id = message['camera_ids'][0]
         wp_module = message['type_module']
 
         # BASED ON wp_module PERFORM PROCESSING ON MODULE
         text = ''
         if wp_module == 'crowd_density_local':
-            text, resp_code = crowd_density_local(sfn_module, camera_id, urls['crowd_density_url'], message)
+            text, resp_code = crowd_density_local(sfn_module, cam_id, sfn_module.urls['crowd_density_url'], message)
         elif wp_module == 'flow':
-            text, resp_code = flow_analysis(sfn_module, camera_id, urls['flow_analysis_url'], message)
+            text, resp_code = flow_analysis(sfn_module, cam_id, sfn_module.urls['flow_analysis_url'], message)
         elif wp_module == 'fighting_detection':
-            text, resp_code = fighting_detection(sfn_module, camera_id, urls['fighting_detection_url'], message)
+            text, resp_code = fighting_detection(sfn_module, cam_id, sfn_module.urls['fighting_detection_url'], message)
         elif wp_module == 'object_detection':
-            text, resp_code = object_detection(sfn_module, camera_id, urls['object_detection_url'], message)
+            text, resp_code = object_detection(sfn_module, cam_id, sfn_module.urls['object_detection_url'], message)
         # print('Function has taken: {}s'.format(time.time() - start))
         log_text = log_text + text
 
         # UNDER AND IF STATEMENT CHECK IF WE WANT TO AMALGAMATE AND CREATE A NEW MESSAGE
         sfn_module.timer = time.time() - sfn_module.last_amalgamation
-        if sfn_module.length_db(module_id='crowd_density_local') > 2 and sfn_module.timer > 20:
+        if sfn_module.length_db(module_id='crowd_density_local') > 2 and sfn_module.timer > sfn_module.amal_interval:
             sfn_module.last_amalgamation = time.time()
-            text, resp_code = amalgamate_crowd_density_local(sfn_module, urls['crowd_density_url'])
+            text, resp_code = amalgamate_crowd_density_local(sfn_module, sfn_module.urls['crowd_density_url'])
         else:
             # NO MESSAGES HELD
-            text = 'MESSAGES in recent_cam_messages {}. Time since last run {} '.\
-                format(sfn_module.length_db(), sfn_module.timer)
+            text = 'TIME SINCE LAST AMALGAMATION: {}. '.format(sfn_module.timer)
 
         log_text = log_text + text
         print(log_text)
         print('Function has taken: {}s'.format(time.time() - start))
         return log_text, resp_code
     else:
+        print(log_text)
         return 'No JSON.', 415
 
 
@@ -140,23 +144,23 @@ def update_configs():
         configs = [json.loads(item.msg) for item in configs]
         for config in configs:
             if 'camera_id' in config:
-                sfn_module.send_reg_message(json.dumps(config), urls['camera_reg_url'])
+                sfn_module.send_reg_message(json.dumps(config), sfn_module.urls['camera_reg_url'])
             elif 'module_id' in config:
                 if config['type_module'] == 'crowd_density_local':
                     print('SENDING CONFIG crowd_density_local')
-                    sfn_module.send_reg_message(json.dumps(config), urls['crowd_density_url'])
+                    sfn_module.send_reg_message(json.dumps(config), sfn_module.urls['crowd_density_url'])
                 elif config['type_module'] == 'crowd_density_global':
                     print('SENDING CONFIG crowd_density_global')
-                    sfn_module.send_reg_message(json.dumps(config), urls['crowd_density_url'])
+                    sfn_module.send_reg_message(json.dumps(config), sfn_module.urls['crowd_density_url'])
                 elif config['type_module'] == 'flow':
                     print('SENDING CONFIG flow')
-                    sfn_module.send_reg_message(json.dumps(config), urls['flow_analysis_url'])
+                    sfn_module.send_reg_message(json.dumps(config), sfn_module.urls['flow_analysis_url'])
                 elif config['type_module'] == 'fighting_detection':
                     print('SENDING CONFIG fighting_detection')
-                    sfn_module.send_reg_message(json.dumps(config), urls['fighting_detection_url'])
+                    sfn_module.send_reg_message(json.dumps(config), sfn_module.urls['fighting_detection_url'])
                 elif config['type_module'] == 'object_detection':
                     print('SENDING CONFIG object_detection')
-                    sfn_module.send_reg_message(json.dumps(config), urls['object_detection_url'])
+                    sfn_module.send_reg_message(json.dumps(config), sfn_module.urls['object_detection_url'])
 
         return log_text, 200
     else:
@@ -168,7 +172,7 @@ def update_configs():
 def hello_linksmart():
     print('REQUEST: HELLO SCRAL')
     try:
-        resp = requests.get(urls['dummy_linksmart_url'] + 'scral/sfn')
+        resp = requests.get(sfn_module.urls['dummy_linksmart_url'] + 'scral/sfn')
     except requests.exceptions.RequestException as e:
         print(e)
         return 'SCRAL Connection Failed: ' + str(e), 502
@@ -181,7 +185,7 @@ def hello_linksmart():
 def get_configs_linksmart():
     print('REQUEST: GET THE CONFIGS FROM LINKSMART')
     try:
-        resp = requests.get(urls['dummy_linksmart_url'] + 'configs')
+        resp = requests.get(sfn_module.urls['dummy_linksmart_url'] + 'configs')
     except requests.exceptions.RequestException as e:
         print(e)
         return 'Dummy Linksmart Connection Failed: ' + str(e), 502

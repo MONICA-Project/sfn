@@ -55,7 +55,7 @@ def load_json_txt(location, file_name):
 def save_json_txt(data, location, file_name):
     message = json.dumps(data)
     try:
-        txt_file = open(location + '/' +  file_name + '.txt', 'w')
+        txt_file = open(location + '/' + file_name + '.txt', 'w')
     except IOError:
         print('IoError')
     else:

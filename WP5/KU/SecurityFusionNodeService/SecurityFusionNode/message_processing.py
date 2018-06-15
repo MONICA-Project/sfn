@@ -58,12 +58,15 @@ def flow_analysis(sfn_instance, camera_id, url, message, j_id=0):
         text, resp_code = forward_message(json.dumps(message), url)
         log_text = log_text + text
         # LOG THE OUTPUT OF THIS MESSAGE OPERATION
-        # log_text = log_text + sfn_instance.insert_db(camera_id, 'flow_analysis', json.dumps(message))
-        # sfn_instance.insert_log(time.time(), message['timestamp'], log_text)
+        if sfn_instance.flow_save:
+            log_text = log_text + sfn_instance.insert_db(camera_id, 'flow_analysis', json.dumps(message))
+        if sfn_instance.logging:
+            sfn_instance.insert_log(time.time(), message['timestamp'], log_text)
         # print('Function has taken: {}s'.format(time.time() - start))
     else:
         log_text = log_text + 'THIS IS THE FIRST flow MESSAGE AND IS THEREFORE BLANK.'
-        # sfn_instance.insert_log(time.time(), message['timestamp'], log_text)
+        if sfn_instance.logging:
+            sfn_instance.insert_log(time.time(), message['timestamp'], log_text)
         resp_code = 200
     return log_text, resp_code
 
@@ -87,8 +90,11 @@ def fighting_detection(sfn_instance, camera_id, url, message, j_id=0):
     text, resp_code = forward_message(json.dumps(message), url)
     log_text = log_text + text
     # LOG THE OUTPUT OF THIS MESSAGE OPERATION
-    # log_text = log_text + sfn_instance.insert_db(camera_id, 'fighting_detection', json.dumps(message))
-    # sfn_instance.insert_log(time.time(), message['timestamp'], log_text)
+
+    if sfn_instance.fight_save:
+        log_text = log_text + sfn_instance.insert_db(camera_id, 'fighting_detection', json.dumps(message))
+    if sfn_instance.logging:
+        sfn_instance.insert_log(time.time(), message['timestamp'], log_text)
     # print('Function has taken: {}s'.format(time.time() - start))
     return log_text, resp_code
 
@@ -112,8 +118,10 @@ def object_detection(sfn_instance, camera_id, url, message, j_id=0):
     text, resp_code = forward_message(json.dumps(message), url)
     log_text = log_text + text
     # LOG THE OUTPUT OF THIS MESSAGE OPERATION
-    # log_text = log_text + sfn_instance.insert_db(camera_id, 'object_detection', json.dumps(message))
-    # sfn_instance.insert_log(time.time(), message['timestamp'], log_text)
+    if sfn_instance.object_save:
+        log_text = log_text + sfn_instance.insert_db(camera_id, 'object_detection', json.dumps(message))
+    if sfn_instance.logging:
+        sfn_instance.insert_log(time.time(), message['timestamp'], log_text)
     # print('Function has taken: {}s'.format(time.time() - start))
     return log_text, resp_code
 
@@ -159,7 +167,7 @@ def amalgamate_crowd_density_local(sfn_instance, url):
         if config is not None and len(config) == 1:
             config = json.loads(config[0].msg)
         else:
-            print('NONE OR MORE THAN ONE CONFIG WAS RETURNED')
+            log_text = log_text + 'ERROR: NONE OR MORE THAN ONE CONFIG WAS RETURNED. '
 
         config_for_amalgamation.append(config['ground_plane_position'] + [config['camera_tilt']])
     # RUN THE AMALGAMATION
@@ -168,7 +176,7 @@ def amalgamate_crowd_density_local(sfn_instance, url):
             top_down_maps, config_for_amalgamation)
         log_text = log_text + 'CURRENTLY HELD MESSAGES HAVE BEEN AMALGAMATED INTO THE crowd_density_global VIEW. '
     else:
-        log_text = log_text + 'NOT EQUAL CAM MESSAGES AND CONFIGS. '
+        log_text = log_text + 'ERROR: NOT EQUAL CAM MESSAGES AND CONFIGS. '
 
 
     # Create new message

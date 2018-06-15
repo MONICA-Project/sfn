@@ -7,7 +7,7 @@ import time
 from sqlalchemy import Column, Integer, String, Text
 from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.exc import SQLAlchemyError, OperationalError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
 from sqlalchemy import and_
@@ -15,9 +15,9 @@ from sqlalchemy import create_engine
 from pathlib import Path
 import requests
 import sys
-sys.path.append(str(Path(__file__).absolute().parents[3]))
-from KU.SharedResources.convert_to_meter import convert_to_meter
-from KU.SharedResources.rotate_image import rotate_image
+sys.path.append(str(Path(__file__).absolute().parents[4]))
+from WP5.KU.SharedResources.convert_to_meter import convert_to_meter
+from WP5.KU.SharedResources.rotate_image import rotate_image
 
 __version__ = '0.1'
 __author__ = 'RoViT (KU)'
@@ -58,19 +58,29 @@ class SecurityFusionNode:
         self.last_amalgamation = time.time()
         self.timer = 0
         self.state = 'active'
+        self.urls = []
+        # self.sfn_db_address = 'sqlite:///sfn_database.db
+        self.sfn_db_address = 'mysql://root:root@127.0.0.1:3306/sfn_database'
+        # self.log_db_address = 'sqlite:///log_database.db'
+        self.log_db_address = 'mysql://root:root@127.0.0.1:3306/log_database'
+        self.num_configs = 0
+        self.num_messages = 0
+        self.amal_interval = 20
+        self.logging = True
+        self.flow_save = True
+        self.object_save = True
+        self.fight_save = True
 
+        # LOAD SETTINGS FOR SFN
+        self.load_settings(str(Path(__file__).absolute().parents[0]), 'settings')
 
-        # self.sfn_engine = create_engine('sqlite:///sfn_database.db')
-        self.sfn_engine = create_engine('mysql://root:root@127.0.0.1:3306/sfn_database')
-
+        self.sfn_engine = create_engine(self.sfn_db_address)
         sfn_base.metadata.drop_all(self.sfn_engine)
         sfn_base.metadata.create_all(self.sfn_engine)
         sfn_session_factory = sessionmaker(bind=self.sfn_engine)
         self.sfn_db_session = scoped_session(sfn_session_factory)
 
-        # self.log_engine = create_engine('sqlite:///log_database.db')
-        self.log_engine = create_engine('mysql://root:root@localhost:3307/log_database')
-
+        self.log_engine = create_engine(self.log_db_address)
         log_base.metadata.drop_all(self.log_engine)
         log_base.metadata.create_all(self.log_engine)
         log_factory_session = sessionmaker(bind=self.log_engine)
@@ -184,6 +194,10 @@ class SecurityFusionNode:
         try:
             if len(args) == 0:  # No input
                 rows = sfn_session.query(Messages).all()
+                if rows is not None:
+                    self.num_messages = len(rows)
+                else:
+                    self.num_messages = 0
             elif len(args) == 2:
                 if args[0] is None:
                     rows = sfn_session.query(Messages).filter(Messages.module_id == args[1]).all()
@@ -212,6 +226,10 @@ class SecurityFusionNode:
         try:
             if len(args) == 0:  # No input
                 rows = sfn_session.query(Configs).all()
+                if rows is not None:
+                    self.num_configs = len(rows)
+                else:
+                    self.num_configs = 0
             elif len(args) == 1:
                 rows = sfn_session.query(Configs).filter(Configs.conf_id == args[0]).all()
             if session_created:
@@ -263,18 +281,41 @@ class SecurityFusionNode:
         message = json.dumps(data)
         return message
 
-    @staticmethod
-    def load_urls(location, file_name):
+    def load_settings(self, location, file_name, update_urls=True):
         try:
             json_file = open(location + '/' + file_name + '.txt')
         except IOError:
             print('IoError')
         else:
             line = json_file.readline()
-            urls = json.loads(line)
+            settings = json.loads(line)
             json_file.close()
-            print('URLS LOADED: ' + file_name)
-            return urls
+            print('SETTINGS LOADED: ' + file_name)
+
+            if 'urls' in settings and update_urls:
+                print('URLS FOUND AND UPDATED')
+                self.urls = settings['urls']
+            if 'log_db_address' in settings:
+                print('log_db_address FOUND AND UPDATED')
+                self.log_db_address = settings['log_db_address']
+            if 'sfn_db_address' in settings:
+                print('sfn_db_address FOUND AND UPDATED')
+                self.sfn_db_address = settings['sfn_db_address']
+            if 'amal_interval' in settings:
+                print('amal_interval FOUND AND UPDATED')
+                self.amal_interval = settings['amal_interval']
+            if 'logging' in settings:
+                print('logging FOUND AND UPDATED')
+                self.logging = settings['logging']
+            if 'flow_save' in settings:
+                print('flow_save FOUND AND UPDATED')
+                self.flow_save = settings['flow_save']
+            if 'fight_save' in settings:
+                print('fight_save FOUND AND UPDATED')
+                self.fight_save = settings['fight_save']
+            if 'object_save' in settings:
+                print('object_save FOUND AND UPDATED')
+                self.object_save = settings['object_save']
 
     @staticmethod
     def generate_amalgamated_top_down_map(top_down_maps, config_for_amalgamation):

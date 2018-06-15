@@ -1,0 +1,14 @@
+FROM tiangolo/uwsgi-nginx-flask:python3.6
+MAINTAINER R Dupre "r.dupre@kingston.ac.uk"
+RUN apt-get install python3
+RUN curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+RUN python get-pip.py
+COPY ./WP5/KU/SecurityFusionNodeService/SecurityFusionNode/ /app/WP5/KU/SecurityFusionNodeService/SecurityFusionNode/
+COPY ./WP5/KU/SecurityFusionNodeService/requirements.txt /app/WP5/KU/SecurityFusionNodeService/requirements.txt
+COPY ./WP5/KU/SharedResources/ /app/WP5/KU/SharedResources/
+COPY ./WP5/KU/definitions.py /app/WP5/KU/definitions.py
+WORKDIR /app/WP5/KU/SecurityFusionNodeService/
+RUN pip3 install -r requirements.txt
+COPY ./app /app
+EXPOSE 5000
+EXPOSE 3606

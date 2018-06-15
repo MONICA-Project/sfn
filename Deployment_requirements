@@ -1,0 +1,9 @@
+1. Nvidia Driver. (should be already installed by supplier)
+2. Nvidia CUDA & CuDNN. Follow https://medium.com/@zhanwenchen/install-cuda-and-cudnn-for-tensorflow-gpu-on-ubuntu-79306e4ac04e
+3. mkdir /home/<USERNAME>/Monica_repo
+4. install git and configure for the Monica repo
+5. cd to Monica_repo and git init
+6. Clone the FIT repo. git clone -b KU_dev https://scm.fit.fraunhofer.de/scm/git/monica
+
+5. install Docker CE. Follow https://docs.docker.com/install/linux/docker-ce/ubuntu/
+6. build docker SFN image
