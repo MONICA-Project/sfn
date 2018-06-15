@@ -16,8 +16,8 @@ __author__ = 'RoViT (KU)'
 print(str(socket.gethostname()))
 
 url = 'http://0.0.0.0:5000/'
-# scral_url = 'http://monappdwp3.monica-cloud.eu:8000/'
-scral_url = 'http://0.0.0.0:3389/'
+scral_url = 'http://monappdwp3.monica-cloud.eu:8000/'
+# scral_url = 'http://0.0.0.0:3389/'
 
 sfn_urls = {'scral_url': scral_url,
             'crowd_density_url': scral_url + 'scral/sfn/crowd_monitoring',
@@ -93,7 +93,7 @@ else:
 # SEND MESSAGE TO SFN
 try:
     res = requests.put(url + 'message', json=json.dumps(
-        tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_1_00000')))
+        tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_2_00000')))
 except requests.exceptions.RequestException as e:
     print(str(e))
 else:
@@ -102,7 +102,7 @@ else:
 # SEND MESSAGE TO SFN
 try:
     res = requests.put(url + 'message', json=json.dumps(
-        tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_2_00000')))
+        tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_3_00000')))
 except requests.exceptions.RequestException as e:
     print(str(e))
 else:

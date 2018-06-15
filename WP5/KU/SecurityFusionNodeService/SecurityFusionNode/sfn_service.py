@@ -85,35 +85,43 @@ def add_message():
         if type(message) == str:
             message = json.loads(message)
 
-        cam_id = message['camera_ids'][0]
-        wp_module = message['type_module']
+        if message is not None and 'type_module' in message:
+            wp_module = message['type_module']
 
-        # BASED ON wp_module PERFORM PROCESSING ON MODULE
-        text = ''
-        if wp_module == 'crowd_density_local':
-            text, resp_code = crowd_density_local(sfn_module, cam_id, sfn_module.urls['crowd_density_url'], message)
-        elif wp_module == 'flow':
-            text, resp_code = flow_analysis(sfn_module, cam_id, sfn_module.urls['flow_analysis_url'], message)
-        elif wp_module == 'fighting_detection':
-            text, resp_code = fighting_detection(sfn_module, cam_id, sfn_module.urls['fighting_detection_url'], message)
-        elif wp_module == 'object_detection':
-            text, resp_code = object_detection(sfn_module, cam_id, sfn_module.urls['object_detection_url'], message)
-        # print('Function has taken: {}s'.format(time.time() - start))
-        log_text = log_text + text
+            # BASED ON wp_module PERFORM PROCESSING ON MODULE
+            text = ''
+            if wp_module == 'crowd_density_local':
+                cam_id = message['camera_ids'][0]
+                text, resp_code = crowd_density_local(sfn_module, cam_id, sfn_module.urls['crowd_density_url'], message)
+            elif wp_module == 'flow':
+                cam_id = message['camera_ids'][0]
+                text, resp_code = flow_analysis(sfn_module, cam_id, sfn_module.urls['flow_analysis_url'], message)
+            elif wp_module == 'fighting_detection':
+                cam_id = message['camera_ids'][0]
+                text, resp_code = fighting_detection(sfn_module, cam_id, sfn_module.urls['fighting_detection_url'], message)
+            elif wp_module == 'object_detection':
+                cam_id = message['camera_ids'][0]
+                text, resp_code = object_detection(sfn_module, cam_id, sfn_module.urls['object_detection_url'], message)
+            # print('Function has taken: {}s'.format(time.time() - start))
+            log_text = log_text + text
 
-        # UNDER AND IF STATEMENT CHECK IF WE WANT TO AMALGAMATE AND CREATE A NEW MESSAGE
-        sfn_module.timer = time.time() - sfn_module.last_amalgamation
-        if sfn_module.length_db(module_id='crowd_density_local') > 2 and sfn_module.timer > sfn_module.amal_interval:
-            sfn_module.last_amalgamation = time.time()
-            text, resp_code = amalgamate_crowd_density_local(sfn_module, sfn_module.urls['crowd_density_url'])
+            # UNDER AND IF STATEMENT CHECK IF WE WANT TO AMALGAMATE AND CREATE A NEW MESSAGE
+            sfn_module.timer = time.time() - sfn_module.last_amalgamation
+            if sfn_module.length_db(module_id='crowd_density_local') > 2 and sfn_module.timer > sfn_module.amal_interval:
+                sfn_module.last_amalgamation = time.time()
+                text, resp_code = amalgamate_crowd_density_local(sfn_module, sfn_module.urls['crowd_density_url'])
+            else:
+                # NO MESSAGES HELD
+                text = 'TIME SINCE LAST AMALGAMATION: {}. '.format(sfn_module.timer)
+
+            log_text = log_text + text
+            print(log_text)
+            print('Function has taken: {}s'.format(time.time() - start))
+            return log_text, resp_code
         else:
-            # NO MESSAGES HELD
-            text = 'TIME SINCE LAST AMALGAMATION: {}. '.format(sfn_module.timer)
-
-        log_text = log_text + text
-        print(log_text)
-        print('Function has taken: {}s'.format(time.time() - start))
-        return log_text, resp_code
+            log_text = log_text + 'NO type_module FOUND IN THE MESSAGE'
+            print(log_text)
+            return 'NO type_module FOUND IN THE MESSAGE.', 415
     else:
         print(log_text)
         return 'No JSON.', 415
@@ -167,12 +175,11 @@ def update_configs():
         return 'No JSON.', 415
 
 
-# ROUTES FOR THE DUMMY LINKSMART ONLY
 @app.route("/scral")
 def hello_linksmart():
     print('REQUEST: HELLO SCRAL')
     try:
-        resp = requests.get(sfn_module.urls['dummy_linksmart_url'] + 'scral/sfn')
+        resp = requests.get(sfn_module.urls['scral_url'] + 'scral/sfn')
     except requests.exceptions.RequestException as e:
         print(e)
         return 'SCRAL Connection Failed: ' + str(e), 502
@@ -181,6 +188,7 @@ def hello_linksmart():
         return resp.text + ' VIA SECURITY FUSION NODE', 200
 
 
+# ROUTES FOR THE DUMMY LINKSMART ONLY
 @app.route("/linksmart/get_configs")
 def get_configs_linksmart():
     print('REQUEST: GET THE CONFIGS FROM LINKSMART')

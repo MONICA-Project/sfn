@@ -11,11 +11,17 @@ MYSQL
 2. Start the service and ensure it starts on boot
 3. Run DB initialisation. mysql -u root -p < monica/WP5/KU/SecurityFusionNodeService/SecurityFusionNode/mysql_setup_db.sql
 
+SCRAL CHECK
+1. Check connect to SCRAL. curl 'http://monappdwp3.monica-cloud.eu:8000/scral/sfn'
+
+
 DOCKER
 1. install Docker CE. Follow https://docs.docker.com/install/linux/docker-ce/ubuntu/
 2. build docker SFN image. sudo docker build -f Dockerfile_sfn -t sfn .
 3. Run the Docker Image. sudo docker run --net="host" -t sfn
 4. Test with sfn_http_request.py
+-. stop the docker Image. sudo docker stop $(sudo docker ps -q --filter ancestor=sfn)
+
 
 
 
