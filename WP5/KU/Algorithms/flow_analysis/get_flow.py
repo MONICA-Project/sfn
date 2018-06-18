@@ -141,7 +141,7 @@ class GetFlow(FrameAnalyser):
     def load_settings(self):
         # Build model
         flownet2 = FlowNet2()
-        path = KU_DIR + 'Algorithms/flow_analysis/FlowNet2_src/pretrained/FlowNet2_checkpoint.pth.tar'
+        path = KU_DIR + '/Algorithms/flow_analysis/FlowNet2_src/pretrained/FlowNet2_checkpoint.pth.tar'
         pretrained_dict = torch.load(path)['state_dict']
         model_dict = flownet2.state_dict()
         pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
