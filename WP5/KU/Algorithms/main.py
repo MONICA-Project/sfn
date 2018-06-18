@@ -77,7 +77,7 @@ if __name__ == '__main__':
     if _args.sequence is not None:
         info = [_args.sequence, 0, _args.config]
         display = _args.display
-        if _args.algorith is 'flow':
+        if _args.algorithm is 'flow':
             # analyser = GetFlow('001')
             analyser = GetFlow(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'flow')))
         else:
