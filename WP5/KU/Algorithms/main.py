@@ -9,6 +9,7 @@ import requests
 import uuid
 from pathlib import Path
 import sys
+import argparse
 sys.path.append(str(Path(__file__).absolute().parents[3]))
 from WP5.KU.definitions import KU_DIR
 from WP5.KU.SharedResources.cam_video_streamer import CamVideoStreamer
@@ -30,7 +31,7 @@ def dataset(index):
         # [Address, Stream, Settings File]
         0: ['rtsp://root:pass@10.144.129.107/axis-media/media.amp', 'Live', 'CAMERA_KU'],
         # [Location, Start Frame, Settings File]
-        1: [(dataset_folder + 'UCSD_Anomaly/UCSDped1/Train/Train001/'), 0],
+        1: [(KU_DIR + '/Algorithms/sample_sequence/'), 0, 'OXFORD'],
         2: [(dataset_folder + 'Mall_Dataset/frames/'), 0],
         3: [(dataset_folder + 'EWAP_Dataset/seq_eth/'), 0],
         4: [(dataset_folder + 'EWAP_Dataset/seq_hotel/'), 0],
@@ -64,104 +65,85 @@ def load_settings(location):
     entry = pickle.load(fo, encoding='latin1')
     return entry
 
+parser = argparse.ArgumentParser(description='A test application designed to mimic (badly) the VCA framework.')
+parser.add_argument('--sequence', default=None, type=str, help='Folder location of image sequence')
+parser.add_argument('--config', default='OXFORD', type=str, help='Config file Name in KUConfigTool folder to be used')
+parser.add_argument('--display', default=True, type=bool, help='Bool to control displaying output')
+parser.add_argument('--algorithm', default='flow', type=str, help='Either flow or density')
+_args = parser.parse_args()
 
-display = True
-info = dataset(19)
-# info = dataset(0)
-print(info)
+if __name__ == '__main__':
 
-# LOAD THE SETTINGS AND PASS THEN WHEN PROCESSING A FRAME
-settings = load_settings(KU_DIR + '/KUConfigTool/' + '/' + info[2])
-
-# CREATE AN analyser OBJECT AND CREATE THE REGISTRATION MESSAGE
-# analyser = GetCrowd(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'crowd_density_local')))
-# analyser = GetFlow('001')
-analyser = GetFlow(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'flow')))
-
-reg_message = analyser.create_reg_message(arrow.utcnow())
-with open(KU_DIR + '/Algorithms/registration_messages/' + analyser.module_id + '_' + analyser.type_module + '_reg.txt',
-          'w') as outfile:
-    outfile.write(reg_message)
-outfile.close()
-reg_message = json.loads(reg_message)
-
-sfn_url = 'http://127.0.0.1:5000/message'
-if info == -1:
-    print('NO DATA SET SELECTED')
-else:
-    if info[1] == 'Live':
-        cap = CamVideoStreamer(info[0])
-        cap.start()
-        if cap.open():
-            print("CAMERA CONNECTION IS ESTABLISHED.")
+    if _args.sequence is not None:
+        info = [_args.sequence, 0, _args.config]
+        display = _args.display
+        if _args.algorith is 'flow':
+            # analyser = GetFlow('001')
+            analyser = GetFlow(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'flow')))
         else:
-            print("FAILED TO CONNECT TO CAMERA.")
-            exit(-1)
-
-        count = 0
-        while cap.open():
-            frame = cap.read()
-            if analyser.type_module == 'flow':
-                message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
-                                                         settings['flow_rois'])
-            elif analyser.type_module == 'crowd_density_local':
-                message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
-                                                         settings['image_2_ground_plane_matrix'],
-                                                         settings['ground_plane_roi'], settings['ground_plane_size'])
-
-            # SEND A HTTP REQUEST OFF
-            try:
-                res = requests.post(sfn_url, json=message)
-            except requests.exceptions.RequestException as e:
-                print(e)
-            else:
-                print('Obs Message Sent. Response: ' + str(res.status_code) + '. ' + res.text)
-
-            save_folder = str(Path(__file__).absolute().parents[0]) + '/algorithm_output/'
-            # cv2.putText(frame, json.dumps(message, indent=4), (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-            #             (255, 255, 255), 1, cv2.LINE_AA)
-            # cv2.imwrite(save_folder + info[2] + '_' + reg_message['type_module'] + '_Result_' +
-            #             str(inc.get_incrementer(count, 5)) + '.jpeg', frame)
-            with open(save_folder + info[2] + '_' + reg_message['type_module'] + '_' +
-                      str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
-                outfile.write(message)
-            count = count + 1
-            if display:
-                key = cv2.waitKey(1) & 0xFF
-                # KEYBINDINGS FOR DISPLAY
-                cv2.imshow('frame', frame)
-                if key == 27:  # exit
-                    break
+            analyser = GetCrowd(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'crowd_density_local')))
     else:
-        cam = ImageSequenceStreamer(info[0], info[1], (1080, 768), loop_last=False, repeat=True)
-        count = 0
-        while cam.open():
-            frame = cam.read()
-            if analyser.type_module == 'flow':
-                message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
-                                                         settings['flow_rois'])
-            elif analyser.type_module == 'crowd_density_local':
-                message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
-                                                         settings['image_2_ground_plane_matrix'],
-                                                         settings['ground_plane_roi'], settings['ground_plane_size'])
+        # info = dataset(0)
+        info = dataset(1)
+        display = True
 
-            # SEND A HTTP REQUEST OFF
-            # try:
-            #     res = requests.post(sfn_url, json=message)
-            # except requests.exceptions.RequestException as e:
-            #     print(e)
-            # else:
-            #     print('Obs Message Sent. Response: ' + str(res.status_code) + '. ' + res.text)
+        # CREATE AN analyser OBJECT AND CREATE THE REGISTRATION MESSAGE
+        # analyser = GetCrowd(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'crowd_density_local')))
+        # analyser = GetFlow('001')
+        analyser = GetFlow(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'flow')))
 
-            # WRITE FILES FOR USE LATER
-            save_folder = str(Path(__file__).absolute().parents[0]) + '/algorithm_output/'
-            if result != []:  # result == [], IF WE ARE IN THE FIRST FRAME OF THE CURRENT CAMERA
-                if result is not None:  # result is None, IF WE DO NOT NEED TO VISUALIZE
-                    cv2.imwrite(save_folder + info[2] + '_' + reg_message['type_module'] + '_Result_' +
-                                str(inc.get_incrementer(count, 5)) + '.jpeg', result)
+    print(info)
 
+    # LOAD THE SETTINGS AND PASS THEN WHEN PROCESSING A FRAME
+    settings = load_settings(KU_DIR + '/KUConfigTool/' + '/' + info[2])
+
+    reg_message = analyser.create_reg_message(arrow.utcnow())
+    with open(KU_DIR + '/Algorithms/registration_messages/' + analyser.module_id + '_' + analyser.type_module + '_reg.txt',
+              'w') as outfile:
+        outfile.write(reg_message)
+    outfile.close()
+    reg_message = json.loads(reg_message)
+
+    sfn_url = 'http://127.0.0.1:5000/message'
+    if info == -1:
+        print('NO DATA SET SELECTED')
+    else:
+        if info[1] == 'Live':
+            cap = CamVideoStreamer(info[0])
+            cap.start()
+            if cap.open():
+                print("CAMERA CONNECTION IS ESTABLISHED.")
+            else:
+                print("FAILED TO CONNECT TO CAMERA.")
+                exit(-1)
+
+            count = 0
+            while cap.open():
+                frame = cap.read()
+                if analyser.type_module == 'flow':
+                    message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
+                                                             settings['flow_rois'])
+                elif analyser.type_module == 'crowd_density_local':
+                    message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
+                                                             settings['image_2_ground_plane_matrix'],
+                                                             settings['ground_plane_roi'],
+                                                             settings['ground_plane_size'])
+
+                # SEND A HTTP REQUEST OFF
+                try:
+                    res = requests.post(sfn_url, json=message)
+                except requests.exceptions.RequestException as e:
+                    print(e)
+                else:
+                    print('Obs Message Sent. Response: ' + str(res.status_code) + '. ' + res.text)
+
+                save_folder = str(Path(__file__).absolute().parents[0]) + '/algorithm_output/'
+                # cv2.putText(frame, json.dumps(message, indent=4), (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                #             (255, 255, 255), 1, cv2.LINE_AA)
+                # cv2.imwrite(save_folder + info[2] + '_' + reg_message['type_module'] + '_Result_' +
+                #             str(inc.get_incrementer(count, 5)) + '.jpeg', frame)
                 with open(save_folder + info[2] + '_' + reg_message['type_module'] + '_' +
-                      str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
+                          str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
                     outfile.write(message)
                 count = count + 1
                 if display:
@@ -170,3 +152,42 @@ else:
                     cv2.imshow('frame', frame)
                     if key == 27:  # exit
                         break
+        else:
+            cam = ImageSequenceStreamer(info[0], info[1], (1080, 768), loop_last=False, repeat=True)
+            count = 0
+            while cam.open():
+                frame = cam.read()
+                if analyser.type_module == 'flow':
+                    message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
+                                                             settings['flow_rois'])
+                elif analyser.type_module == 'crowd_density_local':
+                    message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
+                                                             settings['image_2_ground_plane_matrix'],
+                                                             settings['ground_plane_roi'],
+                                                             settings['ground_plane_size'])
+
+                # SEND A HTTP REQUEST OFF
+                # try:
+                #     res = requests.post(sfn_url, json=message)
+                # except requests.exceptions.RequestException as e:
+                #     print(e)
+                # else:
+                #     print('Obs Message Sent. Response: ' + str(res.status_code) + '. ' + res.text)
+
+                # WRITE FILES FOR USE LATER
+                save_folder = str(Path(__file__).absolute().parents[0]) + '/algorithm_output/'
+                if result != []:  # result == [], IF WE ARE IN THE FIRST FRAME OF THE CURRENT CAMERA
+                    if result is not None:  # result is None, IF WE DO NOT NEED TO VISUALIZE
+                        cv2.imwrite(save_folder + info[2] + '_' + reg_message['type_module'] + '_Result_' +
+                                    str(inc.get_incrementer(count, 5)) + '.jpeg', result)
+
+                    with open(save_folder + info[2] + '_' + reg_message['type_module'] + '_' +
+                          str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
+                        outfile.write(message)
+                    count = count + 1
+                    if display:
+                        key = cv2.waitKey(1) & 0xFF
+                        # KEYBINDINGS FOR DISPLAY
+                        cv2.imshow('frame', frame)
+                        if key == 27:  # exit
+                            break
