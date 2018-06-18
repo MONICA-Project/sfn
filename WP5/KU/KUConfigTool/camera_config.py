@@ -217,6 +217,8 @@ class MainPage(Frame):
         # TODO:ADD LOGIC TO MAKE APPEAR A NEXT BUTTON WHEN ENTRIES RETURN TRUE FROM config_tools CHECKER
         b1 = Button(self, text='Quit', command=parent.quit)
         b1.grid(row=4, column=0, sticky=W, pady=4)
+        b1 = Button(self, text='Screenshot', command=lambda: cam.save(self.e1.get()))
+        b1.grid(row=4, column=2, sticky=W, pady=4)
         b2 = Button(self, text='Save & Send', command=lambda: self.save())
         b2.grid(row=4, column=3, sticky=W, pady=4)
         b3 = Button(self, text='Load', command=lambda: controller.load(self.e1.get()))

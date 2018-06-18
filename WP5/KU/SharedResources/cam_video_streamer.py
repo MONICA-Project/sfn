@@ -5,7 +5,7 @@ import numpy as np
 from threading import Thread
 import time
 
-__version__ = '0.1'
+__version__ = '0.2'
 __author__ = 'Rob Dupre (KU)'
 
 
@@ -50,6 +50,9 @@ class CamVideoStreamer:
 
     def stop(self):
         self.stopped = True
+
+    def save(self, filename):
+        cv2.imwrite(filename + '.png', self.current_frame)
 
 # cap1 = CamVideoStreamer('rtsp://184.72.239.149/vod/mp4:BigBuckBunny_175k.mov')
 # cap1.start()

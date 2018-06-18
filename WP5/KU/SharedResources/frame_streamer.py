@@ -4,7 +4,7 @@ repeating the last frame"""
 import cv2
 import os
 
-__version__ = '0.1'
+__version__ = '0.2'
 __author__ = 'Rob Dupre (KU)'
 
 
@@ -72,3 +72,6 @@ class ImageSequenceStreamer:
         # NOW IN INFINITE LOOP AS current_image WILL ONLY EVER HOLD THE LAST IMAGE.
 
         return self.current_image
+
+    def save(self, filename):
+        cv2.imwrite(filename + '.png', self.current_image)
