@@ -9,7 +9,7 @@ import requests
 import uuid
 from pathlib import Path
 import sys
-sys.path.append(str(Path(__file__).absolute().parents[4]))
+sys.path.append(str(Path(__file__).absolute().parents[3]))
 from WP5.KU.definitions import KU_DIR
 from WP5.KU.SharedResources.cam_video_streamer import CamVideoStreamer
 from WP5.KU.SharedResources.frame_streamer import ImageSequenceStreamer
@@ -66,7 +66,7 @@ def load_settings(location):
 
 
 display = True
-info = dataset(12)
+info = dataset(19)
 # info = dataset(0)
 print(info)
 

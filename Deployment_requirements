@@ -22,6 +22,10 @@ DOCKER
 4. Test with sfn_http_request.py
 -. stop the docker Image. sudo docker stop $(sudo docker ps -q --filter ancestor=sfn)
 
+TEST ALGORITHMS WORK
+
+
+RUNNING KU DEPLOYMENT TOOL
 
 
 
