@@ -1,7 +1,4 @@
 # get_flow.py
-import pickle
-from WP5.KU.Algorithms.frame_analyser import FrameAnalyser
-
 import json
 import cv2
 import math
@@ -9,6 +6,11 @@ import arrow
 import numpy as np
 import torch
 from torch.autograd import Variable
+from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).absolute().parents[4]))
+from WP5.KU.definitions import KU_DIR
+from WP5.KU.Algorithms.frame_analyser import FrameAnalyser
 from WP5.KU.Algorithms.flow_analysis.FlowNet2_src import flow_to_image
 from WP5.KU.Algorithms.flow_analysis.FlowNet2_src import FlowNet2
 
@@ -139,7 +141,7 @@ class GetFlow(FrameAnalyser):
     def load_settings(self):
         # Build model
         flownet2 = FlowNet2()
-        path = '/home/hajar/MONICA_repo/WP5/KU/Algorithms/flow_analysis/FlowNet2_src/pretrained/FlowNet2_checkpoint.pth.tar'
+        path = KU_DIR + 'Algorithms/flow_analysis/FlowNet2_src/pretrained/FlowNet2_checkpoint.pth.tar'
         pretrained_dict = torch.load(path)['state_dict']
         model_dict = flownet2.state_dict()
         pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}

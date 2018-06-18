@@ -9,6 +9,9 @@ import base64
 import cv2
 import json
 import arrow
+from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).absolute().parents[4]))
 import WP5.KU.SharedResources.get_top_down_heat_map as heat_map_gen
 from WP5.KU.definitions import KU_DIR
 from WP5.KU.Algorithms.frame_analyser import FrameAnalyser
