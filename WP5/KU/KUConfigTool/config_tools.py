@@ -6,7 +6,7 @@ import numpy as np
 import pickle
 import requests
 import json
-import datetime
+import arrow
 
 __version__ = '0.1'
 __author__ = 'Rob Dupre (KU)'
@@ -154,7 +154,7 @@ class ConfigTools:
                         'module_types': self.module_types,
                         'frame_roi': self.frame_roi,
                         'flow_rois': self.flow_rois,
-                        'timestamp': datetime.datetime.utcnow().isoformat(),
+                        'timestamp': arrow.utcnow(),
                         'state': self.state,
                         'ground_plane_roi': self.ground_plane_roi,
                         'ground_plane_size': self.ground_plane_size,
@@ -182,7 +182,7 @@ class ConfigTools:
             elif self.state == 0:
                 data['state'] = 'inactive'
 
-            # REMOVE ref_pts FROM THE REGISTRATION MESSSAGE
+            # REMOVE ref_pts FROM THE REGISTRATION MESSAGE
             data.pop('ref_pt')
 
             # WRITE THE REG MESSAGE TO txt FILE

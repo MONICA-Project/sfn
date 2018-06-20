@@ -74,4 +74,5 @@ class ImageSequenceStreamer:
         return self.current_image
 
     def save(self, filename):
+        print('Screen shot Saved')
         cv2.imwrite(filename + '.png', self.current_image)

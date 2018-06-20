@@ -3,29 +3,35 @@ DRIVERS
 2. Nvidia CUDA & CuDNN. Follow https://medium.com/@zhanwenchen/install-cuda-and-cudnn-for-tensorflow-gpu-on-ubuntu-79306e4ac04e
 
 GIT
-1. Install git.
-2. Clone the FIT repo. git clone -b KU_dev https://scm.fit.fraunhofer.de/scm/git/monica
+1. Install git. sudo apt-get install git
+2. Clone the FIT repo, KU_dev Branch. git clone -b KU_dev https://scm.fit.fraunhofer.de/scm/git/monica
 
-MYSQL
-1. Install mysql, with username root and password root (TODO: THIS SHOULD BE MORE SECURE).
+MYSQL (TODO: THIS SHOULD BE MORE SECURE)
+1. Install mysql, with username root and password root. https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-16-04
 2. Start the service and ensure it starts on boot
 3. Run DB initialisation. mysql -u root -p < monica/WP5/KU/SecurityFusionNodeService/SecurityFusionNode/mysql_setup_db.sql
+H. Log into mysql bash. sudo mysql -u root -p
 
 SCRAL CHECK
-1. Check connect to SCRAL. curl 'http://monappdwp3.monica-cloud.eu:8000/scral/sfn'
-
+1. What is the address of the SCRAL and is processing node connect to required VPNs/Networks
+2. Check connection to SCRAL. curl http://monappdwp3.monica-cloud.eu:8000/scral/sfn
 
 DOCKER
-1. install Docker CE. Follow https://docs.docker.com/install/linux/docker-ce/ubuntu/
+1. Install Docker CE. Follow https://docs.docker.com/install/linux/docker-ce/ubuntu/
 2. build docker SFN image. sudo docker build -f Dockerfile_sfn -t sfn .
 3. Run the Docker Image. sudo docker run --net="host" -t sfn
-4. Test with sfn_http_request.py
--. stop the docker Image. sudo docker stop $(sudo docker ps -q --filter ancestor=sfn)
+4. Test with sfn_http_request.py. python3 monica/WP5/KU/SecurityFusionNodeService/SecurityFusionNode/sfn_http_request.py
+H. Stop the docker image. sudo docker stop $(sudo docker ps -q --filter ancestor=sfn)
 
-TEST ALGORITHMS WORK
-
+TEST ALGORITHMS WORK ON THE PROCESSING NODE
+1. Install Requirements. pip3 install -r /<MONICA DIR>/WP5/KU/Algorithms/requirements.txt
+2. From the root of the project git, test the flow. python3 WP5/KU/Algorithms/main.py --sequence '<MONICA DIR>/WP5/KU/Algorithms/sample_sequence/' --config 'OXFORD' --algorithm 'flow'
+3. From the root of the project git, test the density. python3 WP5/KU/Algorithms/main.py --sequence '<MONICA DIR>/WP5/KU/Algorithms/sample_sequence/' --config 'OXFORD' --algorithm 'density'
+H. For Error: 'No module named _tkinter'. sudo apt-get install python3-tk
 
 RUNNING KU DEPLOYMENT TOOL
-
+1. Install Requirements. pip3 install -r /<MONICA DIR>/WP5/KU/KUConfigTool/requirements.txt
+2. From the root of the project git test the app. python3 WP5/KU/KUConfigTool/camera_config.py --seq_location '/<FULL MONICA DIR> /monica/WP5/KU/Algorithms/sample_sequence/'
+H. For Error: 'No module named _tkinter'. sudo apt-get install python3-tk
 
 

@@ -4,35 +4,50 @@ import json
 import requests
 from threading import Thread
 import time
+import argparse
 import arrow
 import os
 import socket
 from pathlib import Path
 import sys
+sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.definitions import KU_DIR
 import WP5.KU.SecurityFusionNodeService.loader_tools as tools
-sys.path.append(str(Path(__file__).absolute().parents[4]))
 
 __version__ = '0.1'
 __author__ = 'RoViT (KU)'
 
 print(str(socket.gethostname()))
 
-url = 'http://0.0.0.0:5000/'
-scral_url = 'http://monappdwp3.monica-cloud.eu:8000/'
-# scral_url = 'http://0.0.0.0:3389/'
+parser = argparse.ArgumentParser(description='"A simple load testing script to fire messages off to the SFN')
+parser.add_argument('--sfn_url', default='http://0.0.0.0:5000/', type=str,
+                    help='The URL and port the SFN is currently listening on')
+parser.add_argument('--scral_url', default='http://monappdwp3.monica-cloud.eu:8000/', type=str,
+# parser.add_argument('--scral_url', default='http://0.0.0.0:3389/', type=str,
+                    help='The URL and port the SCRAL is currently listening on.')
+parser.add_argument('--threaded', default=True, type=bool, help='Run the message requests in threads.')
+parser.add_argument('--looping', default=True, type=bool, help='Loop the message calls indefinitely.')
+parser.add_argument('--dataset_folder', default='/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/', type=str,
+                    help='Location of RiF JSON Files to send to SFN.')
 
-sfn_urls = {'scral_url': scral_url,
-            'crowd_density_url': scral_url + 'scral/sfn/crowd_monitoring',
-            'flow_analysis_url': scral_url + 'scral/sfn/flow_analysis',
-            'object_detection_url': scral_url + 'scral/sfn/object_detection',
-            'fighting_detection_url': scral_url + 'scral/sfn/fight_detection',
-            'camera_reg_url': scral_url + 'scral/sfn/camera',
-            }
+_args = parser.parse_args()
+if __name__ == '__main__':
+    url = _args.sfn_url
+    scral_url = _args.scral_url
 
-sleep_counter = 0.3
-threaded = True
-looping = True
+    print('SFN URL:{}. SCRAL URL:{}'.format(url, scral_url))
+    sfn_urls = {'scral_url': scral_url,
+                'crowd_density_url': scral_url + 'scral/sfn/crowd_monitoring',
+                'flow_analysis_url': scral_url + 'scral/sfn/flow_analysis',
+                'object_detection_url': scral_url + 'scral/sfn/object_detection',
+                'fighting_detection_url': scral_url + 'scral/sfn/fight_detection',
+                'camera_reg_url': scral_url + 'scral/sfn/camera',
+                }
+
+    sleep_counter = 0.3
+    threaded = _args.threaded
+    looping = _args.looping
+    dataset_folder = _args.dataset_folder
 
 configs = [
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_2_reg', False),
@@ -49,26 +64,25 @@ configs = [
     tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6789pwrl123dc_fighting_detection_reg', False),
 ]
 
-dataset_folder = '/ocean/datasets'
 message_locations = [
-    os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_1_crowd_density_JSON/'),
-    os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_1_crowd_density_JSON/'),
-    os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_2_crowd_density_JSON/'),
-    os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_2_crowd_density_JSON/'),
-    os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_3_crowd_density_JSON/'),
-    os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_3_crowd_density_JSON/'),
-    os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_4_crowd_density_JSON/'),
-    os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_4_crowd_density_JSON/'),
-    os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_1_flow_analysis_JSON/'),
-    os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_1_flow_analysis_JSON/'),
-    os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_2_flow_analysis_JSON/'),
-    os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_2_flow_analysis_JSON/'),
-    os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_3_flow_analysis_JSON/'),
-    os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_3_flow_analysis_JSON/'),
-    os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_4_flow_analysis_JSON/'),
-    os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_4_flow_analysis_JSON/'),
-    [os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/'), 'RIF_CAM_3_fight_detection_00000'],
-    [os.path.join(dataset_folder, 'MONICA/BONN/Rein in Flammen 2018/'), 'RIF_CAM_4_object_detection_00000'],
+    os.path.join(dataset_folder, '20180505_193000_camera_1_crowd_density_JSON/'),
+    os.path.join(dataset_folder, '20180505_233000_camera_1_crowd_density_JSON/'),
+    os.path.join(dataset_folder, '20180505_193000_camera_2_crowd_density_JSON/'),
+    os.path.join(dataset_folder, '20180505_233000_camera_2_crowd_density_JSON/'),
+    os.path.join(dataset_folder, '20180505_193000_camera_3_crowd_density_JSON/'),
+    os.path.join(dataset_folder, '20180505_233000_camera_3_crowd_density_JSON/'),
+    os.path.join(dataset_folder, '20180505_193000_camera_4_crowd_density_JSON/'),
+    os.path.join(dataset_folder, '20180505_233000_camera_4_crowd_density_JSON/'),
+    os.path.join(dataset_folder, '20180505_193000_camera_1_flow_analysis_JSON/'),
+    os.path.join(dataset_folder, '20180505_233000_camera_1_flow_analysis_JSON/'),
+    os.path.join(dataset_folder, '20180505_193000_camera_2_flow_analysis_JSON/'),
+    os.path.join(dataset_folder, '20180505_233000_camera_2_flow_analysis_JSON/'),
+    os.path.join(dataset_folder, '20180505_193000_camera_3_flow_analysis_JSON/'),
+    os.path.join(dataset_folder, '20180505_233000_camera_3_flow_analysis_JSON/'),
+    os.path.join(dataset_folder, '20180505_193000_camera_4_flow_analysis_JSON/'),
+    os.path.join(dataset_folder, '20180505_233000_camera_4_flow_analysis_JSON/'),
+    [os.path.join(dataset_folder), 'RIF_CAM_3_fight_detection_00000'],
+    [os.path.join(dataset_folder), 'RIF_CAM_4_object_detection_00000'],
 ]
 
 
@@ -79,7 +93,6 @@ def get_file_names(locations):
     for f in sorted(os.listdir(locations[1])):
         file_names.append([locations[1], os.path.splitext(f)[0]])
     return file_names
-
 
 cam_1_crowd_density = get_file_names(message_locations[0:2])
 cam_2_crowd_density = get_file_names(message_locations[2:4])

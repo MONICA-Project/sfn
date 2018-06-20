@@ -52,6 +52,7 @@ class CamVideoStreamer:
         self.stopped = True
 
     def save(self, filename):
+        print('Screen shot Saved')
         cv2.imwrite(filename + '.png', self.current_frame)
 
 # cap1 = CamVideoStreamer('rtsp://184.72.239.149/vod/mp4:BigBuckBunny_175k.mov')
