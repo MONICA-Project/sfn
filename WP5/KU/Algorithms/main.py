@@ -84,7 +84,7 @@ if __name__ == '__main__':
             analyser = GetCrowd(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'crowd_density_local')))
     else:
         # info = dataset(0)
-        info = dataset(1)
+        info = dataset(19)
         display = True
 
         # CREATE AN analyser OBJECT AND CREATE THE REGISTRATION MESSAGE

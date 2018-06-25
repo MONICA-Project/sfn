@@ -29,6 +29,7 @@ class GetFlow(FrameAnalyser):
         self.type_module = 'flow'
         self.state = True
         self.previous_frames_dictionary = {}  # a dictionary of (camera_id,frame) pair
+        self.previous_frames_timestamp = {}
         FrameAnalyser.__init__(self, module_id)
         # CAMERA INFO
         self.roi = [0, 300, 0, 300]
@@ -47,63 +48,72 @@ class GetFlow(FrameAnalyser):
         # CHECK WHETHER THIS IS THE FIRST FRAME OF THIS CAMERA ID
         if camera_id not in self.previous_frames_dictionary:
             self.previous_frames_dictionary[camera_id] = frame
+            self.previous_frames_timestamp[camera_id] = arrow.utcnow()
             message = self.create_obs_message([], [], arrow.utcnow())
             return message, []
 
         # USES ONLY THE REGION OF INTEREST DEFINED IN THE SETTINGS
-        frame1 = self.previous_frames_dictionary[camera_id]
-        frame2 = frame
-        self.previous_frames_dictionary[camera_id] = frame2
+        time_1 = self.previous_frames_timestamp[camera_id]
+        time_2 = arrow.utcnow()
 
-        frame1 = frame1[roi[1]:roi[3], roi[0]:roi[2], :]
-        frame2 = frame2[roi[1]:roi[3], roi[0]:roi[2], :]
+        if (time_2 - time_1).seconds >= 1:
+            frame2 = frame
+            frame1 = self.previous_frames_dictionary[camera_id]
+            self.previous_frames_dictionary[camera_id] = frame2
+            self.previous_frames_timestamp[camera_id] = time_2
 
-        height, width = frame1.shape[:2]
+            frame1 = frame1[roi[1]:roi[3], roi[0]:roi[2], :]
+            frame2 = frame2[roi[1]:roi[3], roi[0]:roi[2], :]
 
-        # DO SOME SCALE TO OPTIMAL MODEL INPUT, MAYBE SPLIT IMAGE IF ITS TOO LARGE?
-        fr1 = cv2.resize(frame1, (self.scale_height, self.scale_width))
-        fr2 = cv2.resize(frame2, (self.scale_height, self.scale_width))
+            height, width = frame1.shape[:2]
 
-        ims = np.array([[fr1, fr2]]).transpose((0, 4, 1, 2, 3)).astype(np.float32)
-        ims = torch.from_numpy(ims)
-        ims_v = Variable(ims.cuda(), requires_grad=False)
+            # DO SOME SCALE TO OPTIMAL MODEL INPUT, MAYBE SPLIT IMAGE IF ITS TOO LARGE?
+            fr1 = cv2.resize(frame1, (self.scale_height, self.scale_width))
+            fr2 = cv2.resize(frame2, (self.scale_height, self.scale_width))
 
-        flownet_2 = self.model
-        flow_uv = flownet_2(ims_v).cpu().data
-        flow_uv = flow_uv[0].numpy().transpose((1, 2, 0))
+            ims = np.array([[fr1, fr2]]).transpose((0, 4, 1, 2, 3)).astype(np.float32)
+            ims = torch.from_numpy(ims)
+            ims_v = Variable(ims.cuda(), requires_grad=False)
 
-        # CONVERT BACK TO ORIGINAL SCALE
-        flow_uv = cv2.resize(flow_uv, (width, height))
+            flownet_2 = self.model
+            flow_uv = flownet_2(ims_v).cpu().data
+            flow_uv = flow_uv[0].numpy().transpose((1, 2, 0))
 
-        # VISUALIZE THE OPTICAL FLOW AND SAVE IT
-        # flow_image = None
-        flow_image = flow_to_image(flow_uv)
+            # CONVERT BACK TO ORIGINAL SCALE
+            flow_uv = cv2.resize(flow_uv, (width, height))
 
-        ave_flow_mag = []
-        ave_flow_dir = []
-        for i in range(len(rois)):
-            roi_current = rois[i]
-            flow_uv_current = flow_uv[roi_current[1]:roi_current[3], roi_current[0]:roi_current[2], :]
+            # VISUALIZE THE OPTICAL FLOW AND SAVE IT
+            # flow_image = None
+            flow_image = flow_to_image(flow_uv)
 
-            mean_u = flow_uv_current[:, :, 0].mean()
-            mean_v = flow_uv_current[:, :, 1].mean()
+            ave_flow_mag = []
+            ave_flow_dir = []
+            for i in range(len(rois)):
+                roi_current = rois[i]
+                flow_uv_current = flow_uv[roi_current[1]:roi_current[3], roi_current[0]:roi_current[2], :]
 
-            mag = math.sqrt(math.pow(mean_u, 2) + math.pow(mean_v, 2))
+                mean_u = flow_uv_current[:, :, 0].mean()
+                mean_v = flow_uv_current[:, :, 1].mean()
 
-            if mean_v < 0:
-                uv_angle = 360 + math.degrees(math.atan2(mean_v, mean_u))
-            else:
-                uv_angle = math.degrees(math.atan2(mean_v, mean_u))
-            direction = uv_angle / 360
+                mag = math.sqrt(math.pow(mean_u, 2) + math.pow(mean_v, 2))
 
-            ave_flow_mag.append(mag)
-            ave_flow_dir.append(direction)
+                if mean_v < 0:
+                    uv_angle = 360 + math.degrees(math.atan2(mean_v, mean_u))
+                else:
+                    uv_angle = math.degrees(math.atan2(mean_v, mean_u))
+                direction = uv_angle / 360
 
-        # CREATE THE MESSAGE
-        self.cam_id = camera_id
-        message = self.create_obs_message(ave_flow_mag, ave_flow_dir, arrow.utcnow())
+                ave_flow_mag.append(mag)
+                ave_flow_dir.append(direction)
 
-        return message, flow_image
+            # CREATE THE MESSAGE
+            self.cam_id = camera_id
+            message = self.create_obs_message(ave_flow_mag, ave_flow_dir, arrow.utcnow())
+
+            return message, flow_image
+        else:
+            message = self.create_obs_message([], [], arrow.utcnow())
+            return message, []
 
     def create_obs_message(self, average_flow_mag, average_flow_dir, timestamp):
         """ Function to create the JSON payload containing the observation. Follows the content as defined on the WP5
