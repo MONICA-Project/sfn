@@ -35,12 +35,14 @@ class GetCrowd(FrameAnalyser):
         FrameAnalyser.__init__(self, module_id)
         # CAMERA INFO
         self.cam_id = ''
+        self.previous_frames_timestamp = {}
+        self.process_interval = 1
 
         # ALGORITHM VARIABLES
         self.scale = 0.5
         self.count = 0
         self.model_path = []
-        self.load_settings()
+        self.load_settings(str(Path(__file__).absolute().parents[0]), 'settings')
 
         self.net = CrowdCounter()
         # TODO: FUTURE WARNING HERE
@@ -63,48 +65,58 @@ class GetCrowd(FrameAnalyser):
             message --      the JSON message produced by create_obs_message
             density_map --  the output of the algorithm in a viewable image
         """
-        # EXTRACT THE ROI FROM THE FRAME
-        frame = frame[roi[1]:roi[3], roi[0]:roi[2], :]
+        # CHECK WHETHER THIS IS THE FIRST FRAME OF THIS CAMERA ID
+        if camera_id not in self.previous_frames_timestamp:
+            self.previous_frames_timestamp[camera_id] = arrow.utcnow()
 
-        height = roi[3] - roi[1]
-        width = roi[2] - roi[0]
+        time_1 = self.previous_frames_timestamp[camera_id]
+        time_2 = arrow.utcnow()
+        if (time_2 - time_1).seconds >= self.process_interval:
+            self.previous_frames_timestamp[camera_id] = time_2
 
-        # DO SOME SCALE TO OPTIMAL MODEL INPUT, MAYBE SPLIT IMAGE IF ITS TOO LARGE?
-        x = cv2.resize(frame, (0, 0), fx=self.scale, fy=self.scale)
-        x = cv2.cvtColor(x, cv2.COLOR_RGB2GRAY)
+            # EXTRACT THE ROI FROM THE FRAME
+            frame = frame[roi[1]:roi[3], roi[0]:roi[2], :]
 
-        # INFERENCE
-        x = x.astype(np.float32, copy=False)
-        x = np.expand_dims(x, axis=0)
-        x = np.expand_dims(x, axis=0)
-        density_map = self.net(x)
-        density_map = density_map.data.cpu().numpy()[0][0]
+            height = roi[3] - roi[1]
+            width = roi[2] - roi[0]
 
-        # GET THE NUMERIC OUTPUT (COUNT)
-        count = np.sum(density_map)
+            # DO SOME SCALE TO OPTIMAL MODEL INPUT, MAYBE SPLIT IMAGE IF ITS TOO LARGE?
+            x = cv2.resize(frame, (0, 0), fx=self.scale, fy=self.scale)
+            x = cv2.cvtColor(x, cv2.COLOR_RGB2GRAY)
 
-        # CONVERT BACK TO ORIGINAL SCALE
-        ratio = 4
-        density_map = cv2.resize(density_map, (width, height)) / ratio
+            # INFERENCE
+            x = x.astype(np.float32, copy=False)
+            x = np.expand_dims(x, axis=0)
+            x = np.expand_dims(x, axis=0)
+            density_map = self.net(x)
+            density_map = density_map.data.cpu().numpy()[0][0]
 
-        # CREATE THE MESSAGE
-        self.cam_id = camera_id
-        timestamp = arrow.utcnow()
-        # CONVERT TO TOP DOWN
-        top_down_density_map, heat_image = heat_map_gen.generate_heat_map(density_map,
-                                                                          image_2_ground_plane_matrix,
-                                                                          ground_plane_roi,
-                                                                          ground_plane_size,
-                                                                          # timestamp=timestamp,
-                                                                          # frame=frame,
-                                                                          )
-        # message = self.create_obs_message(count, top_down_density_map, timestamp)
-        message = self.create_obs_message(count, top_down_density_map, timestamp, frame=frame)
+            # GET THE NUMERIC OUTPUT (COUNT)
+            count = np.sum(density_map)
 
-        # CONVERT TO IMAGE THAT CAN BE DISPLAYED
-        density_map = 255 * density_map / np.max(density_map)
+            # CONVERT BACK TO ORIGINAL SCALE
+            ratio = 4
+            density_map = cv2.resize(density_map, (width, height)) / ratio
 
-        return message, density_map
+            # CREATE THE MESSAGE
+            self.cam_id = camera_id
+            timestamp = arrow.utcnow()
+            # CONVERT TO TOP DOWN
+            top_down_density_map, heat_image = heat_map_gen.generate_heat_map(density_map,
+                                                                              image_2_ground_plane_matrix,
+                                                                              ground_plane_roi,
+                                                                              ground_plane_size,
+                                                                              # timestamp=timestamp,
+                                                                              # frame=frame,
+                                                                              )
+            # message = self.create_obs_message(count, top_down_density_map, timestamp)
+            message = self.create_obs_message(count, top_down_density_map, timestamp, frame=frame)
+
+            # CONVERT TO IMAGE THAT CAN BE DISPLAYED
+            density_map = 255 * density_map / np.max(density_map)
+            return message, density_map
+        else:
+            return None, None
 
     def create_obs_message(self, count, density_map, timestamp, frame=None):
         """ Function to create the JSON payload containing the observation. Follows the content as defined on the WP5
@@ -160,7 +172,21 @@ class GetCrowd(FrameAnalyser):
         message = json.dumps(data)
         return message
 
-    # TODO: ADD MODULE SETTINGS FILE
-    def load_settings(self):
-        self.model_path = path.join(KU_DIR, 'Algorithms/crowd_density_local/C_CNN/final_models/cmtl_shtechA_204.h5')
+    def load_settings(self, location, file_name):
+        try:
+            json_file = open(location + '/' + file_name + '.txt')
+        except IOError:
+            print('IoError')
+        else:
+            line = json_file.readline()
+            settings = json.loads(line)
+            json_file.close()
+
+            if 'model_path' in settings:
+                self.model_path = path.join(KU_DIR, settings['model_path'])
+                # self.model_path = path.join(KU_DIR, 'Algorithms/crowd_density_local/C_CNN/final_models/cmtl_shtechA_204.h5')
+            if 'scale' in settings:
+                self.scale = settings['scale']
+            if 'process_interval' in settings:
+                self.process_interval = settings['process_interval']
         print('SETTINGS LOADED FOR MODULE: ' + self.module_id)

@@ -149,6 +149,10 @@ class FlowNet2(nn.Module):
 
         return flownetfusion_flow
 
+    @staticmethod
+    def cuda_available():
+        return torch.cuda.is_available()
+
 
 class FlowNet2C(FlowNetC):
 

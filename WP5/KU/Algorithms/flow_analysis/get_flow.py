@@ -30,17 +30,17 @@ class GetFlow(FrameAnalyser):
         self.state = True
         self.previous_frames_dictionary = {}  # a dictionary of (camera_id,frame) pair
         self.previous_frames_timestamp = {}
+        self.process_interval = 1
         FrameAnalyser.__init__(self, module_id)
         # CAMERA INFO
         self.roi = [0, 300, 0, 300]
         self.cam_id = ''
         self.weights_path = []
-        # self.load_settings(settings_location)
 
         # ALGORITHM VARIABLES
         self.model = None
-        self.load_settings()
         self.cuda = False
+        self.load_settings(str(Path(__file__).absolute().parents[0]), 'settings')
         self.scale_height = 384  # TO SCALE THE INPUT IMAGE IF IT IS TOO LARGE FOR FLOWNET
         self.scale_width = 512
 
@@ -56,7 +56,7 @@ class GetFlow(FrameAnalyser):
         time_1 = self.previous_frames_timestamp[camera_id]
         time_2 = arrow.utcnow()
 
-        if (time_2 - time_1).seconds >= 1:
+        if (time_2 - time_1).seconds >= self.process_interval:
             frame2 = frame
             frame1 = self.previous_frames_dictionary[camera_id]
             self.previous_frames_dictionary[camera_id] = frame2
@@ -83,8 +83,8 @@ class GetFlow(FrameAnalyser):
             flow_uv = cv2.resize(flow_uv, (width, height))
 
             # VISUALIZE THE OPTICAL FLOW AND SAVE IT
-            # flow_image = None
-            flow_image = flow_to_image(flow_uv)
+            flow_image = None
+            # flow_image = flow_to_image(flow_uv)
 
             ave_flow_mag = []
             ave_flow_dir = []
@@ -112,8 +112,7 @@ class GetFlow(FrameAnalyser):
 
             return message, flow_image
         else:
-            message = self.create_obs_message([], [], arrow.utcnow())
-            return message, []
+            return None, None
 
     def create_obs_message(self, average_flow_mag, average_flow_dir, timestamp):
         """ Function to create the JSON payload containing the observation. Follows the content as defined on the WP5
@@ -148,14 +147,31 @@ class GetFlow(FrameAnalyser):
         message = json.dumps(data)
         return message
 
-    def load_settings(self):
-        # Build model
-        flownet2 = FlowNet2()
-        path = KU_DIR + '/Algorithms/flow_analysis/FlowNet2_src/pretrained/FlowNet2_checkpoint.pth.tar'
-        pretrained_dict = torch.load(path)['state_dict']
-        model_dict = flownet2.state_dict()
-        pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
-        model_dict.update(pretrained_dict)
-        flownet2.load_state_dict(model_dict)
-        flownet2.cuda()
-        self.model = flownet2
+    def load_settings(self, location, file_name):
+        try:
+            json_file = open(location + '/' + file_name + '.txt')
+        except IOError:
+            print('IoError')
+        else:
+            line = json_file.readline()
+            settings = json.loads(line)
+            json_file.close()
+
+            if 'model_path' in settings:
+                path = KU_DIR + '/Algorithms/flow_analysis/FlowNet2_src/pretrained/FlowNet2_checkpoint.pth.tar'
+            if 'process_interval' in settings:
+                self.process_interval = settings['process_interval']
+            # Build model
+            flownet2 = FlowNet2()
+            pretrained_dict = torch.load(path)['state_dict']
+            model_dict = flownet2.state_dict()
+            pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+            model_dict.update(pretrained_dict)
+            flownet2.load_state_dict(model_dict)
+
+            # CUDA WARNING
+            if flownet2.cuda_available():
+                flownet2.cuda()
+            else:
+                print('RUNNING WITHOUT CUDA SUPPORT')
+            self.model = flownet2

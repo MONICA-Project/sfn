@@ -20,7 +20,8 @@ __author__ = 'RoViT (KU)'
 print(str(socket.gethostname()))
 
 parser = argparse.ArgumentParser(description='"A simple load testing script to fire messages off to the SFN')
-parser.add_argument('--sfn_url', default='http://0.0.0.0:5000/', type=str,
+parser.add_argument('--sfn_url', default='http://MPCLSGESFN01.monica-cloud.eu:5000/', type=str,
+# parser.add_argument('--sfn_url', default='http://0.0.0.0:5000/', type=str,
                     help='The URL and port the SFN is currently listening on')
 parser.add_argument('--scral_url', default='http://monappdwp3.monica-cloud.eu:8000/', type=str,
 # parser.add_argument('--scral_url', default='http://0.0.0.0:3389/', type=str,
@@ -44,7 +45,12 @@ if __name__ == '__main__':
                 'camera_reg_url': scral_url + 'scral/sfn/camera',
                 }
 
-    sleep_counter = 0.3
+    # sleep_counter = 0.9
+    num_algorithms = 2
+    num_cameras = 4
+    algorithm_process_time = 1
+    time_interval = (algorithm_process_time * num_cameras) / (num_algorithms * num_cameras)
+    print('Messages will be sent every {} seconds'.format(time_interval))
     threaded = _args.threaded
     looping = _args.looping
     dataset_folder = _args.dataset_folder
@@ -188,40 +194,51 @@ else:
                     t = Thread(target=call_sfn, args=(cam_1_cd_mess, i, 'CD',))
                     t.daemon = True
                     t.start()
+                    time.sleep(time_interval)
                     t = Thread(target=call_sfn, args=(cam_2_cd_mess, i, 'CD',))
                     t.daemon = True
                     t.start()
+                    time.sleep(time_interval)
                     t = Thread(target=call_sfn, args=(cam_3_cd_mess, i, 'CD',))
                     t.daemon = True
                     t.start()
+                    time.sleep(time_interval)
                     t = Thread(target=call_sfn, args=(cam_4_cd_mess, i, 'CD',))
                     t.daemon = True
                     t.start()
+                    time.sleep(time_interval)
                     t = Thread(target=call_sfn, args=(cam_1_fa_mess, i, 'FA',))
                     t.daemon = True
                     t.start()
+                    time.sleep(time_interval)
                     t = Thread(target=call_sfn, args=(cam_2_fa_mess, i, 'FA',))
                     t.daemon = True
                     t.start()
+                    time.sleep(time_interval)
                     t = Thread(target=call_sfn, args=(cam_3_fa_mess, i, 'FA',))
                     t.daemon = True
                     t.start()
+                    time.sleep(time_interval)
                     t = Thread(target=call_sfn, args=(cam_4_fa_mess, i, 'FA',))
                     t.daemon = True
                     t.start()
-                    t = Thread(target=call_sfn, args=(cam_1_od_mess, i, 'OD',))
-                    t.daemon = True
-                    t.start()
-                    t = Thread(target=call_sfn, args=(cam_2_od_mess, i, 'OD',))
-                    t.daemon = True
-                    t.start()
-                    t = Thread(target=call_sfn, args=(cam_3_od_mess, i, 'OD',))
-                    t.daemon = True
-                    t.start()
-                    t = Thread(target=call_sfn, args=(cam_4_od_mess, i, 'OD',))
-                    t.daemon = True
-                    t.start()
-                    time.sleep(sleep_counter)
+                    time.sleep(time_interval)
+                    # t = Thread(target=call_sfn, args=(cam_1_od_mess, i, 'OD',))
+                    # t.daemon = True
+                    # t.start()
+                    # time.sleep(time_interval)
+                    # t = Thread(target=call_sfn, args=(cam_2_od_mess, i, 'OD',))
+                    # t.daemon = True
+                    # t.start()
+                    # time.sleep(time_interval)
+                    # t = Thread(target=call_sfn, args=(cam_3_od_mess, i, 'OD',))
+                    # t.daemon = True
+                    # t.start()
+                    # time.sleep(time_interval)
+                    # t = Thread(target=call_sfn, args=(cam_4_od_mess, i, 'OD',))
+                    # t.daemon = True
+                    # t.start()
+                    # time.sleep(time_interval)
                 else:
                     call_sfn(cam_1_cd_mess, i, 'CD')
                     call_sfn(cam_2_cd_mess, i, 'CD')
@@ -231,10 +248,11 @@ else:
                     call_sfn(cam_2_fa_mess, i, 'FA')
                     call_sfn(cam_3_fa_mess, i, 'FA')
                     call_sfn(cam_4_fa_mess, i, 'FA')
-                    call_sfn(cam_1_od_mess, i, 'OD')
-                    call_sfn(cam_2_od_mess, i, 'OD')
-                    call_sfn(cam_3_od_mess, i, 'OD')
-                    call_sfn(cam_4_od_mess, i, 'OD')
+                    # call_sfn(cam_1_od_mess, i, 'OD')
+                    # call_sfn(cam_2_od_mess, i, 'OD')
+                    # call_sfn(cam_3_od_mess, i, 'OD')
+                    # call_sfn(cam_4_od_mess, i, 'OD')
+                    time.sleep(sleep_counter)
 
             if not looping:
                 break

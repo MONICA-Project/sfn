@@ -1,6 +1,5 @@
 # sfn_service.py
 """A test application designed to mimic (badly) the VCA framework."""
-import datetime
 import arrow
 import json
 import pickle
@@ -19,7 +18,7 @@ from WP5.KU.Algorithms.crowd_density_local.get_crowd import GetCrowd
 from WP5.KU.Algorithms.flow_analysis.get_flow import GetFlow
 from WP5.KU.Algorithms.object_detection.get_people import GetPeople
 
-__version__ = '0.1'
+__version__ = '0.2'
 __author__ = 'Rob Dupre (KU)'
 
 
@@ -65,6 +64,7 @@ def load_settings(location):
     entry = pickle.load(fo, encoding='latin1')
     return entry
 
+
 parser = argparse.ArgumentParser(description='A test application designed to mimic (badly) the VCA framework.')
 parser.add_argument('--sequence', default=None, type=str, help='Folder location of image sequence')
 parser.add_argument('--config', default='OXFORD', type=str, help='Config file Name in KUConfigTool folder to be used')
@@ -78,7 +78,6 @@ if __name__ == '__main__':
         info = [_args.sequence, 0, _args.config]
         display = _args.display
         if _args.algorithm is 'flow':
-            # analyser = GetFlow('001')
             analyser = GetFlow(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'flow')))
         else:
             analyser = GetCrowd(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'crowd_density_local')))
@@ -88,9 +87,9 @@ if __name__ == '__main__':
         display = True
 
         # CREATE AN analyser OBJECT AND CREATE THE REGISTRATION MESSAGE
-        # analyser = GetCrowd(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'crowd_density_local')))
+        analyser = GetCrowd(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'crowd_density_local')))
         # analyser = GetFlow('001')
-        analyser = GetFlow(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'flow')))
+        # analyser = GetFlow(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'flow')))
 
     print(info)
 
@@ -176,7 +175,7 @@ if __name__ == '__main__':
 
                 # WRITE FILES FOR USE LATER
                 save_folder = str(Path(__file__).absolute().parents[0]) + '/algorithm_output/'
-                if result != []:  # result == [], IF WE ARE IN THE FIRST FRAME OF THE CURRENT CAMERA
+                if message:
                     if result is not None:  # result is None, IF WE DO NOT NEED TO VISUALIZE
                         cv2.imwrite(save_folder + info[2] + '_' + reg_message['type_module'] + '_Result_' +
                                     str(inc.get_incrementer(count, 5)) + '.jpeg', result)

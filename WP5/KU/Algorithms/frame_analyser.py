@@ -15,6 +15,7 @@ class FrameAnalyser:
         self.module_id = module_id
         self.module_type = ''
         self.state = 'inactive'
+        self.previous_frames_timestamp = {}
 
         # CONSTANTS
         self.FONT = cv2.FONT_HERSHEY_SIMPLEX

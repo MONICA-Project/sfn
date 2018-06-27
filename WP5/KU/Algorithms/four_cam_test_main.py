@@ -1,28 +1,24 @@
-# sfn_service.py
+# four_cam_test_main.py
 """A test application designed to mimic (badly) the VCA framework."""
 import datetime
 import json
 import pickle
 import cv2
 from random import randrange
-import requests
 from pathlib import Path
 import sys
 sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.definitions import KU_DIR
-from WP5.KU.SharedResources.cam_video_streamer import CamVideoStreamer
 from WP5.KU.SharedResources.frame_streamer import ImageSequenceStreamer
 import WP5.KU.SharedResources.get_incrementer as inc
 from WP5.KU.Algorithms.crowd_density_local.get_crowd import GetCrowd
 from WP5.KU.Algorithms.flow_analysis.get_flow import GetFlow
-from WP5.KU.Algorithms.object_detection.get_people import GetPeople
 
 __version__ = '0.1'
 __author__ = 'Rob Dupre (KU)'
 
 
 def dataset(index):
-    dataset_folder = 'C:/Users/Rob/Desktop/CROWD_DATASETS/'
     dataset_folder = '/ocean/datasets/'
 
     return {
@@ -61,26 +57,14 @@ info = [info1, info2, info3, info4]
 
 # CREATE AN analyser OBJECT AND CREATE THE REGISTRATION MESSAGE
 # analyser = GetCrowd('001')
-# analyser = GetPeople('001')
 analyser = GetFlow('001')
 
-linksmart_url = 'http://127.0.0.2:3389/add_config'
-# linksmart_url = 'https://portal.monica-cloud.eu/scral/sfn/crowdmonitoring'
 reg_message = analyser.create_reg_message(datetime.datetime.utcnow().isoformat())
 with open(KU_DIR + '/Algorithms/registration_messages/' + analyser.module_id + '_' + analyser.type_module + '_reg.txt',
           'w') as outfile:
     outfile.write(reg_message)
 reg_message = json.loads(reg_message)
 
-try:
-    res = requests.post(linksmart_url, data=reg_message, headers={'content-Type': 'application/json'})
-except requests.exceptions.RequestException as e:
-    print(e)
-else:
-    print('Registration Message has been Sent. Response: ' + str(res.status_code) + '. ' + res.text)
-
-
-sfn_url = 'http://127.0.0.1:5000/message'
 cam1 = ImageSequenceStreamer(info1[0], info1[1], (1080, 768), loop_last=False, repeat=True)
 cam2 = ImageSequenceStreamer(info2[0], info2[1], (1080, 768), loop_last=False, repeat=True)
 cam3 = ImageSequenceStreamer(info3[0], info3[1], (1080, 768), loop_last=False, repeat=True)
@@ -103,22 +87,9 @@ while cam1.open() & cam2.open() & cam3.open() & cam4.open():
                                                  setting['image_2_ground_plane_matrix'],
                                                  setting['ground_plane_roi'], setting['ground_plane_size'])
 
-    # SEND A HTTP REQUEST OFF
-    # try:
-    #     res = requests.post(sfn_url, json=message)
-    # except requests.exceptions.RequestException as e:
-    #     print(e)
-    # else:
-    #     print('Obs Message Sent. Response: ' + str(res.status_code) + '. ' + res.text)
-
     # WRITE FILES FOR USE LATER
     save_folder = str(Path(__file__).absolute().parents[0]) + '/algorithm_output/'
-    # cv2.putText(result, 'Number of People: {}'.format(json.loads(message)['density_count']), (10, 70),
-    #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
-    if result != []:
-        cv2.imwrite(save_folder + info[random_index][2] + '_' + reg_message['type_module'] + '_Result_' +
-                    str(inc.get_incrementer(count, 5)) + '.jpeg', result)
-
+    if message:
         with open(save_folder + info[random_index][2] + '_' + reg_message['type_module'] + '_' +
                       str(inc.get_incrementer(count, 5)) + '.txt', 'w') as outfile:
             outfile.write(message)

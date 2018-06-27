@@ -21,6 +21,9 @@ DOCKER
 2. build docker SFN image. sudo docker build -f Dockerfile_sfn -t sfn .
 3. Run the Docker Image. sudo docker run --net="host" -t sfn
 4. Test with sfn_http_request.py. python3 monica/WP5/KU/SecurityFusionNodeService/SecurityFusionNode/sfn_http_request.py
+5. Load test with vca_sfn_simulation.py python3 WP5/KU/SecurityFusionNodeService/SecurityFusionNode/vca_sfn_simulation.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder '<LOCATION OF BONN JSON FILES>'
+
+H. Check connection to SFN. curl http://MPCLSGESFN01.monica-cloud.eu:5000/
 H. Stop the docker image. sudo docker stop $(sudo docker ps -q --filter ancestor=sfn)
 
 TEST ALGORITHMS WORK ON THE PROCESSING NODE
@@ -34,4 +37,6 @@ RUNNING KU DEPLOYMENT TOOL
 2. From the root of the project git test the app. python3 WP5/KU/KUConfigTool/camera_config.py --seq_location '/<FULL MONICA DIR> /monica/WP5/KU/Algorithms/sample_sequence/'
 H. For Error: 'No module named _tkinter'. sudo apt-get install python3-tk
 
-
+ATOS GPU CLOUD MACHINE
+1. Connect to Monica VPN.
+2. Logging to the ssh. ssh -XCi /home/robdupre/Desktop/Monica VPN/monappdwp5.key r.dupre@MPCLSGESFN01.monica-cloud.eu
