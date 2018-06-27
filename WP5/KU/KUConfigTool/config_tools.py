@@ -154,7 +154,7 @@ class ConfigTools:
                         'module_types': self.module_types,
                         'frame_roi': self.frame_roi,
                         'flow_rois': self.flow_rois,
-                        'timestamp': arrow.utcnow(),
+                        'timestamp': str(arrow.utcnow()),
                         'state': self.state,
                         'ground_plane_roi': self.ground_plane_roi,
                         'ground_plane_size': self.ground_plane_size,
