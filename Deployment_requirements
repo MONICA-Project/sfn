@@ -19,10 +19,12 @@ SCRAL CHECK
 2. Check connection to SCRAL. curl http://monappdwp3.monica-cloud.eu:8000/scral/sfn
 
 DOCKER
-1. Install Docker CE. Follow https://docs.docker.com/install/linux/docker-ce/ubuntu/
+1a Install Docker CE. Follow https://docs.docker.com/install/linux/docker-ce/ubuntu/
+1b Install Docker version sudo apt-get install docker-ce=18.03.1~ce-0~ubuntu
 2. build docker SFN image. sudo docker build -f Dockerfile_sfn -t sfn .
 3. Run the Docker Image. sudo docker run --net="host" -t sfn
-4. Test with sfn_http_request.py. python3 monica/WP5/KU/SecurityFusionNodeService/SecurityFusionNode/sfn_http_request.py
+4a Test with sfn_http_request.py. Update the SFN settings.txt to ensure SCRAL address is correct.
+4b Test with sfn_http_request.py. python3 monica/WP5/KU/SecurityFusionNodeService/SecurityFusionNode/sfn_http_request.py
 5. Load test with vca_sfn_simulation.py python3 WP5/KU/SecurityFusionNodeService/SecurityFusionNode/vca_sfn_simulation.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder '<LOCATION OF BONN JSON FILES>'
 
 H. Check connection to SFN. curl http://MPCLSGESFN01.monica-cloud.eu:5000/
