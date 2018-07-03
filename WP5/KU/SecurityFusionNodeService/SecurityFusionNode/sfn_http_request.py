@@ -16,6 +16,7 @@ __author__ = 'RoViT (KU)'
 print(str(socket.gethostname()))
 
 url = 'http://0.0.0.0:5000/'
+# url = 'http://MPCLSGESFN01.monica-cloud.eu:5000/'
 scral_url = 'http://monappdwp3.monica-cloud.eu:8000/'
 # scral_url = 'http://0.0.0.0:3389/'
 
@@ -73,6 +74,7 @@ except requests.exceptions.RequestException as e:
 else:
     print(resp.text, resp.status_code)
 
+# configs = [tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_2_reg', False)]
 # SEND THE CONFIGS AS IF VCA WERE UPDATING THE SFN
 try:
     resp = requests.post(url + 'configs', json=json.dumps(configs))

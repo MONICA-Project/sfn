@@ -4,13 +4,15 @@ DRIVERS
 
 GIT
 1. Install git. sudo apt-get install git
-2. Clone the FIT repo, KU_dev Branch. git clone -b KU_dev https://scm.fit.fraunhofer.de/scm/git/monica
+2. Make MONICA folder. sudo mkdir monica_repo
+3. Clone the FIT repo, KU_dev Branch. git clone -b KU_dev https://scm.fit.fraunhofer.de/scm/git/monica
 
 MYSQL (TODO: THIS SHOULD BE MORE SECURE)
 1. Install mysql, with username root and password root. https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-16-04
 2. Start the service and ensure it starts on boot
 3. Run DB initialisation. mysql -u root -p < monica/WP5/KU/SecurityFusionNodeService/SecurityFusionNode/mysql_setup_db.sql
 H. Log into mysql bash. sudo mysql -u root -p
+H. Check DBs have been created (after logging into mysql). SHOW DATABASES;
 
 SCRAL CHECK
 1. What is the address of the SCRAL and is processing node connect to required VPNs/Networks
