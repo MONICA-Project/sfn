@@ -35,8 +35,8 @@ parser.add_argument('--rtsp', default='rtsp://root:pass@10.144.129.107/axis-medi
 # parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_1/',
 # parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_2/',
 # parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_3/',
-parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_4/',
-# parser.add_argument('--seq_location', default='None',
+# parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_4/',
+parser.add_argument('--seq_location', default='None',
                     type=str, help='Local file location to be used to stream images instead of RTSP')
 parser.add_argument('--x_size', default=1080, type=int, help='Desired frame in X for loaded images.')
 parser.add_argument('--y_size', default=768, type=int, help='Desired frame in Y for loaded images.')
