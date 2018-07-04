@@ -123,6 +123,7 @@ def add_message():
             print(log_text)
             return 'NO type_module FOUND IN THE MESSAGE.', 415
     else:
+        log_text = log_text + 'No JSON'
         print(log_text)
         return 'No JSON.', 415
 

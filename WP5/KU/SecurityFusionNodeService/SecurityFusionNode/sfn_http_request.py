@@ -43,6 +43,7 @@ configs = [
 ]
 
 # HELLO WORLD
+print('CHECKING CONNECTION TO THE SFN')
 try:
     resp = requests.get(url)
 except requests.exceptions.RequestException as e:
@@ -51,6 +52,7 @@ else:
     print(resp.text, resp.status_code)
 
 # RELOAD SETTINGS
+print('CHECKING SETTINGS RELOAD ON SFN')
 try:
     resp = requests.get(url + 'settings')
 except requests.exceptions.RequestException as e:
@@ -59,6 +61,7 @@ else:
     print(resp.text, resp.status_code)
 
 # UPDATE URLS
+print('CHECKING URL UPDATE SFN')
 try:
     resp = requests.post(url + 'urls', json=json.dumps(sfn_urls))
 except requests.exceptions.RequestException as e:
@@ -66,16 +69,9 @@ except requests.exceptions.RequestException as e:
 else:
     print(resp.text, resp.status_code)
 
-# HELLO LINKSMART VIA SFN
-try:
-    resp = requests.get(url + 'scral')
-except requests.exceptions.RequestException as e:
-    print('WOO THERE, Something went wrong, error:' + str(e))
-else:
-    print(resp.text, resp.status_code)
-
 # configs = [tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_2_reg', False)]
 # SEND THE CONFIGS AS IF VCA WERE UPDATING THE SFN
+print('CHECKING CONFIG UPDATE SFN')
 try:
     resp = requests.post(url + 'configs', json=json.dumps(configs))
 except requests.exceptions.RequestException as e:
@@ -83,29 +79,42 @@ except requests.exceptions.RequestException as e:
 else:
     print(resp.text, resp.status_code)
 
-# SEND MESSAGE TO SFN
+# HELLO LINKSMART VIA SFN
+print('CHECKING SFN CAN SEE SCRAL')
 try:
-    res = requests.put(url + 'message', json=json.dumps(
-        tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_1_00000')))
+    resp = requests.get(url + 'scral')
 except requests.exceptions.RequestException as e:
-    print(str(e))
+    print('WOO THERE, Something went wrong, error:' + str(e))
 else:
-    print(res.text, res.status_code)
+    print(resp.text, resp.status_code)
+if resp.ok:
 
-# SEND MESSAGE TO SFN
-try:
-    res = requests.put(url + 'message', json=json.dumps(
-        tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_2_00000')))
-except requests.exceptions.RequestException as e:
-    print(str(e))
-else:
-    print(res.text, res.status_code)
+    # SEND MESSAGE TO SFN
+    print('CHECKING SAMPLE MESSAGES ARE SENT')
+    try:
+        res = requests.put(url + 'message', json=json.dumps(
+            tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_1_00000')))
+    except requests.exceptions.RequestException as e:
+        print(str(e))
+    else:
+        print(res.text, res.status_code)
 
-# SEND MESSAGE TO SFN
-try:
-    res = requests.put(url + 'message', json=json.dumps(
-        tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_3_00000')))
-except requests.exceptions.RequestException as e:
-    print(str(e))
+    # SEND MESSAGE TO SFN
+    try:
+        res = requests.put(url + 'message', json=json.dumps(
+            tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_2_00000')))
+    except requests.exceptions.RequestException as e:
+        print(str(e))
+    else:
+        print(res.text, res.status_code)
+
+    # SEND MESSAGE TO SFN
+    try:
+        res = requests.put(url + 'message', json=json.dumps(
+            tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_3_00000')))
+    except requests.exceptions.RequestException as e:
+        print(str(e))
+    else:
+        print(res.text, res.status_code)
 else:
-    print(res.text, res.status_code)
+    print('SFN HAD ISSUES SEEING THE SCRAL')

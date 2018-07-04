@@ -44,3 +44,7 @@ H. For Error: 'No module named _tkinter'. sudo apt-get install python3-tk
 ATOS GPU CLOUD MACHINE
 1. Connect to Monica VPN.
 2. Logging to the ssh. ssh -XCi /home/robdupre/Desktop/Monica VPN/monappdwp5.key r.dupre@MPCLSGESFN01.monica-cloud.eu
+
+UTILITIES
+1. Fix permissions. sudo chmod -R a+rwx /<MONICA DIR>/
+
