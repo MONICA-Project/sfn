@@ -39,7 +39,9 @@ H. For Error: 'No module named _tkinter'. sudo apt-get install python3-tk
 RUNNING KU DEPLOYMENT TOOL
 1. Install Requirements. pip3 install -r /<MONICA DIR>/WP5/KU/KUConfigTool/requirements.txt
 2. From the root of the project git test the app. python3 WP5/KU/KUConfigTool/camera_config.py --seq_location '/<FULL MONICA DIR> /monica/WP5/KU/Algorithms/sample_sequence/'
+3. Run the Config tool on a camera. python3 WP5/KU/KUConfigTool/camera_config.py --rtsp rtsp://admin:password@10.133.223.178:554/Streaming/Channels/103/'
 H. For Error: 'No module named _tkinter'. sudo apt-get install python3-tk
+H. Run the Config Tool on a Screenshot. python3 WP5/KU/KUConfigTool/camera_config.py --x_size '704' --y_size '576' --seq_location '/home/monica/monica_repo/monica/WP5/KU/KUConfigTool/175'
 
 ATOS GPU CLOUD MACHINE
 1. Connect to Monica VPN.

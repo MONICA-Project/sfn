@@ -147,7 +147,7 @@ class GetFlow(FrameAnalyser):
         }
         message = json.dumps(data)
         try:
-            reg_file = open(os.path.join(os.path.dirname(__file__), self.module_id + '_' + '_reg.txt'), 'w')
+            reg_file = open(os.path.join(os.path.dirname(__file__), self.module_id + '_reg.txt'), 'w')
         except IOError:
             print('IoError')
         else:

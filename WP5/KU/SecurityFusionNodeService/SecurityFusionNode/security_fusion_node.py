@@ -54,7 +54,7 @@ class Logs(log_base):
 class SecurityFusionNode:
 
     def __init__(self, module_id):
-        self.module_id = module_id
+        self.module_id = module_id + '_crowd_density_global'
         self.module_type = 'crowd_density_global'
         self.last_amalgamation = time.time()
         self.timer = 0
@@ -251,8 +251,7 @@ class SecurityFusionNode:
         }
         message = json.dumps(data)
         try:
-            reg_file = open(os.path.join(os.path.dirname(__file__),
-                                         self.module_id + '_' + self.type_module + '_reg.txt'), 'w')
+            reg_file = open(os.path.join(os.path.dirname(__file__), self.module_id + '_reg.txt'), 'w')
         except IOError:
             print('IoError')
         else:
