@@ -93,7 +93,7 @@ else:
         print('CHECKING SAMPLE MESSAGES ARE SENT')
         try:
             res = requests.put(url + 'message', json=json.dumps(
-                tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_1_00000')))
+                tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_1_crowd_denisty_local_00000')))
         except requests.exceptions.RequestException as e:
             print(str(e))
         else:
@@ -102,7 +102,7 @@ else:
         # SEND MESSAGE TO SFN
         try:
             res = requests.put(url + 'message', json=json.dumps(
-                tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_2_00000')))
+                tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_1_crowd_denisty_local_00001')))
         except requests.exceptions.RequestException as e:
             print(str(e))
         else:
@@ -111,7 +111,7 @@ else:
         # SEND MESSAGE TO SFN
         try:
             res = requests.put(url + 'message', json=json.dumps(
-                tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_3_00000')))
+                tools.load_json_txt(os.path.join(KU_DIR, 'Algorithms/algorithm_output/'), 'RIF_CAM_1_crowd_denisty_local_00002')))
         except requests.exceptions.RequestException as e:
             print(str(e))
         else:

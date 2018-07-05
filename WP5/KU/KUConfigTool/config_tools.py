@@ -195,7 +195,7 @@ class ConfigTools:
                 outfile.close()
 
             # IF A URL HAS BEEN GIVEN TO A REST SERVICE TRY AND SEND THE JSON MESSAGE
-            if url != 'none':
+            if url != 'None':
                 headers = {
                     'content-Type': 'application/json',
                 }
