@@ -183,7 +183,7 @@ class GetCrowd(FrameAnalyser):
             json_file.close()
 
             if 'model_path' in settings:
-                self.model_path = path.join(KU_DIR, settings['model_path'])
+                self.model_path = path.join(os.path.dirname(__file__), settings['model_path'])
                 # self.model_path = path.join(KU_DIR, 'Algorithms/crowd_density_local/C_CNN/final_models/cmtl_shtechA_204.h5')
             if 'scale' in settings:
                 self.scale = settings['scale']

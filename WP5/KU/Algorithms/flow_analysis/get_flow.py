@@ -8,6 +8,7 @@ import torch
 from torch.autograd import Variable
 from pathlib import Path
 import sys
+import os
 sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.definitions import KU_DIR
 from WP5.KU.Algorithms.frame_analyser import FrameAnalyser
@@ -158,7 +159,7 @@ class GetFlow(FrameAnalyser):
             json_file.close()
 
             if 'model_path' in settings:
-                path = KU_DIR + '/Algorithms/flow_analysis/FlowNet2_src/pretrained/FlowNet2_checkpoint.pth.tar'
+                path = os.path.join(os.path.dirname(__file__), settings['model_path'] )
             if 'process_interval' in settings:
                 self.process_interval = settings['process_interval']
             # Build model
