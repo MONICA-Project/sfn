@@ -1,1 +1,1 @@
-{"model_path": "Algorithms/crowd_density_local/C_CNN/final_models/cmtl_shtechA_204.h5", "process_interval": 1, "scale": 0.5}
+{"model_path": "C_CNN/final_models/cmtl_shtechA_204.h5", "process_interval": 1, "scale": 0.5}

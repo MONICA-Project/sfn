@@ -28,11 +28,11 @@ class GetCrowd(FrameAnalyser):
         Keyword arguments:
             module_id -- A unique string identifier
         """
+        FrameAnalyser.__init__(self, module_id)
         self.type_module = 'crowd_density_local'
-        self.module_id = module_id
+        self.module_id = module_id + '_crowd_density_local'
         self.state = 'active'
         self.zone_id = 'N/A'
-        FrameAnalyser.__init__(self, module_id)
         # CAMERA INFO
         self.cam_id = ''
         self.previous_frames_timestamp = {}
@@ -171,8 +171,7 @@ class GetCrowd(FrameAnalyser):
         }
         message = json.dumps(data)
         try:
-            reg_file = open(os.path.join(os.path.dirname(__file__),
-                                         self.module_id + '_' + self.type_module + '_reg.txt'), 'w')
+            reg_file = open(os.path.join(os.path.dirname(__file__), self.module_id + '_' + '_reg.txt'), 'w')
         except IOError:
             print('IoError')
         else:

@@ -26,13 +26,13 @@ class GetFlow(FrameAnalyser):
                 module_id -- A unique string identifier
                 settings_location -- Module settings: location
         """
+        FrameAnalyser.__init__(self, module_id)
         self.module_id = module_id + '_flow'
         self.type_module = 'flow'
         self.state = True
         self.previous_frames_dictionary = {}  # a dictionary of (camera_id,frame) pair
         self.previous_frames_timestamp = {}
         self.process_interval = 1
-        FrameAnalyser.__init__(self, module_id)
         # CAMERA INFO
         self.roi = [0, 300, 0, 300]
         self.cam_id = ''
@@ -147,8 +147,7 @@ class GetFlow(FrameAnalyser):
         }
         message = json.dumps(data)
         try:
-            reg_file = open(os.path.join(os.path.dirname(__file__),
-                                         self.module_id + '_' + self.type_module + '_reg.txt'), 'w')
+            reg_file = open(os.path.join(os.path.dirname(__file__), self.module_id + '_' + '_reg.txt'), 'w')
         except IOError:
             print('IoError')
         else:
