@@ -2,6 +2,7 @@
 """The class that handles the storage of current messages on the sfn_service and contains the functions to process those
 messages"""
 import numpy as np
+import os
 import json
 import time
 from sqlalchemy import Column, Integer, String, Text
@@ -249,6 +250,14 @@ class SecurityFusionNode:
                 'state': self.state,
         }
         message = json.dumps(data)
+        try:
+            reg_file = open(os.path.join(os.path.dirname(__file__),
+                                         self.module_id + '_' + self.type_module + '_reg.txt'), 'w')
+        except IOError:
+            print('IoError')
+        else:
+            reg_file.write(message)
+            reg_file.close()
         # ADD THE REG MESSAGE TO THE DB
         self.insert_config_db(self.module_id, message)
         # message = json.loads(message)
