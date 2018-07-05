@@ -146,6 +146,14 @@ class GetFlow(FrameAnalyser):
                 'state': self.state,
         }
         message = json.dumps(data)
+        try:
+            reg_file = open(os.path.join(os.path.dirname(__file__),
+                                         self.module_id + '_' + self.type_module + '_reg.txt'), 'w')
+        except IOError:
+            print('IoError')
+        else:
+            reg_file.write(message)
+            reg_file.close()
         return message
 
     def load_settings(self, location, file_name):
@@ -159,7 +167,7 @@ class GetFlow(FrameAnalyser):
             json_file.close()
 
             if 'model_path' in settings:
-                path = os.path.join(os.path.dirname(__file__), settings['model_path'] )
+                path = os.path.join(os.path.dirname(__file__), settings['model_path'])
             if 'process_interval' in settings:
                 self.process_interval = settings['process_interval']
             # Build model

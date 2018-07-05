@@ -15,8 +15,8 @@ from WP5.KU.SharedResources.cam_video_streamer import CamVideoStreamer
 from WP5.KU.SharedResources.frame_streamer import ImageSequenceStreamer
 import WP5.KU.SharedResources.get_incrementer as inc
 from WP5.KU.Algorithms.crowd_density_local.get_crowd import GetCrowd
-from WP5.KU.Algorithms.flow_analysis.get_flow import GetFlow
-from WP5.KU.Algorithms.object_detection.get_people import GetPeople
+# from WP5.KU.Algorithms.flow_analysis.get_flow import GetFlow
+# from WP5.KU.Algorithms.object_detection.get_people import GetPeople
 
 __version__ = '0.2'
 __author__ = 'Rob Dupre (KU)'

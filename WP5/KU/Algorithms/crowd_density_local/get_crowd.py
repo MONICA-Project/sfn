@@ -3,7 +3,7 @@
 High-level Prior and Density Estimation for Crowd Counting
 This module is intended for use within the VCA framework within PyVCA interface
 """
-from os import path
+import os
 import numpy as np
 import base64
 import cv2
@@ -46,7 +46,7 @@ class GetCrowd(FrameAnalyser):
 
         self.net = CrowdCounter()
         # TODO: FUTURE WARNING HERE
-        nw.load_net(path.join(self.model_path), self.net)
+        nw.load_net(os.path.join(self.model_path), self.net)
         # CUDA WARNING
         if self.net.cuda_available():
             self.net.cuda()
@@ -170,6 +170,14 @@ class GetCrowd(FrameAnalyser):
                 'state': self.state,
         }
         message = json.dumps(data)
+        try:
+            reg_file = open(os.path.join(os.path.dirname(__file__),
+                                         self.module_id + '_' + self.type_module + '_reg.txt'), 'w')
+        except IOError:
+            print('IoError')
+        else:
+            reg_file.write(message)
+            reg_file.close()
         return message
 
     def load_settings(self, location, file_name):
@@ -183,8 +191,7 @@ class GetCrowd(FrameAnalyser):
             json_file.close()
 
             if 'model_path' in settings:
-                self.model_path = path.join(os.path.dirname(__file__), settings['model_path'])
-                # self.model_path = path.join(KU_DIR, 'Algorithms/crowd_density_local/C_CNN/final_models/cmtl_shtechA_204.h5')
+                self.model_path = os.path.join(os.path.dirname(__file__), settings['model_path'])
             if 'scale' in settings:
                 self.scale = settings['scale']
             if 'process_interval' in settings:
