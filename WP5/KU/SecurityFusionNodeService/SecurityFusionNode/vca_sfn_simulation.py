@@ -52,7 +52,7 @@ if __name__ == '__main__':
     time_interval = (algorithm_process_time * num_cameras) / (num_algorithms * num_cameras)
     print('Messages will be sent every {} seconds'.format(time_interval))
     threaded = _args.threaded
-    threaded = False
+    # threaded = False
     looping = _args.looping
     dataset_folder = _args.dataset_folder
 
