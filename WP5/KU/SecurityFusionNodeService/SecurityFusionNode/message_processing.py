@@ -168,7 +168,6 @@ def amalgamate_crowd_density_local(sfn_instance, url):
         amalgamation_density_count += recent_cam_messages[i]['density_count']
         top_down_maps.append(recent_cam_messages[i]['density_map'])
 
-        config = sfn_module.query_config_db(None, recent_cam_messages[i]['camera_ids'][0])
         for c in configs:
             if 'camera_id' in c:
                 if c['camera_id'] == recent_cam_messages[i]['camera_ids'][0]:
@@ -176,12 +175,13 @@ def amalgamate_crowd_density_local(sfn_instance, url):
                     break
 
         if config is not None:
+            print(config)
             print(config['camera_id'])
             print(config['ground_plane_position'])
             print(config['camera_bearing'])
             config_for_amalgamation.append(config['ground_plane_position'] + [config['camera_bearing']])
         else:
-            print('ERROR: NO CONFIG WAS RETURNED. ')
+            print('ERROR: NO CONFIG WAS RETURNED LOOKING FOR {}. '.format(recent_cam_messages[i]['camera_ids'][0]))
             log_text = log_text + 'ERROR: NONE OR MORE THAN ONE CONFIG WAS RETURNED, BREAKING OUT OF AMALGAMATION. '
             break
 
