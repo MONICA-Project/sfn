@@ -176,6 +176,7 @@ def amalgamate_crowd_density_local(sfn_instance, url):
                     break
 
         if config is not None:
+            print(config['camera_id'])
             print(config['ground_plane_position'])
             print(config['camera_bearing'])
             config_for_amalgamation.append(config['ground_plane_position'] + [config['camera_bearing']])
