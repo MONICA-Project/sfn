@@ -176,7 +176,7 @@ def amalgamate_crowd_density_local(sfn_instance, url):
                     break
 
         if config is not None:
-            config_for_amalgamation.append(config['ground_plane_position'] + [config['camera_tilt']])
+            config_for_amalgamation.append(config['ground_plane_position'] + [config['camera_bearing']])
         else:
             print('ERROR: NO CONFIG WAS RETURNED. ')
             log_text = log_text + 'ERROR: NONE OR MORE THAN ONE CONFIG WAS RETURNED, BREAKING OUT OF AMALGAMATION. '
