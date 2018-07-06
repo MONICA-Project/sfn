@@ -17,8 +17,8 @@ print(str(socket.gethostname()))
 
 url = 'http://0.0.0.0:5000/'
 # url = 'http://MPCLSGESFN01.monica-cloud.eu:5000/'
-scral_url = 'http://monappdwp3.monica-cloud.eu:8000/'
-# scral_url = 'http://0.0.0.0:3389/'
+# scral_url = 'http://monappdwp3.monica-cloud.eu:8000/'
+scral_url = 'http://0.0.0.0:3389/'
 
 sfn_urls = {'scral_url': scral_url,
             'crowd_density_url': scral_url + 'scral/sfn/crowd_monitoring',
@@ -46,6 +46,15 @@ configs = [
 print('CHECKING CONNECTION TO THE SFN')
 try:
     resp = requests.get(url)
+except requests.exceptions.RequestException as e:
+    print('WOO THERE, Something went wrong, error:' + str(e))
+else:
+    print(resp.text, resp.status_code)
+
+# CHECK DEBUGGING MODE
+print('CHECKING DEBUGGING MODE')
+try:
+    resp = requests.get(url + 'debug')
 except requests.exceptions.RequestException as e:
     print('WOO THERE, Something went wrong, error:' + str(e))
 else:

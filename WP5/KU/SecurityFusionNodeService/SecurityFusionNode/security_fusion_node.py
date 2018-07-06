@@ -71,6 +71,7 @@ class SecurityFusionNode:
         self.flow_save = True
         self.object_save = True
         self.fight_save = True
+        self.debug = False
 
         # LOAD SETTINGS FOR SFN
         self.load_settings(str(Path(__file__).absolute().parents[0]), 'settings')
@@ -261,6 +262,27 @@ class SecurityFusionNode:
         self.insert_config_db(self.module_id, message)
         # message = json.loads(message)
         return message
+
+    def dump_amalgamation_data(self):
+        messages = self.query_db(None)
+        for message in messages:
+            msg = json.loads(message.msg)
+            try:
+                reg_file = open(os.path.join(os.path.dirname(__file__), message.cam_id + '_' +  message.module_id + '_' + message.id), 'w')
+            except IOError:
+                print('IoError')
+            else:
+                reg_file.write(message.msg)
+                reg_file.close()
+        configs = self.query_config_db(None)
+
+    def flip_debug(self):
+        if self.debug:
+            self.debug = False
+        else:
+            self.debug = True
+
+        return self.debug
 
     @staticmethod
     def send_reg_message(message, url):

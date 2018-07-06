@@ -151,6 +151,11 @@ def amalgamate_crowd_density_local(sfn_instance, url):
     recent_cam_messages = sfn_module.query_db(None, None, 'crowd_density_local')  # Search for a specific module_id
     recent_cam_messages = [json.loads(item.msg) for item in recent_cam_messages]
 
+    # GET ONLY CAMERAS CONFIGS
+    configs = sfn_module.query_config_db(None)
+    configs = [json.loads(config.msg) for config in configs]
+    config = None
+
     for i, item in enumerate(recent_cam_messages):
 
         if i == 0:
@@ -164,30 +169,44 @@ def amalgamate_crowd_density_local(sfn_instance, url):
         top_down_maps.append(recent_cam_messages[i]['density_map'])
 
         config = sfn_module.query_config_db(None, recent_cam_messages[i]['camera_ids'][0])
-        if config is not None and len(config) == 1:
-            config = json.loads(config[0].msg)
-        else:
-            log_text = log_text + 'ERROR: NONE OR MORE THAN ONE CONFIG WAS RETURNED. '
+        for c in configs:
+            if 'camera_id' in c:
+                if c['camera_id'] == recent_cam_messages[i]['camera_ids'][0]:
+                    config = c
+                    break
 
-        config_for_amalgamation.append(config['ground_plane_position'] + [config['camera_tilt']])
+        if config is not None:
+            config_for_amalgamation.append(config['ground_plane_position'] + [config['camera_tilt']])
+        else:
+            print('ERROR: NO CONFIG WAS RETURNED. ')
+            log_text = log_text + 'ERROR: NONE OR MORE THAN ONE CONFIG WAS RETURNED, BREAKING OUT OF AMALGAMATION. '
+            break
+
     # RUN THE AMALGAMATION
     if len(recent_cam_messages) == len(config_for_amalgamation):
         amalgamated_top_down_map, amalgamation_ground_plane_position = sfn_module.generate_amalgamated_top_down_map(
             top_down_maps, config_for_amalgamation)
         log_text = log_text + 'CURRENTLY HELD MESSAGES HAVE BEEN AMALGAMATED INTO THE crowd_density_global VIEW. '
+        # Create new message
+        crowd_density_global = sfn_module.create_obs_message(amalgamation_cam_ids, amalgamation_density_count,
+                                                             amalgamated_top_down_map, amalgamation_timestamp_1,
+                                                             amalgamation_timestamp_2,
+                                                             amalgamation_ground_plane_position)
+
+        log_text = log_text + 'crowd_density_global MESSAGE CREATED. '
+        # sfn_module.debug = True
+        if sfn_module.debug:
+            sfn_module.dump_amalgamation_data()
+            log_text = log_text + 'DEBUGGING IS ENABLES SO A DATABASE DUMP HAS BEEN DONE. '
+
+        # SEND crowd_density_global MESSAGE TO LINKSMART
+        log_text = log_text + sfn_instance.insert_db('GLOBAL', 'crowd_density_global', json.dumps(crowd_density_global))
+        text, resp_code = forward_message(crowd_density_global, url)
+
     else:
+        print('ERROR: NOT EQUAL CAM MESSAGES AND CONFIGS. ')
         log_text = log_text + 'ERROR: NOT EQUAL CAM MESSAGES AND CONFIGS. '
 
-
-    # Create new message
-    crowd_density_global = sfn_module.create_obs_message(amalgamation_cam_ids, amalgamation_density_count,
-                                                         amalgamated_top_down_map, amalgamation_timestamp_1,
-                                                         amalgamation_timestamp_2, amalgamation_ground_plane_position)
-    log_text = log_text + 'crowd_density_global MESSAGE CREATED. '
-
-    # SEND crowd_density_global MESSAGE TO LINKSMART
-    log_text = log_text + sfn_instance.insert_db('GLOBAL', 'crowd_density_global', json.dumps(crowd_density_global))
-    text, resp_code = forward_message(crowd_density_global, url)
     log_text = log_text + text
     sfn_instance.insert_log(time.time(), time.time(), log_text)
     return log_text, resp_code

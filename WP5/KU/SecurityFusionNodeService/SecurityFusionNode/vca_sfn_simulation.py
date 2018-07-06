@@ -20,8 +20,8 @@ __author__ = 'RoViT (KU)'
 print(str(socket.gethostname()))
 
 parser = argparse.ArgumentParser(description='"A simple load testing script to fire messages off to the SFN')
-parser.add_argument('--sfn_url', default='http://MPCLSGESFN01.monica-cloud.eu:5000/', type=str,
-# parser.add_argument('--sfn_url', default='http://0.0.0.0:5000/', type=str,
+# parser.add_argument('--sfn_url', default='http://MPCLSGESFN01.monica-cloud.eu:5000/', type=str,
+parser.add_argument('--sfn_url', default='http://0.0.0.0:5000/', type=str,
                     help='The URL and port the SFN is currently listening on')
 parser.add_argument('--scral_url', default='http://monappdwp3.monica-cloud.eu:8000/', type=str,
 # parser.add_argument('--scral_url', default='http://0.0.0.0:3389/', type=str,
@@ -52,6 +52,7 @@ if __name__ == '__main__':
     time_interval = (algorithm_process_time * num_cameras) / (num_algorithms * num_cameras)
     print('Messages will be sent every {} seconds'.format(time_interval))
     threaded = _args.threaded
+    threaded = False
     looping = _args.looping
     dataset_folder = _args.dataset_folder
 
@@ -252,7 +253,6 @@ else:
                     # call_sfn(cam_2_od_mess, i, 'OD')
                     # call_sfn(cam_3_od_mess, i, 'OD')
                     # call_sfn(cam_4_od_mess, i, 'OD')
-                    time.sleep(sleep_counter)
 
             if not looping:
                 break

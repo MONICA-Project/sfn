@@ -38,8 +38,8 @@ configs = [
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), '183_reg', False),
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), '184_reg', False),
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), '189_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '0ce70402-6147-5507-a135-42f6c26d2213_crowd_density_local__reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '06144a3d-bb41-5c87-be0d-9ed7be234101_flow__reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '0ce70402-6147-5507-a135-42f6c26d2213_crowd_density_local_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '06144a3d-bb41-5c87-be0d-9ed7be234101_flow_reg', False),
     # tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6506F977-6868-4E78-B02D-8C516B8469F3_object_detection_reg', False),
     # tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6789pwrl123dc_fighting_detection_reg', False),
 ]

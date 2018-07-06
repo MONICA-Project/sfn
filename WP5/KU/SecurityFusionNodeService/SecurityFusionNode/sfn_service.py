@@ -32,6 +32,13 @@ def hello_world():
     return "SECURITY FUSION NODE"
 
 
+@app.route("/debug")
+def debug():
+    print('REQUEST: FLIP DEBUGGING MODE')
+    debug_mode = sfn_module.flip_debug()
+    return "DEBUGGING IS SET TO {}".format(debug_mode), 200
+
+
 @app.route("/urls", methods=['POST'])
 def update_urls():
     print('REQUEST: UPDATE URLS')
