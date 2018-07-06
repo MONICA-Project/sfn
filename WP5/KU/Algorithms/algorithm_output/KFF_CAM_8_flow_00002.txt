@@ -1,0 +1,1 @@
+{"average_flow_direction": [0.788593158578484, 0.07674278668424901, 0.7307184480635059], "camera_ids": ["KFF_CAM_8"], "module_id": "06144a3d-bb41-5c87-be0d-9ed7be234101", "flow_frame_byte_array": "", "timestamp": "2018-06-18T13:04:00.810414+00:00", "average_flow_magnitude": [6.414280068137947, 0.4298774154713354, 4.297610824095827], "type_module": "flow"}

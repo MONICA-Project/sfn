@@ -183,7 +183,6 @@ def amalgamate_crowd_density_local(sfn_instance, url):
         else:
             print('ERROR: NO CONFIG WAS RETURNED LOOKING FOR {}. '.format(recent_cam_messages[i]['camera_ids'][0]))
             log_text = log_text + 'ERROR: NONE OR MORE THAN ONE CONFIG WAS RETURNED, BREAKING OUT OF AMALGAMATION. '
-            break
 
     # RUN THE AMALGAMATION
     if len(recent_cam_messages) == len(config_for_amalgamation):
@@ -205,12 +204,12 @@ def amalgamate_crowd_density_local(sfn_instance, url):
         # SEND crowd_density_global MESSAGE TO LINKSMART
         log_text = log_text + sfn_instance.insert_db('GLOBAL', 'crowd_density_global', json.dumps(crowd_density_global))
         text, resp_code = forward_message(crowd_density_global, url)
+        log_text = log_text + text
 
     else:
         print('ERROR: NOT EQUAL CAM MESSAGES AND CONFIGS. ')
         log_text = log_text + 'ERROR: NOT EQUAL CAM MESSAGES AND CONFIGS. '
 
-    log_text = log_text + text
     sfn_instance.insert_log(time.time(), time.time(), log_text)
     return log_text, resp_code
 
