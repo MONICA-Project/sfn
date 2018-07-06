@@ -13,6 +13,7 @@ from pathlib import Path
 import sys
 sys.path.append(str(Path(__file__).absolute().parents[4]))
 import WP5.KU.SharedResources.get_top_down_heat_map as heat_map_gen
+import WP5.KU.SharedResources.get_incrementer as incrementer
 from WP5.KU.definitions import KU_DIR
 from WP5.KU.Algorithms.frame_analyser import FrameAnalyser
 from WP5.KU.Algorithms.crowd_density_local.C_CNN.src.crowd_count import CrowdCounter
@@ -43,6 +44,11 @@ class GetCrowd(FrameAnalyser):
         self.count = 0
         self.model_path = []
         self.load_settings(str(Path(__file__).absolute().parents[0]), 'settings')
+
+        # EVALUATION
+        self.counter = 0
+        self.iterator = 0
+        self.save_on_count = 3200
 
         self.net = CrowdCounter()
         # TODO: FUTURE WARNING HERE
@@ -114,6 +120,22 @@ class GetCrowd(FrameAnalyser):
 
             # CONVERT TO IMAGE THAT CAN BE DISPLAYED
             density_map = 255 * density_map / np.max(density_map)
+            if self.iterator >= self.save_on_count:
+                save_name = self.cam_id + '_' + self.module_id + '_' + incrementer.get_incrementer(self.counter, 7)
+                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame.jpeg'), frame)
+                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_density.jpeg'), density_map)
+                try:
+                    reg_file = open(os.path.join(os.path.dirname(__file__), save_name + '.txt'), 'w')
+                except IOError:
+                    print('IoError')
+                else:
+                    reg_file.write(message)
+                    reg_file.close()
+                self.iterator = 0
+                self.counter = self.counter + 1
+            else:
+                self.iterator = self.iterator + 1
+
             return message, density_map
         else:
             return None, None
