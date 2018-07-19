@@ -38,16 +38,21 @@ def load_settings(settings_location, cam_id, pickel_file=True):
             return data
 
 
-def load_json_txt(location, file_name):
+def load_json_txt(location, file_name=None):
+    if file_name is None:
+        file_location = location
+    else:
+        file_location = location + file_name + '.txt'
+
     try:
-        json_file = open(location + file_name + '.txt')
+        json_file = open(file_location)
     except IOError:
         print('IoError')
     else:
         line = json_file.readline()
         data = json.loads(line)
         json_file.close()
-        print('MESSAGE LOADED: ' + file_name)
+        print('MESSAGE LOADED FROM: ' + file_location)
         return data
 
 

@@ -196,30 +196,6 @@ def hello_linksmart():
         return resp.text + ' VIA SECURITY FUSION NODE', 200
 
 
-# ROUTES FOR THE DUMMY LINKSMART ONLY
-@app.route("/linksmart/get_configs")
-def get_configs_linksmart():
-    print('REQUEST: GET THE CONFIGS FROM LINKSMART')
-    try:
-        resp = requests.get(sfn_module.urls['dummy_linksmart_url'] + 'configs')
-    except requests.exceptions.RequestException as e:
-        print(e)
-        return 'Dummy Linksmart Connection Failed: ' + str(e), 502
-    else:
-        global cam_configs
-        cam_configs = resp.json()
-        text = ''
-        # GET A LIST OF CONFIG DICTS, LOOP THROUGH AND ADD TO DB
-        for config in cam_configs:
-            if 'camera_id' in config:
-                text = sfn_module.insert_config_db(c_id=config['camera_id'], msg=json.dumps(config))
-            elif 'module_id' in config:
-                text = sfn_module.insert_config_db(c_id=config['module_id'], msg=json.dumps(config))
-
-        print('{} NUM CONFIGS RETURNED = {}, {}'.format(text, len(sfn_module.query_config_db()), resp.status_code))
-        return 'OBTAINED CONFIGS VIA SECURITY FUSION NODE: ' + str(sfn_module.query_config_db()), 200
-
-
 # RUN THE SERVICE
 parser = argparse.ArgumentParser(description='Development Server Help')
 parser.add_argument("-d", "--debug", action="store_true", dest="debug_mode",

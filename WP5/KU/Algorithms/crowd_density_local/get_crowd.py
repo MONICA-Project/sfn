@@ -80,11 +80,9 @@ class GetCrowd(FrameAnalyser):
         if (time_2 - time_1).seconds >= self.process_interval:
             self.previous_frames_timestamp[camera_id] = time_2
 
-            # EXTRACT THE ROI FROM THE FRAME
-            frame = frame[roi[1]:roi[3], roi[0]:roi[2], :]
-
-            height = roi[3] - roi[1]
-            width = roi[2] - roi[0]
+            height = frame.shape[0]
+            width = frame.shape[1]
+            roi = [int(np.floor(i * self.scale)) for i in roi]
 
             # DO SOME SCALE TO OPTIMAL MODEL INPUT, MAYBE SPLIT IMAGE IF ITS TOO LARGE?
             x = cv2.resize(frame, (0, 0), fx=self.scale, fy=self.scale)
@@ -97,16 +95,16 @@ class GetCrowd(FrameAnalyser):
             density_map = self.net(x)
             density_map = density_map.data.cpu().numpy()[0][0]
 
-            # GET THE NUMERIC OUTPUT (COUNT)
-            count = np.sum(density_map)
+            # EXTRACT THE ROI FROM THE FRAME AND COUNT WITHIN THAT AREA
+            count = np.sum(density_map[roi[1]:roi[3], roi[0]:roi[2]])
 
             # CONVERT BACK TO ORIGINAL SCALE
-            ratio = 4
-            density_map = cv2.resize(density_map, (width, height)) / ratio
+            density_map = cv2.resize(density_map, (width, height))
 
             # CREATE THE MESSAGE
             self.cam_id = camera_id
             timestamp = arrow.utcnow()
+
             # CONVERT TO TOP DOWN
             top_down_density_map, heat_image = heat_map_gen.generate_heat_map(density_map,
                                                                               image_2_ground_plane_matrix,

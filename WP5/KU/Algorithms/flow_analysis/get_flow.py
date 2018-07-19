@@ -11,6 +11,7 @@ import sys
 import os
 sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.definitions import KU_DIR
+import WP5.KU.SharedResources.get_incrementer as incrementer
 from WP5.KU.Algorithms.frame_analyser import FrameAnalyser
 from WP5.KU.Algorithms.flow_analysis.FlowNet2_src import flow_to_image
 from WP5.KU.Algorithms.flow_analysis.FlowNet2_src import FlowNet2
@@ -44,6 +45,11 @@ class GetFlow(FrameAnalyser):
         self.load_settings(str(Path(__file__).absolute().parents[0]), 'settings')
         self.scale_height = 384  # TO SCALE THE INPUT IMAGE IF IT IS TOO LARGE FOR FLOWNET
         self.scale_width = 512
+
+        # EVALUATION
+        self.counter = 0
+        self.iterator = 0
+        self.save_on_count = 3200
 
     def process_frame(self, frame, camera_id, roi, rois):  # rois: region of interests
         # CHECK WHETHER THIS IS THE FIRST FRAME OF THIS CAMERA ID
@@ -83,10 +89,6 @@ class GetFlow(FrameAnalyser):
             # CONVERT BACK TO ORIGINAL SCALE
             flow_uv = cv2.resize(flow_uv, (width, height))
 
-            # VISUALIZE THE OPTICAL FLOW AND SAVE IT
-            flow_image = None
-            # flow_image = flow_to_image(flow_uv)
-
             ave_flow_mag = []
             ave_flow_dir = []
             for i in range(len(rois)):
@@ -110,6 +112,25 @@ class GetFlow(FrameAnalyser):
             # CREATE THE MESSAGE
             self.cam_id = camera_id
             message = self.create_obs_message(ave_flow_mag, ave_flow_dir, arrow.utcnow())
+
+            if self.iterator >= self.save_on_count:
+                # VISUALIZE THE OPTICAL FLOW AND SAVE IT
+                flow_image = flow_to_image(flow_uv)
+                save_name = incrementer.get_incrementer(self.counter, 7) + '_' + self.cam_id + '_' + self.module_id
+                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame1.jpeg'), frame1)
+                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame2.jpeg'), frame2)
+                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_flow.jpeg'), flow_image)
+                try:
+                    reg_file = open(os.path.join(os.path.dirname(__file__), save_name + '.txt'), 'w')
+                except IOError:
+                    print('IoError')
+                else:
+                    reg_file.write(message)
+                    reg_file.close()
+                self.iterator = 0
+                self.counter = self.counter + 1
+            else:
+                self.iterator = self.iterator + 1
 
             return message, flow_image
         else:
