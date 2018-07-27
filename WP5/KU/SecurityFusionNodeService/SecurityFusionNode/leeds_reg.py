@@ -1,4 +1,4 @@
-# kff_reg.py
+# leeds_reg.py
 """A script designed to update the registration messages for a set location"""
 import json
 import requests
@@ -29,17 +29,12 @@ sfn_urls = {'scral_url': scral_url,
             }
 
 configs = [
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), '175_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), '176_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), '177_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), '178_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), '180_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), '182_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), '183_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), '184_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), '189_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '0ce70402-6147-5507-a135-42f6c26d2213_crowd_density_local_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '06144a3d-bb41-5c87-be0d-9ed7be234101_flow_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'LEEDS_1'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'LEEDS_2'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'LEEDS_3'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'LEEDS_4'),
+    # tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '0ce70402-6147-5507-a135-42f6c26d2213_crowd_density_local_reg', False),
+    # tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '06144a3d-bb41-5c87-be0d-9ed7be234101_flow_reg', False),
     # tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6506F977-6868-4E78-B02D-8C516B8469F3_object_detection_reg', False),
     # tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6789pwrl123dc_fighting_detection_reg', False),
 ]
