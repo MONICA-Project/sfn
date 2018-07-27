@@ -1,1 +1,1 @@
-{"model_path": "C_CNN/final_models/cmtl_shtechA_204.h5", "process_interval": 4, "scale": 0.5}
+{"model_path": "C_CNN/final_models/cmtl_shtechB_768.h5", "process_interval": 4, "scale": 0.5}

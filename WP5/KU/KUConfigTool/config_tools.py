@@ -7,6 +7,7 @@ import pickle
 import requests
 import json
 import arrow
+import os
 
 __version__ = '0.1'
 __author__ = 'Rob Dupre (KU)'
@@ -35,6 +36,7 @@ class ConfigTools:
         # [Xo, Yo, X1, Y1]
         self.module_types = [0, 0, 1, 0, 0, 0]
         self.frame_roi = [0, 300, 0, 300]
+        self.crowd_mask = []
         # PAGE THREE
         # [XoYo [x,y], X1Yo [x,y], XoY1 [x,y], X1Y1[x,y], RefPoint [x,y]]
         self.ref_pt = [[50, 50], [300, 50], [50, 300], [300, 300], [100, 100]]
@@ -58,7 +60,7 @@ class ConfigTools:
         if self.transform is not None:
             return True
         else:
-            print('AN ELEMENT IS NOT COMPLETE')
+            print('TRANSFORM HAS NOT BEEN CALCULATED')
             return False
 
     def perspective_transform(self, image, pts2=np.float32([[2000, 2000], [2250, 2000], [2000, 2250], [2250, 2250]]),
@@ -132,12 +134,12 @@ class ConfigTools:
         url is specified a registration message is sent containing the json payload.
 
         Keyword arguments:
-            url --          [OPTIONAL] when speficied a requests request is sent containing a JSON payload of the
+            url --          [OPTIONAL] when specified a requests request is sent containing a JSON payload of the
                             current config.
         """
         if self.check_inputs():
             try:
-                fo = open((str(self.camera_id) + '.pk'), 'wb')
+                fo = open(os.path.join(os.path.dirname(__file__) + '/cam_configs/' + str(self.camera_id) + '.pk'), 'wb')
             except IOError:
                 print('IOError SAVING .pk FILE')
             else:
@@ -153,6 +155,7 @@ class ConfigTools:
                         'zone_id': self.zone_id,
                         'module_types': self.module_types,
                         'frame_roi': self.frame_roi,
+                        'crowd_mask': cv2.resize(self.crowd_mask[:, :], (0, 0), fx=0.2, fy=0.2).tolist(),
                         'flow_rois': self.flow_rois,
                         'timestamp': str(arrow.utcnow()),
                         'state': self.state,
@@ -187,7 +190,7 @@ class ConfigTools:
 
             # WRITE THE REG MESSAGE TO txt FILE
             try:
-                outfile = open(self.camera_id + '_reg.txt', 'w')
+                outfile = open(os.path.join(os.path.dirname(__file__), self.camera_id + '_reg.txt'), 'w')
             except IOError:
                 print('IOError SAVING .txt FILE')
             else:
@@ -215,7 +218,7 @@ class ConfigTools:
             A bool --       True if load is successful
             """
         try:
-            fo = open((str(cam_id) + '.pk'), 'rb')
+            fo = open(os.path.join(os.path.dirname(__file__) + '/cam_configs/' + str(cam_id) + '.pk'), 'rb')
         except IOError:
             print('IoError')
             return False
@@ -247,6 +250,8 @@ class ConfigTools:
                 self.frame_roi = entry['roi']
             if 'frame_roi' in entry:
                 self.frame_roi = entry['frame_roi']
+            if 'crowd_mask' in entry:
+                self.crowd_mask = np.array(entry['crowd_mask'])
             if 'flow_rois' in entry:
                 self.flow_rois = entry['flow_rois']
             self.ground_plane_roi = entry['ground_plane_roi']

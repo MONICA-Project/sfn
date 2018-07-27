@@ -39,9 +39,9 @@ def dataset(index):
         7: [(dataset_folder + 'KU_Courtyard_Dataset/20130805_140532_52EB_00408CDCC71E/'), 50],
         8: [(dataset_folder + 'KU_LAB/Output_1/'), 15],
         9: [(dataset_folder + 'OXFORD_TOWNCENTRE/TownCentreXVID/'), 1, 2000],
-        10: [(dataset_folder + 'MONICA/TO/KFF 2017/channel 2/2017-07-09 19-40-00~19-50-00/'), 0, 'KFF_CAM_2'],
-        11: [(dataset_folder + 'MONICA/TO/KFF 2017/channel 4/2017-07-08 14-00-00~14-10-00/'), 0, 'KFF_CAM_4'],
-        12: [(dataset_folder + 'MONICA/TO/KFF 2017/channel 8/2017-07-08 20-40-00~20-50-00/'), 0, 'KFF_CAM_8'],
+        10: [(dataset_folder + 'MONICA/TO/KFF_2017/channel 2/2017-07-09 19-40-00~19-50-00/'), 0, 'KFF_CAM_2'],
+        11: [(dataset_folder + 'MONICA/TO/KFF_2017/channel 4/2017-07-08 14-00-00~14-10-00/'), 0, 'KFF_CAM_4'],
+        12: [(dataset_folder + 'MONICA/TO/KFF_2017/channel 8/2017-07-08 20-40-00~20-50-00/'), 0, 'KFF_CAM_8'],
         13: [(dataset_folder + '/MONICA/SAMPLE_VIDEOS/KFF/'), 0],
         14: [(dataset_folder + '/MONICA/SAMPLE_VIDEOS/LED/'), 0],
         15: [(dataset_folder + '/MONICA/SAMPLE_VIDEOS/DOM/'), 0],
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     print(info)
 
     # LOAD THE SETTINGS AND PASS THEN WHEN PROCESSING A FRAME
-    settings = load_settings(KU_DIR + '/KUConfigTool/' + '/' + info[2])
+    settings = load_settings(KU_DIR + '/KUConfigTool/cam_configs/' + '/' + info[2])
 
     if info[1] == 'Live':
         cam = CamVideoStreamer(info[0])
@@ -120,10 +120,9 @@ if __name__ == '__main__':
         message = None
         result = None
         if analyser.type_module == 'flow':
-            message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
-                                                     settings['flow_rois'])
+            message, result = analyser.process_frame(frame, settings['camera_id'], settings['flow_rois'])
         elif analyser.type_module == 'crowd_density_local':
-            message, result = analyser.process_frame(frame, settings['camera_id'], settings['frame_roi'],
+            message, result = analyser.process_frame(frame, settings['camera_id'], settings['crowd_mask'],
                                                      settings['image_2_ground_plane_matrix'],
                                                      settings['ground_plane_roi'],
                                                      settings['ground_plane_size'])

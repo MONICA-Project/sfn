@@ -51,7 +51,7 @@ class GetFlow(FrameAnalyser):
         self.iterator = 0
         self.save_on_count = 3200
 
-    def process_frame(self, frame, camera_id, roi, rois):  # rois: region of interests
+    def process_frame(self, frame, camera_id, rois):  # rois: region of interests
         # CHECK WHETHER THIS IS THE FIRST FRAME OF THIS CAMERA ID
         if camera_id not in self.previous_frames_dictionary:
             self.previous_frames_dictionary[camera_id] = frame
@@ -68,9 +68,6 @@ class GetFlow(FrameAnalyser):
             frame1 = self.previous_frames_dictionary[camera_id]
             self.previous_frames_dictionary[camera_id] = frame2
             self.previous_frames_timestamp[camera_id] = time_2
-
-            frame1 = frame1[roi[1]:roi[3], roi[0]:roi[2], :]
-            frame2 = frame2[roi[1]:roi[3], roi[0]:roi[2], :]
 
             height, width = frame1.shape[:2]
 

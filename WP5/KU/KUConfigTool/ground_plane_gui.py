@@ -74,7 +74,7 @@ class GroundPlane(Frame):
 
     def go_back(self, controller):
         self.update_config()
-        controller.show_frame("FrameROI")
+        controller.show_frame("CrowdMask")
 
     def next_page(self, controller):
         self.update_config()
@@ -95,9 +95,9 @@ class GroundPlane(Frame):
         self.canvas.delete("all")
         # RE-DRAW IMAGE
         self.frame = self.cam.read()
-        self.frame = self.frame[self.controller.config_tools.frame_roi[1]:self.controller.config_tools.frame_roi[3],
-                                self.controller.config_tools.frame_roi[0]:self.controller.config_tools.frame_roi[2],
-                                :]
+        # self.frame = self.frame[self.controller.config_tools.frame_roi[1]:self.controller.config_tools.frame_roi[3],
+        #                         self.controller.config_tools.frame_roi[0]:self.controller.config_tools.frame_roi[2],
+        #                         :]
         self.width = int(self.frame.shape[1] / 1.25)
         self.height = int(self.frame.shape[0] / 1.25)
         self.im = Image.fromarray(self.frame, 'RGB')

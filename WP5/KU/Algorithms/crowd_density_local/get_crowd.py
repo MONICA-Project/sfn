@@ -60,7 +60,7 @@ class GetCrowd(FrameAnalyser):
             print('RUNNING WITHOUT CUDA SUPPORT')
         self.net.eval()
 
-    def process_frame(self, frame, camera_id, roi, image_2_ground_plane_matrix, ground_plane_roi, ground_plane_size):
+    def process_frame(self, frame, camera_id, mask, image_2_ground_plane_matrix, ground_plane_roi, ground_plane_size):
         """ Process a given frame using the crowd density analysis algorithm.
         Keyword arguments:
             frame --        MxNx3 RGB image
@@ -77,12 +77,13 @@ class GetCrowd(FrameAnalyser):
 
         time_1 = self.previous_frames_timestamp[camera_id]
         time_2 = arrow.utcnow()
+        # self.process_interval = 0
         if (time_2 - time_1).seconds >= self.process_interval:
             self.previous_frames_timestamp[camera_id] = time_2
 
             height = frame.shape[0]
             width = frame.shape[1]
-            roi = [int(np.floor(i * self.scale)) for i in roi]
+            # roi = [int(np.floor(i * self.scale)) for i in roi]
 
             # DO SOME SCALE TO OPTIMAL MODEL INPUT, MAYBE SPLIT IMAGE IF ITS TOO LARGE?
             x = cv2.resize(frame, (0, 0), fx=self.scale, fy=self.scale)
@@ -96,7 +97,11 @@ class GetCrowd(FrameAnalyser):
             density_map = density_map.data.cpu().numpy()[0][0]
 
             # EXTRACT THE ROI FROM THE FRAME AND COUNT WITHIN THAT AREA
-            count = np.sum(density_map[roi[1]:roi[3], roi[0]:roi[2]])
+            # count = np.sum(density_map)
+            # count = np.sum(density_map[roi[1]:roi[3], roi[0]:roi[2]])
+            mask = cv2.resize(np.array(mask), (density_map.shape[1], density_map.shape[0]))
+            density_map[mask < 1] = 0
+            count = np.sum(density_map)
 
             # CONVERT BACK TO ORIGINAL SCALE
             density_map = cv2.resize(density_map, (width, height))
@@ -162,7 +167,7 @@ class GetCrowd(FrameAnalyser):
         }
         if frame is not None:
             # RESIZE THE IMAGE AND MAKE IT BLACK AND WHITE
-            frame = cv2.cvtColor(cv2.resize(frame, (0, 0), fx=0.25, fy=0.25), cv2.COLOR_RGB2GRAY)
+            # frame = cv2.cvtColor(cv2.resize(frame, (0, 0), fx=0.25, fy=0.25), cv2.COLOR_RGB2GRAY)
             data['frame_byte_array'] = base64.b64encode(frame.copy(order='C')).decode('utf-8')
             data['image_dims'] = frame.shape
 
@@ -216,3 +221,14 @@ class GetCrowd(FrameAnalyser):
             if 'process_interval' in settings:
                 self.process_interval = settings['process_interval']
         print('SETTINGS LOADED FOR MODULE: ' + self.module_id)
+
+    @staticmethod
+    def display_density(frame, density):
+        density = 255 * density / np.max(density)
+        density = np.dstack((density, density, density))
+        disp_frame = np.zeros((frame.shape[0], frame.shape[1] * 2, 3))
+        disp_frame[:, 0:frame.shape[1], :] = frame
+        disp_frame[:, frame.shape[1]:, :] = density
+        disp_frame = disp_frame.astype(np.uint8)
+        cv2.imshow('Density', disp_frame)
+        cv2.waitKey(0)
