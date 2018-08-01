@@ -21,11 +21,12 @@ scral_url = 'http://monappdwp3.monica-cloud.eu:8000/'
 # scral_url = 'http://0.0.0.0:3389/'
 
 sfn_urls = {'scral_url': scral_url,
-            'crowd_density_url': scral_url + 'scral/sfn/crowd_monitoring',
-            'flow_analysis_url': scral_url + 'scral/sfn/flow_analysis',
-            'object_detection_url': scral_url + 'scral/sfn/object_detection',
-            'fighting_detection_url': scral_url + 'scral/sfn/fight_detection',
-            'camera_reg_url': scral_url + 'scral/sfn/camera',
+            'crowd_density_url': scral_url + 'sfn/crowd_monitoring',
+            'flow_analysis_url': scral_url + 'sfn/flow_analysis',
+            'object_detection_url': scral_url + 'sfn/object_detection',
+            'fighting_detection_url': scral_url + 'sfn/fight_detection',
+            'action_recognition_url': scral_url + 'sfn/action_recognition',
+            'camera_reg_url': scral_url + 'sfn/camera',
             }
 
 configs = [
@@ -37,6 +38,7 @@ configs = [
     # tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '06144a3d-bb41-5c87-be0d-9ed7be234101_flow_reg', False),
     # tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6506F977-6868-4E78-B02D-8C516B8469F3_object_detection_reg', False),
     # tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6789pwrl123dc_fighting_detection_reg', False),
+    # tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '1234sdfv234jk_action_recognition_reg', False),
 ]
 
 # HELLO WORLD
