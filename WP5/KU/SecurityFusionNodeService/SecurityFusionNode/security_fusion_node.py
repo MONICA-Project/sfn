@@ -71,6 +71,7 @@ class SecurityFusionNode:
         self.flow_save = True
         self.object_save = True
         self.fight_save = True
+        self.action_save = True
         self.debug = False
 
         # LOAD SETTINGS FOR SFN
@@ -346,6 +347,9 @@ class SecurityFusionNode:
             if 'object_save' in settings:
                 print('object_save FOUND AND UPDATED')
                 self.object_save = settings['object_save']
+            if 'action_save' in settings:
+                print('action_save FOUND AND UPDATED')
+                self.action_save = settings['action_save']
 
     @staticmethod
     def generate_amalgamated_top_down_map(top_down_maps, config_for_amalgamation):

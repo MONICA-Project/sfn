@@ -126,6 +126,33 @@ def object_detection(sfn_instance, camera_id, url, message, j_id=0):
     return log_text, resp_code
 
 
+def action_recognition(sfn_instance, camera_id, url, message, j_id=0):
+    """ Message process function to be used when messages of type action_recognition are sent to the sfn_service
+        Keyword arguments:
+            sfn_instance --     The instance of the SFN module, handling all database interactions
+            camera_id --        Used to pull back the correct config data from the SFN database
+            url --              The url to forward the message to once processing has been completed
+            message --          The original decoded JSON message in Dictionary form
+            j_id --             A Unique identifier serving as a primary key in the log db
+        Returns:
+            log_text --         A trace text outlining the path the message has taken
+            resp_code --        A code which can be used in the SFN_Service response
+        """
+    log_text = ''
+    resp_code = 0
+    # start = time.time()
+    # FORWARD THE NEW MESSAGE
+    text, resp_code = forward_message(json.dumps(message), url)
+    log_text = log_text + text
+    # LOG THE OUTPUT OF THIS MESSAGE OPERATION
+    if sfn_instance.object_save:
+        log_text = log_text + sfn_instance.insert_db(camera_id, 'action_recognition', json.dumps(message))
+    if sfn_instance.logging:
+        sfn_instance.insert_log(time.time(), message['timestamp'], log_text)
+    # print('Function has taken: {}s'.format(time.time() - start))
+    return log_text, resp_code
+
+
 def forward_message(message, url):
     try:
         resp = requests.put(url, data=message, headers={'content-Type': 'application/json'})
@@ -134,7 +161,7 @@ def forward_message(message, url):
         return 'Connection Failed: ' + str(e), 450
     else:
         print('RESPONSE: ' + resp.text + str(resp.status_code))
-        return 'MESSAGE HAS BEEN FORWARDED (' + resp.text + str(resp.status_code) + '). ', resp.status_code
+        return 'MESSAGE FORWARDED (' + resp.text + str(resp.status_code) + '). ', resp.status_code
 
 
 def amalgamate_crowd_density_local(sfn_instance, url):

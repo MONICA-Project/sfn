@@ -14,7 +14,7 @@ import sys
 sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
 from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.message_processing import crowd_density_local, flow_analysis,\
-    amalgamate_crowd_density_local, fighting_detection, object_detection
+    amalgamate_crowd_density_local, fighting_detection, object_detection, action_recognition
 
 __version__ = '0.2'
 __author__ = 'RoViT (KU)'
@@ -94,7 +94,7 @@ def add_message():
 
         if message is not None and 'type_module' in message:
             wp_module = message['type_module']
-
+            log_text = wp_module + ' '
             # BASED ON wp_module PERFORM PROCESSING ON MODULE
             text = ''
             if wp_module == 'crowd_density_local':
@@ -109,6 +109,9 @@ def add_message():
             elif wp_module == 'object_detection':
                 cam_id = message['camera_ids'][0]
                 text, resp_code = object_detection(sfn_module, cam_id, sfn_module.urls['object_detection_url'], message)
+            elif wp_module == 'action_recognition':
+                cam_id = message['camera_ids'][0]
+                text, resp_code = action_recognition(sfn_module, cam_id, sfn_module.urls['action_recognition_url'], message)
             # print('Function has taken: {}s'.format(time.time() - start))
             log_text = log_text + text
 
@@ -177,6 +180,9 @@ def update_configs():
                 elif config['type_module'] == 'object_detection':
                     print('SENDING CONFIG object_detection')
                     sfn_module.send_reg_message(json.dumps(config), sfn_module.urls['object_detection_url'])
+                elif config['type_module'] == 'action_recognition':
+                    print('SENDING CONFIG action_recognition')
+                    sfn_module.send_reg_message(json.dumps(config), sfn_module.urls['action_recognition_url'])
 
         return log_text, 200
     else:

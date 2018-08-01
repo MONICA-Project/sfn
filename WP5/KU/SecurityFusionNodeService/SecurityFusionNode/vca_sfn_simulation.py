@@ -38,11 +38,12 @@ if __name__ == '__main__':
 
     print('SFN URL:{}. SCRAL URL:{}'.format(url, scral_url))
     sfn_urls = {'scral_url': scral_url,
-                'crowd_density_url': scral_url + 'scral/sfn/crowd_monitoring',
-                'flow_analysis_url': scral_url + 'scral/sfn/flow_analysis',
-                'object_detection_url': scral_url + 'scral/sfn/object_detection',
-                'fighting_detection_url': scral_url + 'scral/sfn/fight_detection',
-                'camera_reg_url': scral_url + 'scral/sfn/camera',
+                'crowd_density_url': scral_url + 'sfn/crowd_monitoring',
+                'flow_analysis_url': scral_url + 'sfn/flow_analysis',
+                'object_detection_url': scral_url + 'sfn/object_detection',
+                'fighting_detection_url': scral_url + 'sfn/fight_detection',
+                'action_recognition_url': scral_url + 'sfn/action_recognition',
+                'camera_reg_url': scral_url + 'sfn/camera',
                 }
 
     # sleep_counter = 0.9
@@ -52,23 +53,24 @@ if __name__ == '__main__':
     time_interval = (algorithm_process_time * num_cameras) / (num_algorithms * num_cameras)
     print('Messages will be sent every {} seconds'.format(time_interval))
     threaded = _args.threaded
-    # threaded = False
+    threaded = False
     looping = _args.looping
     dataset_folder = _args.dataset_folder
 
 configs = [
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_2_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_4_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'KFF_CAM_8_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_1_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_2_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_3_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_4_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/'), 'RIF_CAM_4_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'KFF_CAM_2'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'KFF_CAM_4'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'KFF_CAM_8'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'RIF_CAM_1'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'RIF_CAM_2'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'RIF_CAM_3'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'RIF_CAM_4'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'RIF_CAM_4'),
     tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '002_crowd_density_local_reg', False),
     tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '001_flow_reg', False),
     tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6506F977-6868-4E78-B02D-8C516B8469F3_object_detection_reg', False),
     tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6789pwrl123dc_fighting_detection_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '1234sdfv234jk_action_recognition_reg', False),
 ]
 
 message_locations = [
@@ -90,6 +92,7 @@ message_locations = [
     os.path.join(dataset_folder, '20180505_233000_camera_4_flow_analysis_JSON/'),
     [os.path.join(dataset_folder), 'RIF_CAM_3_fight_detection_00000'],
     [os.path.join(dataset_folder), 'RIF_CAM_4_object_detection_00000'],
+    [os.path.join(dataset_folder), '0x0644_action_recognition_00000'],
 ]
 
 
@@ -171,25 +174,31 @@ else:
                 cam_3_fa_mess['timestamp'] = str(arrow.utcnow())
                 cam_4_fa_mess = tools.load_json_txt(cam_4_flow_analysis[i][0], cam_4_flow_analysis[i][1])
                 cam_4_fa_mess['timestamp'] = str(arrow.utcnow())
-                cam_1_od_mess = tools.load_json_txt(message_locations[-1][0], message_locations[-1][1])
+                cam_1_od_mess = tools.load_json_txt(message_locations[-2][0], message_locations[-2][1])
                 cam_1_od_mess['timestamp'] = str(arrow.utcnow())
-                cam_2_od_mess = tools.load_json_txt(message_locations[-1][0], message_locations[-1][1])
+                cam_2_od_mess = tools.load_json_txt(message_locations[-2][0], message_locations[-2][1])
                 cam_2_od_mess['timestamp'] = str(arrow.utcnow())
-                cam_3_od_mess = tools.load_json_txt(message_locations[-1][0], message_locations[-1][1])
+                cam_3_od_mess = tools.load_json_txt(message_locations[-2][0], message_locations[-2][1])
                 cam_3_od_mess['timestamp'] = str(arrow.utcnow())
-                cam_4_od_mess = tools.load_json_txt(message_locations[-1][0], message_locations[-1][1])
+                cam_4_od_mess = tools.load_json_txt(message_locations[-2][0], message_locations[-2][1])
                 cam_4_od_mess['timestamp'] = str(arrow.utcnow())
 
                 if i % 60 == 0:
-                    cam_3_fd_mess = tools.load_json_txt(message_locations[-2][0], message_locations[-2][1])
+                    cam_3_fd_mess = tools.load_json_txt(message_locations[-3][0], message_locations[-3][1])
                     cam_3_fd_mess['timestamp'] = str(arrow.utcnow())
+                    cam_X_ar_mess = tools.load_json_txt(message_locations[-1][0], message_locations[-1][1])
+                    cam_X_ar_mess['timestamp'] = str(arrow.utcnow())
 
                     if threaded:
                         t = Thread(target=call_sfn, args=(cam_3_fd_mess, i, 'FD',))
                         t.daemon = True
                         t.start()
+                        t = Thread(target=call_sfn, args=(cam_X_ar_mess, i, 'AR',))
+                        t.daemon = True
+                        t.start()
                     else:
                         call_sfn(cam_3_fd_mess, i, 'FD')
+                        call_sfn(cam_X_ar_mess, i, 'AR')
 
                 if threaded:
                     t = Thread(target=call_sfn, args=(cam_1_cd_mess, i, 'CD',))
