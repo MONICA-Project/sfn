@@ -56,6 +56,10 @@ def dataset(index):
         24: [(dataset_folder + '/MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_2/'), 0, 'RIF_CAM_2'],
         25: [(dataset_folder + '/MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_3/'), 0, 'RIF_CAM_3'],
         26: [(dataset_folder + '/MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_4/'), 0, 'RIF_CAM_4'],
+        27: [(dataset_folder + '/MONICA/YCCC-LR/LEEDS_2018_AUG/LEEDS_1/'), 0, 'LEEDS_1'],
+        28: [(dataset_folder + '/MONICA/YCCC-LR/LEEDS_2018_AUG/LEEDS_2/'), 0, 'LEEDS_2'],
+        29: [(dataset_folder + '/MONICA/YCCC-LR/LEEDS_2018_AUG/LEEDS_3/'), 0, 'LEEDS_3'],
+        30: [(dataset_folder + '/MONICA/YCCC-LR/LEEDS_2018_AUG/LEEDS_4/'), 0, 'LEEDS_4'],
     }.get(index, -1)  # -1 is default if id not found
 
 
@@ -86,7 +90,7 @@ if __name__ == '__main__':
 
     # IF BOTH sequence AND rtsp ARE None THEN WE USE CODED VALUES FOR TESTING
     else:
-        info = dataset(0)
+        info = dataset(27)
         # info = dataset(19)
         # info.append('flow')
         info.append('density')

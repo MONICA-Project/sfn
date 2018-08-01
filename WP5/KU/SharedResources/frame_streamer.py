@@ -67,7 +67,7 @@ class ImageSequenceStreamer:
             else:
                 self.image_count = self.image_count + 1
             # ELSE: IF NOT loop_last RETURN BLANK FRAME AND STOP OR LEAVE self.current_image AS THE LAST IMAGE LOADED
-            if not self.loop_last:
+            if not self.loop_last and not self.repeat:
                 self.working = False
         # NOW IN INFINITE LOOP AS current_image WILL ONLY EVER HOLD THE LAST IMAGE.
 

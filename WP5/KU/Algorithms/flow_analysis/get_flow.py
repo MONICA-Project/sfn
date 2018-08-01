@@ -110,6 +110,7 @@ class GetFlow(FrameAnalyser):
             self.cam_id = camera_id
             message = self.create_obs_message(ave_flow_mag, ave_flow_dir, arrow.utcnow())
 
+            flow_image = None
             if self.iterator >= self.save_on_count:
                 # VISUALIZE THE OPTICAL FLOW AND SAVE IT
                 flow_image = flow_to_image(flow_uv)
