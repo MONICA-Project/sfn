@@ -110,7 +110,7 @@ def add_message():
                 cam_id = message['camera_ids'][0]
                 text, resp_code = object_detection(sfn_module, cam_id, sfn_module.urls['object_detection_url'], message)
             elif wp_module == 'action_recognition':
-                cam_id = message['camera_ids'][0]
+                cam_id = message['tag_id']
                 text, resp_code = action_recognition(sfn_module, cam_id, sfn_module.urls['action_recognition_url'], message)
             # print('Function has taken: {}s'.format(time.time() - start))
             log_text = log_text + text

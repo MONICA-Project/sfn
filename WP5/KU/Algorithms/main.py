@@ -102,7 +102,6 @@ if __name__ == '__main__':
 
     # LOAD THE SETTINGS AND PASS THEN WHEN PROCESSING A FRAME
     settings = loader.load_settings(KU_DIR + '/KUConfigTool/cam_configs/' + '/', info[2])
-    settings = loader.load_settings(KU_DIR + '/KUConfigTool/cam_configs/' + '/', 'lkl')
 
     if info[1] == 'Live':
         cam = CamVideoStreamer(info[0])
