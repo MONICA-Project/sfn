@@ -14,6 +14,7 @@ __version__ = '0.1'
 __author__ = 'RoViT (KU)'
 
 print(str(socket.gethostname()))
+print(KU_DIR)
 
 url = 'http://0.0.0.0:5000/'
 # url = 'http://MPCLSGESFN01.monica-cloud.eu:5000/'
@@ -34,11 +35,11 @@ configs = [
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'LEEDS_2'),
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'LEEDS_3'),
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'LEEDS_4'),
-    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/crowd_density_local/'), '0ce70402-6147-5507-a135-42f6c26d2213_crowd_density_local_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/flow_analysis/'), '06144a3d-bb41-5c87-be0d-9ed7be234101_flow_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/crowd_density_local/'), '435ae19f-0eab-5561-b11a-9ead485180d6_crowd_density_local_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/flow_analysis/'), '0a26d0fa-b6b6-5d1c-9d46-51676d64daa7_flow_reg', False),
     # tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6506F977-6868-4E78-B02D-8C516B8469F3_object_detection_reg', False),
-    # tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6789pwrl123dc_fighting_detection_reg', False),
-    # tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '1234sdfv234jk_action_recognition_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6789pwrl123dc_fighting_detection_reg', False),
+    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '1234sdfv234jk_action_recognition_reg', False),
 ]
 
 # HELLO WORLD
