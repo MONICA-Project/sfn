@@ -201,9 +201,9 @@ class GetCrowd(FrameAnalyser):
             print('IoError')
         else:
             reg_file.write(message)
+            reg_file.close()
             print('{} module reg message saved to: {}'.format(
                 self.module_type, os.path.join(os.path.dirname(__file__), self.module_id + '_reg.txt')))
-            reg_file.close()
         return message
 
     def load_settings(self, location, file_name):

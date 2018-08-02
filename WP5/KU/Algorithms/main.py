@@ -9,11 +9,13 @@ import uuid
 from pathlib import Path
 import sys
 import argparse
+import socket
 sys.path.append(str(Path(__file__).absolute().parents[3]))
 from WP5.KU.definitions import KU_DIR
 from WP5.KU.SharedResources.cam_video_streamer import CamVideoStreamer
 from WP5.KU.SharedResources.frame_streamer import ImageSequenceStreamer
 import WP5.KU.SharedResources.get_incrementer as inc
+import WP5.KU.SharedResources.loader_tools as loader
 from WP5.KU.Algorithms.crowd_density_local.get_crowd import GetCrowd
 # from WP5.KU.Algorithms.flow_analysis.get_flow import GetFlow
 # from WP5.KU.Algorithms.object_detection.get_people import GetPeople
@@ -63,12 +65,6 @@ def dataset(index):
     }.get(index, -1)  # -1 is default if id not found
 
 
-def load_settings(location):
-    fo = open((location + '.pk'), 'rb')
-    entry = pickle.load(fo, encoding='latin1')
-    return entry
-
-
 parser = argparse.ArgumentParser(description='A test application designed to mimic (badly) the VCA framework.')
 parser.add_argument('--sequence', default=None, type=str, help='Folder location of image sequence')
 parser.add_argument('--rtsp', default=None, type=str, help='RTSP stream address')
@@ -90,7 +86,7 @@ if __name__ == '__main__':
 
     # IF BOTH sequence AND rtsp ARE None THEN WE USE CODED VALUES FOR TESTING
     else:
-        info = dataset(27)
+        info = dataset(0)
         # info = dataset(19)
         # info.append('flow')
         info.append('density')
@@ -98,14 +94,15 @@ if __name__ == '__main__':
 
     # CREATE AN analyser OBJECT AND CREATE THE REGISTRATION MESSAGE
     if info[3] is 'flow':
-        analyser = GetFlow(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'flow')))
+        analyser = GetFlow(str(uuid.uuid5(uuid.NAMESPACE_DNS, socket.gethostname() + 'flow')))
     else:
-        analyser = GetCrowd(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'crowd_density_local')))
+        analyser = GetCrowd(str(uuid.uuid5(uuid.NAMESPACE_DNS, socket.gethostname() + 'crowd_density_local')))
 
     print(info)
 
     # LOAD THE SETTINGS AND PASS THEN WHEN PROCESSING A FRAME
-    settings = load_settings(KU_DIR + '/KUConfigTool/cam_configs/' + '/' + info[2])
+    settings = loader.load_settings(KU_DIR + '/KUConfigTool/cam_configs/' + '/', info[2])
+    settings = loader.load_settings(KU_DIR + '/KUConfigTool/cam_configs/' + '/', 'lkl')
 
     if info[1] == 'Live':
         cam = CamVideoStreamer(info[0])

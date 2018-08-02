@@ -16,8 +16,8 @@ def load_settings(settings_location, cam_id, pickel_file=True):
             fo = open((settings_location + str(cam_id) + '.pk'), 'rb')
         else:
             json_file = open((settings_location + str(cam_id) + '.txt'))
-    except IOError:
-        print('IoError')
+    except IOError as e:
+        print('IoError: {}'.format(e))
         return None
     else:
         if pickel_file:
@@ -46,8 +46,8 @@ def load_json_txt(location, file_name=None):
 
     try:
         json_file = open(file_location)
-    except IOError:
-        print('IoError')
+    except IOError as e:
+        print('IoError: {}'.format(e))
     else:
         line = json_file.readline()
         data = json.loads(line)
@@ -60,8 +60,8 @@ def save_json_txt(data, location, file_name):
     message = json.dumps(data)
     try:
         txt_file = open(location + '/' + file_name + '.txt', 'w')
-    except IOError:
-        print('IoError')
+    except IOError as e:
+        print('IoError: {}'.format(e))
     else:
         txt_file.write(message)
         txt_file.close()
