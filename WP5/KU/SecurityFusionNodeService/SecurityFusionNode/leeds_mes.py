@@ -9,6 +9,7 @@ import arrow
 import os
 import socket
 from pathlib import Path
+import random
 import sys
 sys.path.append(str(Path(__file__).absolute().parents[4]))
 from WP5.KU.definitions import KU_DIR
@@ -26,7 +27,6 @@ parser.add_argument('--sfn_url', default='http://0.0.0.0:5000/', type=str,
 parser.add_argument('--scral_url', default='http://monappdwp3.monica-cloud.eu:8000/', type=str,
 # parser.add_argument('--scral_url', default='http://0.0.0.0:3389/', type=str,
                     help='The URL and port the SCRAL is currently listening on.')
-parser.add_argument('--threaded', default=True, type=bool, help='Run the message requests in threads.')
 parser.add_argument('--looping', default=True, type=bool, help='Loop the message calls indefinitely.')
 parser.add_argument('--dataset_folder', default='/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/', type=str,
                     help='Location of RiF JSON Files to send to SFN.')
@@ -51,34 +51,18 @@ if __name__ == '__main__':
     num_cameras = 4
     algorithm_process_time = 1
     time_interval = (algorithm_process_time * num_cameras) / (num_algorithms * num_cameras)
+    time_interval = 5
     print('Messages will be sent every {} seconds'.format(time_interval))
-    threaded = _args.threaded
-    threaded = False
     looping = _args.looping
     dataset_folder = _args.dataset_folder
 
 message_locations = [
-    os.path.join(dataset_folder, '20180505_193000_camera_1_crowd_density_JSON/'),
-    os.path.join(dataset_folder, '20180505_233000_camera_1_crowd_density_JSON/'),
-    os.path.join(dataset_folder, '20180505_193000_camera_2_crowd_density_JSON/'),
-    os.path.join(dataset_folder, '20180505_233000_camera_2_crowd_density_JSON/'),
-    os.path.join(dataset_folder, '20180505_193000_camera_3_crowd_density_JSON/'),
-    os.path.join(dataset_folder, '20180505_233000_camera_3_crowd_density_JSON/'),
-    os.path.join(dataset_folder, '20180505_193000_camera_4_crowd_density_JSON/'),
-    os.path.join(dataset_folder, '20180505_233000_camera_4_crowd_density_JSON/'),
-    os.path.join(dataset_folder, '20180505_193000_camera_1_flow_analysis_JSON/'),
-    os.path.join(dataset_folder, '20180505_233000_camera_1_flow_analysis_JSON/'),
-    os.path.join(dataset_folder, '20180505_193000_camera_2_flow_analysis_JSON/'),
-    os.path.join(dataset_folder, '20180505_233000_camera_2_flow_analysis_JSON/'),
-    os.path.join(dataset_folder, '20180505_193000_camera_3_flow_analysis_JSON/'),
-    os.path.join(dataset_folder, '20180505_233000_camera_3_flow_analysis_JSON/'),
-    os.path.join(dataset_folder, '20180505_193000_camera_4_flow_analysis_JSON/'),
-    os.path.join(dataset_folder, '20180505_233000_camera_4_flow_analysis_JSON/'),
-    [os.path.join(dataset_folder), 'RIF_CAM_3_fight_detection_00000'],
-    [os.path.join(dataset_folder), 'RIF_CAM_4_object_detection_00000'],
+    [os.path.join(dataset_folder), 'LEEDS_1_fight_detection'],
+    [os.path.join(dataset_folder), 'LEEDS_2_fight_detection'],
+    [os.path.join(dataset_folder), 'LEEDS_3_fight_detection'],
+    [os.path.join(dataset_folder), 'LEEDS_4_fight_detection'],
     [os.path.join(dataset_folder), '0x0644_action_recognition_00000'],
 ]
-
 
 
 def call_sfn(payload, n, module):
@@ -101,15 +85,16 @@ else:
     if resp.ok:
 
         while True:
+            cam = random.randint(0, 4)
+            cam_fd_mess = tools.load_json_txt(message_locations[cam][0], message_locations[cam][1])
+            cam_fd_mess['timestamp'] = str(arrow.utcnow())
+            call_sfn(cam_fd_mess, 1, 'FD')
 
-            cam_3_fd_mess = tools.load_json_txt(message_locations[-3][0], message_locations[-3][1])
-            cam_3_fd_mess['timestamp'] = str(arrow.utcnow())
-            cam_X_ar_mess = tools.load_json_txt(message_locations[-1][0], message_locations[-1][1])
+            cam_X_ar_mess = tools.load_json_txt(message_locations[4][0], message_locations[4][1])
             cam_X_ar_mess['timestamp'] = str(arrow.utcnow())
 
-
-            call_sfn(cam_3_fd_mess, i, 'FD')
-            call_sfn(cam_X_ar_mess, i, 'AR')
+            call_sfn(cam_X_ar_mess, 2, 'AR')
+            time.sleep(time_interval)
 
             if not looping:
                 break
