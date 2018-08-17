@@ -86,8 +86,8 @@ if __name__ == '__main__':
 
     # IF BOTH sequence AND rtsp ARE None THEN WE USE CODED VALUES FOR TESTING
     else:
-        info = dataset(0)
-        # info = dataset(19)
+        # info = dataset(0)
+        info = dataset(30)
         # info.append('flow')
         info.append('density')
         display = True

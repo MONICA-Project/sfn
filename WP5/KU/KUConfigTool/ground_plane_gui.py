@@ -285,22 +285,22 @@ class TopDown(Frame):
     def on_move_press(self, event):
         x, y = (event.x, event.y)
         # LIMIT DRAG TO WITHIN IMAGE DIMENSIONS
-        if x < 0:
-            x = 0
-        elif x > self.width:
-            x = self.width
+        if x > int(self.roi[0] / self.w_scale) + 2 and y > int(self.roi[1] / self.h_scale) + 2:
+            if x < 0:
+                x = 0
+            elif x > self.width:
+                x = self.width
 
-        if y < 0:
-            y = 0
-        elif y > self.height:
-            y = self.height
+            if y < 0:
+                y = 0
+            elif y > self.height:
+                y = self.height
 
-        # expand rectangle as you drag the mouse
-        self.canvas.coords(self.rect, int(self.roi[0] / self.w_scale), int(self.roi[1] / self.h_scale), x, y)
-        # self.canvas.create_text(self.roi[0], self.roi[1] + 5, fill="darkblue", font="Ariel 10 bold", text="X_0, Y_1")
-        # self.canvas.create_text(self.roi[3], self.roi[1] + 5, fill="darkblue", font="Ariel 10 bold", text="X_1, Y_1")
-        # self.canvas.create_text(self.roi[0], self.roi[2] + 5, fill="darkblue", font="Ariel 10 bold", text="X_0, Y_0")
-        # self.canvas.create_text(self.roi[3], self.roi[2] + 5, fill="darkblue", font="Ariel 10 bold", text="X_1, Y_0")
-        self.roi[2] = int(x * self.w_scale)
-        self.roi[3] = int(y * self.h_scale)
-
+            # expand rectangle as you drag the mouse
+            self.canvas.coords(self.rect, int(self.roi[0] / self.w_scale), int(self.roi[1] / self.h_scale), x, y)
+            # self.canvas.create_text(self.roi[0], self.roi[1] + 5, fill="darkblue", font="Ariel 10 bold", text="X_0, Y_1")
+            # self.canvas.create_text(self.roi[3], self.roi[1] + 5, fill="darkblue", font="Ariel 10 bold", text="X_1, Y_1")
+            # self.canvas.create_text(self.roi[0], self.roi[2] + 5, fill="darkblue", font="Ariel 10 bold", text="X_0, Y_0")
+            # self.canvas.create_text(self.roi[3], self.roi[2] + 5, fill="darkblue", font="Ariel 10 bold", text="X_1, Y_0")
+            self.roi[2] = int(x * self.w_scale)
+            self.roi[3] = int(y * self.h_scale)

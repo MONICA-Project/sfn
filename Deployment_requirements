@@ -1,5 +1,5 @@
 DRIVERS
-1. Nvidia Driver. (should be already installed by supplier)
+1. Nvidia Driver. (should be already installed by supplier, https://youtu.be/TvH6CEDs-uI)
 2. Nvidia CUDA & CuDNN. Follow https://medium.com/@zhanwenchen/install-cuda-and-cudnn-for-tensorflow-gpu-on-ubuntu-79306e4ac04e
 
 GIT
