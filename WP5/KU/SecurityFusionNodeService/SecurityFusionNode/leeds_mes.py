@@ -28,7 +28,7 @@ parser.add_argument('--scral_url', default='http://monappdwp3.monica-cloud.eu:80
 # parser.add_argument('--scral_url', default='http://0.0.0.0:3389/', type=str,
                     help='The URL and port the SCRAL is currently listening on.')
 parser.add_argument('--looping', default=True, type=bool, help='Loop the message calls indefinitely.')
-parser.add_argument('--dataset_folder', default='/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/', type=str,
+parser.add_argument('--dataset_folder', default='/home/monicaadmin/monica/WP5/KU/Algorithms/algorithm_output/', type=str,
                     help='Location of RiF JSON Files to send to SFN.')
 
 _args = parser.parse_args()
