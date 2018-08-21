@@ -5,8 +5,6 @@ be sent off to the LinkSmart component
 
 import argparse
 import cv2
-import numpy as np
-import os
 from sys import exit
 from pathlib import Path
 import sys

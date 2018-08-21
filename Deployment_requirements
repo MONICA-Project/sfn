@@ -1,10 +1,17 @@
 DRIVERS
-1. Nvidia Driver. (should be already installed by supplier, https://youtu.be/TvH6CEDs-uI)
+1. Nvidia Driver. (should be already installed by supplier, https://youtu.be/TvH6CEDs-uI, check with nvidia-smi)
 2. Nvidia CUDA & CuDNN. Follow https://medium.com/@zhanwenchen/install-cuda-and-cudnn-for-tensorflow-gpu-on-ubuntu-79306e4ac04e
+
+MONICA VPN
+1. Connect to Monica VPN. sudo apt-get install network-manager-openconnect network-manager-openconnect-gnome
+2. vpn.monica-cloud.eu
+2. Install ssh on Server. sudo apt-get install openssh-server
+H. Logging to the ssh of the processsing node. ssh <USERNAME>@192.168.99.XXX
+H. SFTP, Connect to Server (Files): sftp://<USERNAME>@192.168.99.XXX
 
 GIT
 1. Install git. sudo apt-get install git
-2. Make MONICA folder. sudo mkdir monica_repo
+2. Move to Home Dir. cd
 3. Clone the FIT repo, KU_dev Branch. git clone -b KU_dev https://scm.fit.fraunhofer.de/scm/git/monica
 
 MYSQL (TODO: THIS SHOULD BE MORE SECURE)
@@ -16,7 +23,7 @@ H. Check DBs have been created (after logging into mysql). SHOW DATABASES;
 
 SCRAL CHECK
 1. What is the address of the SCRAL and is processing node connect to required VPNs/Networks
-2. Check connection to SCRAL. curl http://monappdwp3.monica-cloud.eu:8000/scral/sfn
+2. Check connection to SCRAL. curl http://monappdwp3.monica-cloud.eu:8000/sfn
 
 DOCKER
 1a Install Docker CE. Follow https://docs.docker.com/install/linux/docker-ce/ubuntu/
@@ -27,28 +34,25 @@ DOCKER
 4b Test with sfn_http_request.py. python3 monica/WP5/KU/SecurityFusionNodeService/SecurityFusionNode/sfn_http_request.py
 5. Load test with vca_sfn_simulation.py python3 WP5/KU/SecurityFusionNodeService/SecurityFusionNode/vca_sfn_simulation.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder '<LOCATION OF BONN JSON FILES>'
 
-H. Check connection to SFN. curl http://MPCLSGESFN01.monica-cloud.eu:5000/
+H. Check connection to local SFN. curl http://0.0.0.0:5000/
 H. List docker images running. sudo docker ps
 H. Re connect to a docker image that is already running. sudo docker attach $(sudo docker ps -q --filter ancestor=sfn)
 H. Stop the docker image. sudo docker stop $(sudo docker ps -q --filter ancestor=sfn)
 
 TEST ALGORITHMS WORK ON THE PROCESSING NODE
-1. Install Requirements (don't upgrade pip3 to v10). pip3 install -r /<MONICA DIR>/WP5/KU/Algorithms/requirements.txt
+1. Install Requirements (don't upgrade pip3 to v10). sudo pip3 install -r /<MONICA DIR>/WP5/KU/Algorithms/requirements.txt
 2. From the root of the project git, test the flow. python3 WP5/KU/Algorithms/main.py --sequence '<MONICA DIR>/WP5/KU/Algorithms/sample_sequence/' --config 'OXFORD' --algorithm 'flow'
 3. From the root of the project git, test the density. python3 WP5/KU/Algorithms/main.py --sequence '<MONICA DIR>/WP5/KU/Algorithms/sample_sequence/' --config 'OXFORD' --algorithm 'density'
 H. For Error: 'No module named _tkinter'. sudo apt-get install python3-tk
 
 RUNNING KU DEPLOYMENT TOOL
-1. Install Requirements (don't upgrade pip3 to v10). pip3 install -r /<MONICA DIR>/WP5/KU/KUConfigTool/requirements.txt
+1. Install Requirements (don't upgrade pip3 to v10). sudo pip3 install -r /<MONICA DIR>/WP5/KU/KUConfigTool/requirements.txt
 2. From the root of the project git test the app. python3 WP5/KU/KUConfigTool/camera_config.py --seq_location '/<FULL MONICA DIR> /monica/WP5/KU/Algorithms/sample_sequence/'
 3. Run the Config tool on a camera. python3 WP5/KU/KUConfigTool/camera_config.py --rtsp rtsp://admin:password@10.133.223.178:554/Streaming/Channels/103/'
 H. For Error: 'No module named _tkinter'. sudo apt-get install python3-tk
 H. Run the Config Tool on a Screenshot. python3 WP5/KU/KUConfigTool/camera_config.py --x_size '704' --y_size '576' --seq_location '/home/monica/monica_repo/monica/WP5/KU/KUConfigTool/175'
 
-ATOS GPU CLOUD MACHINE
-1. Connect to Monica VPN. sudo apt-get install network-manager-openconnect network-manager-openconnect-gnome
-2. Install ssh on Server. sudo apt-get install openssh-server
-2. Logging to the ssh. ssh -XCi /home/robdupre/Desktop/Monica_VPN/monappdwp5.key r.dupre@MPCLSGESFN01.monica-cloud.eu
+
 
 UTILITIES
 1. Fix permissions. sudo chmod -R a+rwx /<MONICA DIR>/

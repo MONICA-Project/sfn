@@ -28,7 +28,7 @@ parser = argparse.ArgumentParser(description='Config Tool to create settings fil
 #                     ' is being loaded to the correct camera')
 parser.add_argument('--rtsp', default='rtsp://root:pass@10.144.129.107/axis-media/media.amp',
                     type=str, help='The RTSP stream address to allow access to the feed and run the config on.')
-# parser.add_argument('--seq_location', default='/ocean/datasets/OXFORD_TOWNCENTRE/TownCentreXVID/',
+parser.add_argument('--seq_location', default='/ocean/datasets/OXFORD_TOWNCENTRE/TownCentreXVID/',
 # parser.add_argument('--seq_location', default='/ocean/robdupre/',
 # parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/TO/KFF 2017/channel 8/2017-07-08 20-40-00~20-50-00//',
 # parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/TO/KFF 2017/channel 4/2017-07-08 14-00-00~14-10-00/',
@@ -37,7 +37,7 @@ parser.add_argument('--rtsp', default='rtsp://root:pass@10.144.129.107/axis-medi
 # parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_2/',
 # parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_3/',
 # parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_4/',
-parser.add_argument('--seq_location', default='None',
+# parser.add_argument('--seq_location', default='None',
                     type=str, help='Local file location to be used to stream images instead of RTSP')
 parser.add_argument('--x_size', default=1080, type=int, help='Desired frame in X for loaded images.')
 parser.add_argument('--y_size', default=768, type=int, help='Desired frame in Y for loaded images.')
