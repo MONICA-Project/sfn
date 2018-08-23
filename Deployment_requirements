@@ -51,8 +51,7 @@ RUNNING KU DEPLOYMENT TOOL
 3. Run the Config tool on a camera. python3 WP5/KU/KUConfigTool/camera_config.py --rtsp rtsp://admin:password@10.133.223.178:554/Streaming/Channels/103/'
 H. For Error: 'No module named _tkinter'. sudo apt-get install python3-tk
 H. Run the Config Tool on a Screenshot. python3 WP5/KU/KUConfigTool/camera_config.py --x_size '704' --y_size '576' --seq_location '/home/monica/monica_repo/monica/WP5/KU/KUConfigTool/175'
-
-
+H. Install VLC Media Player. sudo apt-get install vlc
 
 UTILITIES
 1. Fix permissions. sudo chmod -R a+rwx /<MONICA DIR>/

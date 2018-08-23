@@ -10,7 +10,6 @@ from pathlib import Path
 import sys
 import os
 sys.path.append(str(Path(__file__).absolute().parents[4]))
-from WP5.KU.definitions import KU_DIR
 import WP5.KU.SharedResources.get_incrementer as incrementer
 from WP5.KU.Algorithms.frame_analyser import FrameAnalyser
 from WP5.KU.Algorithms.flow_analysis.FlowNet2_src import flow_to_image
@@ -51,18 +50,21 @@ class GetFlow(FrameAnalyser):
         self.iterator = 0
         self.save_on_count = 3200
 
-    def process_frame(self, frame, camera_id, rois):  # rois: region of interests
+    def process_frame(self, frame, camera_id, rois, debug=False):  # rois: region of interests
         # CHECK WHETHER THIS IS THE FIRST FRAME OF THIS CAMERA ID
         if camera_id not in self.previous_frames_dictionary:
             self.previous_frames_dictionary[camera_id] = frame
             self.previous_frames_timestamp[camera_id] = arrow.utcnow()
             message = self.create_obs_message([], [], arrow.utcnow())
-            return message, []
+            return message, None
+        # DEBUG OPTIONS
+        if debug:
+            self.process_interval = 0
+            self.save_on_count = 0
 
         # USES ONLY THE REGION OF INTEREST DEFINED IN THE SETTINGS
         time_1 = self.previous_frames_timestamp[camera_id]
         time_2 = arrow.utcnow()
-
         if (time_2 - time_1).seconds >= self.process_interval:
             frame2 = frame
             frame1 = self.previous_frames_dictionary[camera_id]

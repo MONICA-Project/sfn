@@ -60,7 +60,8 @@ class GetCrowd(FrameAnalyser):
             print('RUNNING WITHOUT CUDA SUPPORT')
         self.net.eval()
 
-    def process_frame(self, frame, camera_id, mask, image_2_ground_plane_matrix, ground_plane_roi, ground_plane_size):
+    def process_frame(self, frame, camera_id, mask, image_2_ground_plane_matrix, ground_plane_roi, ground_plane_size,
+                      debug=False):
         """ Process a given frame using the crowd density analysis algorithm.
         Keyword arguments:
             frame --        MxNx3 RGB image
@@ -77,7 +78,10 @@ class GetCrowd(FrameAnalyser):
 
         time_1 = self.previous_frames_timestamp[camera_id]
         time_2 = arrow.utcnow()
-        # self.process_interval = 0
+        # DEBUG OPTIONS
+        if debug:
+            self.process_interval = 0
+            self.save_on_count = 0
         if (time_2 - time_1).seconds >= self.process_interval:
             self.previous_frames_timestamp[camera_id] = time_2
 

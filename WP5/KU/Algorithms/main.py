@@ -1,4 +1,4 @@
-# sfn_service.py
+# main.py
 """A test application designed to mimic (badly) the VCA framework."""
 import arrow
 import json
@@ -18,9 +18,9 @@ import WP5.KU.SharedResources.get_incrementer as inc
 import WP5.KU.SharedResources.loader_tools as loader
 from WP5.KU.Algorithms.crowd_density_local.get_crowd import GetCrowd
 from WP5.KU.Algorithms.flow_analysis.get_flow import GetFlow
-# from WP5.KU.Algorithms.object_detection.get_people import GetPeople
+from WP5.KU.Algorithms.object_detection.get_objects import GetObjects
 
-__version__ = '0.3'
+__version__ = '0.4'
 __author__ = 'Rob Dupre (KU)'
 
 
@@ -58,10 +58,10 @@ def dataset(index):
         24: [(dataset_folder + '/MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_2/'), 0, 'RIF_CAM_2'],
         25: [(dataset_folder + '/MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_3/'), 0, 'RIF_CAM_3'],
         26: [(dataset_folder + '/MONICA/BONN/Rein in Flammen 2018/20180505_233000_camera_4/'), 0, 'RIF_CAM_4'],
-        27: [(dataset_folder + '/MONICA/YCCC-LR/LEEDS_2018_AUG/LEEDS_1/'), 0, 'LEEDS_1'],
-        28: [(dataset_folder + '/MONICA/YCCC-LR/LEEDS_2018_AUG/LEEDS_2/'), 0, 'LEEDS_2'],
-        29: [(dataset_folder + '/MONICA/YCCC-LR/LEEDS_2018_AUG/LEEDS_3/'), 0, 'LEEDS_3'],
-        30: [(dataset_folder + '/MONICA/YCCC-LR/LEEDS_2018_AUG/LEEDS_4/'), 0, 'LEEDS_4'],
+        27: [(dataset_folder + '/MONICA/YCCC-LR/LEEDS_2018_AUG/CONFIG/LEEDS_1/'), 0, 'LEEDS_1'],
+        28: [(dataset_folder + '/MONICA/YCCC-LR/LEEDS_2018_AUG/CONFIG/LEEDS_2/'), 0, 'LEEDS_2'],
+        29: [(dataset_folder + '/MONICA/YCCC-LR/LEEDS_2018_AUG/CONFIG/LEEDS_3/'), 0, 'LEEDS_3'],
+        30: [(dataset_folder + '/MONICA/YCCC-LR/LEEDS_2018_AUG/CONFIG/LEEDS_4/'), 0, 'LEEDS_4'],
     }.get(index, -1)  # -1 is default if id not found
 
 
@@ -70,8 +70,7 @@ parser.add_argument('--sequence', default=None, type=str, help='Folder location 
 parser.add_argument('--rtsp', default=None, type=str, help='RTSP stream address')
 parser.add_argument('--config', default='OXFORD', type=str, help='Config file Name in KUConfigTool folder to be used')
 parser.add_argument('--display', default=True, type=bool, help='Bool to control displaying output')
-# parser.add_argument('--algorithm', default='flow', type=str, help='Either flow or density')
-parser.add_argument('--algorithm', default='density', type=str, help='Either flow or density')
+parser.add_argument('--algorithm', default='density', type=str, help='Either flow or density or object')
 _args = parser.parse_args()
 
 if __name__ == '__main__':
@@ -87,14 +86,17 @@ if __name__ == '__main__':
     # IF BOTH sequence AND rtsp ARE None THEN WE USE CODED VALUES FOR TESTING
     else:
         # info = dataset(0)
-        info = dataset(30)
-        # info.append('flow')
-        info.append('density')
+        info = dataset(1)
+        info.append('flow')
+        # info.append('density')
+        # info.append('object')
         display = True
 
     # CREATE AN analyser OBJECT AND CREATE THE REGISTRATION MESSAGE
-    if info[3] is 'flow':
+    if info[3] == 'flow':
         analyser = GetFlow(str(uuid.uuid5(uuid.NAMESPACE_DNS, socket.gethostname() + 'flow')))
+    elif info[3] == 'object':
+        analyser = GetObjects(str(uuid.uuid5(uuid.NAMESPACE_DNS, socket.gethostname() + 'object_detection')))
     else:
         analyser = GetCrowd(str(uuid.uuid5(uuid.NAMESPACE_DNS, socket.gethostname() + 'crowd_density_local')))
 
@@ -120,12 +122,14 @@ if __name__ == '__main__':
         message = None
         result = None
         if analyser.type_module == 'flow':
-            message, result = analyser.process_frame(frame, settings['camera_id'], settings['flow_rois'])
+            message, frame = analyser.process_frame(frame, settings['camera_id'], settings['flow_rois'], True)
+        if analyser.type_module == 'object_detection':
+            message, frame = analyser.process_frame(frame, settings['camera_id'])
         elif analyser.type_module == 'crowd_density_local':
-            message, result = analyser.process_frame(frame, settings['camera_id'], settings['crowd_mask'],
+            message, frame = analyser.process_frame(frame, settings['camera_id'], settings['crowd_mask'],
                                                      settings['image_2_ground_plane_matrix'],
                                                      settings['ground_plane_roi'],
-                                                     settings['ground_plane_size'])
+                                                     settings['ground_plane_size'], True)
 
         # SEND A HTTP REQUEST OFF
         # sfn_url = 'http://127.0.0.1:5000/message'
@@ -146,7 +150,7 @@ if __name__ == '__main__':
             with open(save_folder + save_name + '.txt', 'w') as outfile:
                 outfile.write(message)
             count = count + 1
-            if display:
+            if display and frame is not None:
                 key = cv2.waitKey(1) & 0xFF
                 # KEYBINDINGS FOR DISPLAY
                 cv2.imshow('frame', frame)

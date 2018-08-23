@@ -1,4 +1,4 @@
-# get_people.py
+# get_objects.py
 from os import path
 import numpy as np
 import pickle
@@ -11,13 +11,13 @@ from WP5.KU.Algorithms.object_detection.SSD.ssd import build_ssd
 import json
 
 
-class GetPeople(FrameAnalyser):
+class GetObjects(FrameAnalyser):
 
     def __init__(self, module_id):
-        self.type_module = 'object_detection'
-        self.module_id = module_id + '_' + self.type_module
-        self.state = 'active'
         FrameAnalyser.__init__(self, module_id)
+        self.module_id = module_id + '_object_detection'
+        self.type_module = 'object_detection'
+        self.state = True
 
         # CAMERA INFO
         self.cam_id = ''
@@ -37,10 +37,9 @@ class GetPeople(FrameAnalyser):
         self.net.eval()
         self.transform = BaseTransform(self.net.size, (104 / 256.0, 117 / 256.0, 123 / 256.0))
 
-    def process_frame(self, frame, camera_id, roi):
+    def process_frame(self, frame, camera_id):
         # EXTRACT THE ROI FROM THE FRAME
         self.cam_id = camera_id
-        frame = frame[roi[1]:roi[3], roi[0]:roi[2], :]
         height, width = frame.shape[:2]
         x = torch.from_numpy(self.transform(frame)[0]).permute(2, 0, 1)
         x = Variable(x.unsqueeze(0)).cuda()
