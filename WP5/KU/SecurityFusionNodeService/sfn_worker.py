@@ -8,7 +8,7 @@ from pathlib import Path
 import sys
 
 # LIB PRE LOADS
-sys.path.append(str(Path(__file__).absolute().parents[4]))
+sys.path.append(str(Path(__file__).absolute().parents[3]))
 sys.path.append(str(Path(__file__).absolute()))
 
 

@@ -2,18 +2,20 @@
 """Implementation of a RESTful webservice to handle messages produced from the VCA framework and forward them on to
 linksmart"""
 import argparse
-import requests
-import json
-import arrow
-import time
 import datetime
-import uuid
-from flask import Flask, request
-from pathlib import Path
+import json
 import sys
-sys.path.append(str(Path(__file__).absolute().parents[4]))
-from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.security_fusion_node import SecurityFusionNode
-from WP5.KU.SecurityFusionNodeService.SecurityFusionNode.message_processing import crowd_density_local, flow_analysis,\
+import time
+import uuid
+from pathlib import Path
+
+import arrow
+import requests
+from flask import Flask, request
+
+sys.path.append(str(Path(__file__).absolute().parents[3]))
+from WP5.KU.SecurityFusionNodeService.security_fusion_node import SecurityFusionNode
+from WP5.KU.SecurityFusionNodeService.message_processing import crowd_density_local, flow_analysis,\
     amalgamate_crowd_density_local, fighting_detection, object_detection, action_recognition
 
 __version__ = '0.2'

@@ -16,7 +16,7 @@ from sqlalchemy import create_engine
 from pathlib import Path
 import requests
 import sys
-sys.path.append(str(Path(__file__).absolute().parents[4]))
+sys.path.append(str(Path(__file__).absolute().parents[3]))
 from WP5.KU.SharedResources.convert_to_meter import convert_to_meter
 from WP5.KU.SharedResources.rotate_image import rotate_image
 
