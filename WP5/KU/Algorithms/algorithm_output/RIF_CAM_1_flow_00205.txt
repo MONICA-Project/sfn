@@ -1,1 +1,0 @@
-{"flow_frame_byte_array": "", "module_id": "06144a3d-bb41-5c87-be0d-9ed7be234101", "type_module": "flow", "average_flow_direction": [0.7107509996660188, 0.7912295396548403, 0.8307171014547868], "timestamp": "2018-06-18T13:28:38.175800+00:00", "average_flow_magnitude": [3.4944130829888302, 8.767443156733844, 0.1762780205277939], "camera_ids": ["RIF_CAM_1"]}

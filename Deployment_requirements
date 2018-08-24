@@ -53,5 +53,10 @@ H. For Error: 'No module named _tkinter'. sudo apt-get install python3-tk
 H. Run the Config Tool on a Screenshot. python3 WP5/KU/KUConfigTool/camera_config.py --x_size '704' --y_size '576' --seq_location '/home/monica/monica_repo/monica/WP5/KU/KUConfigTool/175'
 H. Install VLC Media Player. sudo apt-get install vlc
 
+SPINNING UP VCA CORE
+H. Start VCA Core. sudo systemctl start vca-core
+H. Stop VCA Core. sudo systemctl stop vca-core
+H. See status of VCA Core service. systemctl status vca-core
+
 UTILITIES
 1. Fix permissions. sudo chmod -R a+rwx /<MONICA DIR>/

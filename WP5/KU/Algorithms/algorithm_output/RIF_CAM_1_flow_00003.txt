@@ -1,1 +1,0 @@
-{"type_module": "flow", "average_flow_direction": [], "module_id": "001", "average_flow_magnitude": [], "timestamp": "2018-06-27T14:31:01.445809+00:00", "camera_ids": [""], "flow_frame_byte_array": ""}
