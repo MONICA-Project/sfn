@@ -231,6 +231,7 @@ def amalgamate_crowd_density_local(sfn_instance, url):
 
     else:
         print('ERROR: NOT EQUAL CAM MESSAGES AND CONFIGS. ')
+        resp_code = 500
         log_text = log_text + 'ERROR: NOT EQUAL CAM MESSAGES AND CONFIGS. '
 
     sfn_instance.insert_log(time.time(), time.time(), log_text)
