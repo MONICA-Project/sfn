@@ -172,7 +172,7 @@ def update_configs():
                     sfn_module.send_reg_message(json.dumps(config), sfn_module.urls['crowd_density_url'])
                 elif config['type_module'] == 'crowd_density_global':
                     print('SENDING CONFIG crowd_density_global')
-                    sfn_module.send_reg_message(json.dumps(config), sfn_module.urls['crowd_density_url'])
+                    sfn_module.send_reg_message(json.dumps(config), sfn_module.urls['crowd_density_global_url'])
                 elif config['type_module'] == 'flow':
                     print('SENDING CONFIG flow')
                     sfn_module.send_reg_message(json.dumps(config), sfn_module.urls['flow_analysis_url'])
