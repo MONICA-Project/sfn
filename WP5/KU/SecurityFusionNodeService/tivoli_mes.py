@@ -62,7 +62,7 @@ message_locations = [
     [os.path.join(dataset_folder), 'TIVOLI_27_fight_detection'],
     [os.path.join(dataset_folder), 'TIVOLI_28_fight_detection'],
     [os.path.join(dataset_folder), 'TIVOLI_29_fight_detection'],
-    [os.path.join(dataset_folder), '0x0644_action_recognition_00000'],
+    # [os.path.join(dataset_folder), '0x0644_action_recognition_00000'],
 ]
 
 
@@ -91,10 +91,10 @@ else:
             cam_fd_mess['timestamp'] = str(arrow.utcnow())
             call_sfn(cam_fd_mess, 1, 'FD')
 
-            cam_X_ar_mess = tools.load_json_txt(message_locations[-1][0], message_locations[-1][1])
-            cam_X_ar_mess['timestamp'] = str(arrow.utcnow())
+            # cam_X_ar_mess = tools.load_json_txt(message_locations[-1][0], message_locations[-1][1])
+            # cam_X_ar_mess['timestamp'] = str(arrow.utcnow())
 
-            call_sfn(cam_X_ar_mess, 2, 'AR')
+            # call_sfn(cam_X_ar_mess, 2, 'AR')
             time.sleep(time_interval)
 
             if not looping:
