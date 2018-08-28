@@ -37,6 +37,8 @@ configs = [
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_27'),
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_28'),
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_29'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_30'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_31'),
     # tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '1234sdfv234jk_action_recognition_reg', False),
 ]
 
