@@ -1,1 +1,0 @@
-{"timestamp": "2017-08-03T17:56:32.372Z", "type_module": "object_detection", "module_id": "6506F977-6868-4E78-B02D-8C516B8469F3", "state": "active"}
