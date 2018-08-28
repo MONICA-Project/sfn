@@ -86,7 +86,7 @@ else:
     if resp.ok:
 
         while True:
-            cam = random.randint(0, 5)
+            cam = random.randint(0, 4)
             cam_fd_mess = tools.load_json_txt(message_locations[cam][0], message_locations[cam][1])
             cam_fd_mess['timestamp'] = str(arrow.utcnow())
             call_sfn(cam_fd_mess, 1, 'FD')
