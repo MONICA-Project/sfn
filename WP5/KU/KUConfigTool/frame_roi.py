@@ -19,13 +19,11 @@ class FrameROI(Frame):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1, minsize=216)
         # GET THE CURRENT FRAME AND CONVERT
-        frame = self.cam.read()
-        self.width = frame.shape[1]
-        self.height = frame.shape[0]
-        self.im = Image.fromarray(frame, 'RGB')
-        self.image = ImageTk.PhotoImage(self.im)
+        self.image = controller.get_frame()
+        self.width = self.image.width()
+        self.height = self.image.height()
         # CREATE Canvas FOR THE IMAGE WHICH ALLOWS FOR DRAWING
-        self.canvas = Canvas(self, width=frame.shape[1], height=frame.shape[0], cursor="cross")
+        self.canvas = Canvas(self, width=self.width, height=self.height, cursor="cross")
         self.canvas.grid(row=0, columnspan=5)
         # BIND FUNCTIONS TO THE EVENT CALLBACKS
         self.canvas.bind("<ButtonPress-1>", self.on_button_press)

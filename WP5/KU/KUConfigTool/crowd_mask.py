@@ -20,14 +20,16 @@ class CrowdMask(Frame):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1, minsize=216)
         # GET THE CURRENT FRAME AND CONVERT
-        self.frame = self.cam.read()
-        self.width = self.frame.shape[1]
-        self.height = self.frame.shape[0]
+        self.image = controller.current_frame
+        self.width = self.image.width()
+        self.height = self.image.height()
+        self.stream_w = controller.stream_w
+        self.stream_h = controller.stream_h
+        self.ratio = controller.ratio
+        self.frame = controller.cam_frame
         self.mask = np.zeros([self.height, self.width])
-        self.im = Image.fromarray(self.frame, 'RGB')
-        self.image = ImageTk.PhotoImage(self.im)
         # CREATE Canvas FOR THE IMAGE WHICH ALLOWS FOR DRAWING
-        self.canvas = Canvas(self, width=self.frame.shape[1], height=self.frame.shape[0], cursor="cross")
+        self.canvas = Canvas(self, width=self.width, height=self.height, cursor="cross")
         self.canvas.grid(row=0, columnspan=5)
 
         # VARIABLES USED IN OPERATION
@@ -90,7 +92,7 @@ class CrowdMask(Frame):
         controller.show_frame("GroundPlane")
 
     def update_config(self):
-        self.controller.config_tools.crowd_mask = self.mask
+        self.controller.config_tools.crowd_mask = cv2.resize(self.mask, dsize=(self.stream_w, self.stream_h))
         self.controller.config_tools.camera_position = [float(self.e1.get()), float(self.e2.get())]
         self.controller.config_tools.camera_height = float(self.e3.get())
         self.controller.config_tools.camera_tilt = int(self.e4.get())

@@ -9,7 +9,7 @@ __author__ = 'Rob Dupre (KU)'
 
 
 class ImageSequenceStreamer:
-    def __init__(self, seq_path, start_frame=0, frame_size=[1080, 768], loop_last=True, repeat=False):
+    def __init__(self, seq_path, start_frame=0, frame_size=None, loop_last=True, repeat=False):
         """ Initialisation.
         Keyword arguments:
             seq_path --     String identifying the folder location of the images.
@@ -23,7 +23,6 @@ class ImageSequenceStreamer:
         """
         self.folder_location = seq_path
         self.file_list = []
-        self.size = (frame_size[0], frame_size[1])
         self.images = []
         self.start_frame = start_frame
         self.image_count = self.start_frame
@@ -38,6 +37,13 @@ class ImageSequenceStreamer:
             ext = os.path.splitext(f)[1]
             if ext.lower().endswith(valid_images):
                 self.file_list.append(os.path.join(self.folder_location, f))
+
+        # GET THE FRAME SIZE FROM THE FIRST IMAGE IF NOT SPECIFIED
+        if frame_size[0] is None:
+            temp_image = cv2.imread(self.file_list[self.image_count])
+            self.size = (temp_image.shape[0], temp_image.shape[1])
+        else:
+            self.size = (frame_size[0], frame_size[1])
 
         # IF WORKING THE STREAMER WILL ALLOW THE RETURN OF THE NEXT IMAGE. IF NOT THE STREAM IS CONSIDERED stopped
         if len(self.file_list) > 0:

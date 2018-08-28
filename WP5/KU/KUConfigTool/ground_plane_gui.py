@@ -18,7 +18,7 @@ class GroundPlane(Frame):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1, minsize=216)
         # GET THE CURRENT FRAME AND CONVERT
-        self.frame = self.cam.read()
+        self.frame = controller.cam_frame
         self.width = int(self.frame.shape[1] / 1.25)
         self.height = int(self.frame.shape[0] / 1.25)
         self.im = Image.fromarray(self.frame, 'RGB')
@@ -82,11 +82,12 @@ class GroundPlane(Frame):
 
     def update_config(self):
         # RESCALE THE POINTS TO ALLOW FOR THE SMALLER IMAGE
-        t = [[int(self.ref_pt[0][0] * 1.25), int(self.ref_pt[0][1] * 1.25)],
-             [int(self.ref_pt[1][0] * 1.25), int(self.ref_pt[1][1] * 1.25)],
-             [int(self.ref_pt[2][0] * 1.25), int(self.ref_pt[2][1] * 1.25)],
-             [int(self.ref_pt[3][0] * 1.25), int(self.ref_pt[3][1] * 1.25)],
-             [int(self.ref_pt[4][0] * 1.25), int(self.ref_pt[4][1] * 1.25)]]
+        ratio = self.controller.ratio
+        t = [[int((self.ref_pt[0][0] * 1.25) / ratio), int((self.ref_pt[0][1] * 1.25) / ratio)],
+             [int((self.ref_pt[1][0] * 1.25) / ratio), int((self.ref_pt[1][1] * 1.25) / ratio)],
+             [int((self.ref_pt[2][0] * 1.25) / ratio), int((self.ref_pt[2][1] * 1.25) / ratio)],
+             [int((self.ref_pt[3][0] * 1.25) / ratio), int((self.ref_pt[3][1] * 1.25) / ratio)],
+             [int((self.ref_pt[4][0] * 1.25) / ratio), int((self.ref_pt[4][1] * 1.25) / ratio)]]
         self.controller.config_tools.ref_pt = t
         self.controller.config_tools.ground_plane_orientation = int(self.e3.get())
 
@@ -94,7 +95,7 @@ class GroundPlane(Frame):
         # DELETE EVERYTHING OFF THE CANVAS
         self.canvas.delete("all")
         # RE-DRAW IMAGE
-        self.frame = self.cam.read()
+        self.frame = self.controller.cam_frame
         # self.frame = self.frame[self.controller.config_tools.frame_roi[1]:self.controller.config_tools.frame_roi[3],
         #                         self.controller.config_tools.frame_roi[0]:self.controller.config_tools.frame_roi[2],
         #                         :]

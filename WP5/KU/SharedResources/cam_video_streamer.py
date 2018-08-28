@@ -15,7 +15,7 @@ class CamVideoStreamer:
         self.id = identifier
 
         if self.open():
-            print('CAMERA ' + str(self.id) + ' CONNECTION ESTABLISHED.')
+            print('CAMERA CONNECTION ESTABLISHED.')
         else:
             print('FAILED TO CONNECT TO CAMERA ' + str(self.id) + '.')
 

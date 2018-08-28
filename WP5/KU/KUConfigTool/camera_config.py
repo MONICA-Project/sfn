@@ -8,6 +8,8 @@ from tkinter import *
 from PIL import Image, ImageTk
 from pathlib import Path
 import sys
+import cv2
+import numpy as np
 sys.path.append(str(Path(__file__).absolute().parents[3]))
 from WP5.KU.SharedResources.cam_video_streamer import CamVideoStreamer
 from WP5.KU.SharedResources.frame_streamer import ImageSequenceStreamer
@@ -37,11 +39,11 @@ parser.add_argument('--rtsp', default='rtsp://root:pass@10.144.129.107/axis-medi
 # parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_3/',
 # parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_4/',
 # parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/YCCC-LR/LEEDS_2018_AUG/CONFIG/LEEDS_4//',
-# parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/TIVOLI/REVIEW_2018/CONFIG/TIVOLI_25//',
-parser.add_argument('--seq_location', default='None',
+parser.add_argument('--seq_location', default='/ocean/datasets/MONICA/TIVOLI/REVIEW_2018/CONFIG/TIVOLI_25//',
+# parser.add_argument('--seq_location', default='None',
                     type=str, help='Local file location to be used to stream images instead of RTSP')
-parser.add_argument('--x_size', default=1080, type=int, help='Desired frame in X for loaded images.')
-parser.add_argument('--y_size', default=768, type=int, help='Desired frame in Y for loaded images.')
+parser.add_argument('--x_size', default=None, type=int, help='Desired frame in X for loaded images.')
+parser.add_argument('--y_size', default=None, type=int, help='Desired frame in Y for loaded images.')
 parser.add_argument('--start_frame', default=0, type=int, help='Frame to start a given image sequence from.')
 _args = parser.parse_args()
 
@@ -59,8 +61,14 @@ class ConfigApp(Tk):
         self.frames = {}
         self.config_tools = config_tools
         self.cam = cam_stream
+        self.ratio, self.stream_w, self.stream_h = self.calculate_frame_size()
+        self.cam_frame = []
+        self.current_frame = []
+        self.get_frame()
         # CREATE THE OVERALL CONTAINER FOR THE APP PAGES
         container = Frame(self)
+        # container = Frame(self, width=2024, height=768)
+        # container.pack(fill=None, expand=False)
         container.pack(side="top", fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
@@ -125,11 +133,11 @@ class ConfigApp(Tk):
             self.frames["GroundPlane"].e3.delete(0, END)
             self.frames["GroundPlane"].e3.insert(10, self.config_tools.ground_plane_orientation)
             self.frames["GroundPlane"].ref_pt = [
-                [int(self.config_tools.ref_pt[0][0] / 1.25), int(self.config_tools.ref_pt[0][1] / 1.25)],
-                [int(self.config_tools.ref_pt[1][0] / 1.25), int(self.config_tools.ref_pt[1][1] / 1.25)],
-                [int(self.config_tools.ref_pt[2][0] / 1.25), int(self.config_tools.ref_pt[2][1] / 1.25)],
-                [int(self.config_tools.ref_pt[3][0] / 1.25), int(self.config_tools.ref_pt[3][1] / 1.25)],
-                [int(self.config_tools.ref_pt[4][0] / 1.25), int(self.config_tools.ref_pt[4][1] / 1.25)]]
+                [int((self.config_tools.ref_pt[0][0] / 1.25) * self.ratio), int((self.config_tools.ref_pt[0][1] / 1.25) * self.ratio)],
+                [int((self.config_tools.ref_pt[1][0] / 1.25) * self.ratio), int((self.config_tools.ref_pt[1][1] / 1.25) * self.ratio)],
+                [int((self.config_tools.ref_pt[2][0] / 1.25) * self.ratio), int((self.config_tools.ref_pt[2][1] / 1.25) * self.ratio)],
+                [int((self.config_tools.ref_pt[3][0] / 1.25) * self.ratio), int((self.config_tools.ref_pt[3][1] / 1.25) * self.ratio)],
+                [int((self.config_tools.ref_pt[4][0] / 1.25) * self.ratio), int((self.config_tools.ref_pt[4][1] / 1.25) * self.ratio)]]
             self.frames["GroundPlane"].draw_image()
             self.frames["GroundPlane"].draw_top_down()
 
@@ -145,26 +153,50 @@ class ConfigApp(Tk):
             self.frames["TopDown"].draw_image()
             self.frames["TopDown"].draw_rect()
 
-            self.frames["FlowROIs"].rois = self.config_tools.flow_rois
+            self.frames["FlowROIs"].rois = (np.array(self.config_tools.flow_rois) * self.ratio).astype(np.uint).tolist()
             self.frames["FlowROIs"].draw_rect()
 
     def refresher(self):
         """Call back function which refreshes the various labels/canvases in each frame.
         Updating the frames and updating variables from the config tools
         """
-        im_new = Image.fromarray(cam.read(), 'RGB')
-        im_new = ImageTk.PhotoImage(im_new)
-        self.frames["Main"].label.config(image=im_new)
-        self.frames["Main"].label.image = im_new
+        self.get_frame()
+        self.frames["Main"].label.config(image=self.current_frame)
+        self.frames["Main"].label.image = self.current_frame
         self.frames["CrowdMask"].l1.config(text=str(self.frames["CrowdMask"].roi_count))
         self.frames["GroundPlane"].l1.config(text=str(self.config_tools.ref_pt))
         self.frames["GroundPlane"].draw_image()
         self.frames["TopDown"].l1.config(text=str(self.config_tools.ground_plane_roi))
         self.frames["FlowROIs"].l1.config(text=str(self.config_tools.flow_rois))
 
-        # self.frames["GroundPlane"].label.config(image=im_new)
-        # self.frames["GroundPlane"].label.image = im_new
         self.after(5, self.refresher)
+
+    def get_frame(self, just_frame=False):
+        self.cam_frame = cam.read()
+        if self.ratio < 1:
+            self.cam_frame = cv2.resize(cam.read(),
+                                        dsize=(int(self.stream_w * self.ratio), int(self.stream_h * self.ratio)))
+        self.current_frame = ImageTk.PhotoImage(Image.fromarray(self.cam_frame, 'RGB'))
+
+    def calculate_frame_size(self):
+        display_w = self.winfo_screenwidth()
+        display_h = self.winfo_screenheight()
+        stream_w = cam.read().shape[0]
+        stream_h = cam.read().shape[1]
+
+        if stream_h > stream_w:
+            t = stream_h
+            stream_h = stream_w
+            stream_w = t
+        if display_w - stream_w < 0 or display_h - stream_h < 0:
+            if (display_w - stream_w) < (display_h - stream_h):
+                ratio = (display_w / stream_w) * 0.9
+            else:
+                ratio = (display_h / stream_h) * 0.9
+            print('SCREEN SIZE IS SMALLER THAN THE STREAM SIZE RATIO:{}'.format(ratio))
+        else:
+            ratio = 1
+        return ratio, stream_w, stream_h
 
 
 class MainPage(Frame):
@@ -176,9 +208,7 @@ class MainPage(Frame):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1, minsize=216)
         # GET THE CURRENT FRAME FROM THE STREAM AND CONVERT TO APPROPRIATE IMAGE
-        frame = cam.read()
-        im = Image.fromarray(frame, 'RGB')
-        im = ImageTk.PhotoImage(im)
+        im = controller.current_frame
         # CREATE LABEL FOR THE IMAGE USE self TO ALLOW EXTERNAL ACCESS THROUGH refresher()
         self.label = Label(self, image=im)
         self.label.grid(row=0, columnspan=7)
@@ -247,7 +277,6 @@ class MainPage(Frame):
 
     def next_page(self, controller):
         self.update_config()
-        # controller.show_frame("FrameROI")
         controller.show_frame("CrowdMask")
 
     def save(self):

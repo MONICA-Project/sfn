@@ -2,6 +2,7 @@
 """The Optical Flow ROI GUI class for the KU Cam Config App
 """
 from tkinter import *
+import numpy as np
 from PIL import Image, ImageTk
 
 __version__ = '0.1'
@@ -18,13 +19,12 @@ class FlowROI(Frame):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1, minsize=216)
         # GET THE CURRENT FRAME AND CONVERT
-        frame = self.cam.read()
-        self.width = frame.shape[1]
-        self.height = frame.shape[0]
-        self.im = Image.fromarray(frame, 'RGB')
-        self.image = ImageTk.PhotoImage(self.im)
+        self.image = controller.current_frame
+        self.width = self.image.width()
+        self.height = self.image.height()
+        self.ratio = controller.ratio
         # CREATE Canvas FOR THE IMAGE WHICH ALLOWS FOR DRAWING
-        self.canvas = Canvas(self, width=frame.shape[1], height=frame.shape[0], cursor="cross")
+        self.canvas = Canvas(self, width=self.width, height=self.height, cursor="cross")
         self.canvas.grid(row=0, columnspan=5)
         # BIND FUNCTIONS TO THE EVENT CALLBACKS
         self.canvas.bind("<ButtonPress-1>", self.on_button_press)
@@ -66,7 +66,7 @@ class FlowROI(Frame):
         controller.show_frame("Main")
 
     def update_config(self):
-        self.controller.config_tools.flow_rois = self.rois
+        self.controller.config_tools.flow_rois = (np.array(self.rois) / self.ratio).astype(np.uint).tolist()
 
     def reset_rois(self):
         self.rects = []
