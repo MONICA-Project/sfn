@@ -23,7 +23,7 @@ scral_url = 'http://monappdwp3.monica-cloud.eu:8000/'
 
 sfn_urls = {'scral_url': scral_url,
             'crowd_density_url': scral_url + 'sfn/camera',
-            'crowd_density_global_url': scral_url + 'sfn/crowd_monitoring',
+            'crowd_density_global_url': scral_url + 'sfn/crowd_density_global',
             'flow_analysis_url': scral_url + 'sfn/camera',
             'object_detection_url': scral_url + 'sfn/v',
             'fighting_detection_url': scral_url + 'sfn/camera',
