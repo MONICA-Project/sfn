@@ -165,6 +165,7 @@ def update_configs():
         configs = [json.loads(item.msg) for item in configs]
         for config in configs:
             if 'camera_id' in config:
+                config['crowd_mask'] = ""
                 sfn_module.send_reg_message(json.dumps(config), sfn_module.urls['camera_reg_url'])
             elif 'module_id' in config:
                 if config['type_module'] == 'crowd_density_local':
