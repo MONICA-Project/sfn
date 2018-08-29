@@ -122,8 +122,8 @@ class GetCrowd(FrameAnalyser):
                                                                               # timestamp=timestamp,
                                                                               # frame=frame,
                                                                               )
-            # message = self.create_obs_message(count, top_down_density_map, timestamp)
-            message = self.create_obs_message(count, top_down_density_map, timestamp, frame=frame)
+            message = self.create_obs_message(count, top_down_density_map, timestamp)
+            # message = self.create_obs_message(count, top_down_density_map, timestamp, frame=frame)
 
             # CONVERT TO IMAGE THAT CAN BE DISPLAYED
             density_map = 255 * density_map / (np.max(density_map) + np.finfo(float).eps)

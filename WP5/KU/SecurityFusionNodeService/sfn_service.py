@@ -124,7 +124,7 @@ def add_message():
                 text, resp_code = amalgamate_crowd_density_local(sfn_module, sfn_module.urls['crowd_density_global_url'])
             else:
                 # NO MESSAGES HELD
-                text = 'TIME SINCE LAST AMALGAMATION: {}. '.format(sfn_module.timer)
+                text = '{0:.2f}s SINCE LAST AMALGAMATION'.format(sfn_module.timer)
 
             log_text = log_text + text
             print(log_text)

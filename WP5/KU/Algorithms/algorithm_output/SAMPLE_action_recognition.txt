@@ -1,0 +1,1 @@
+{"type_module": "action_recognition", "action": "Lying", "device": "wearable", "sensor": "tag", "type": "uwb", "timestamp": "2017-08-03T17:56:32.372Z", "module_id": "1234sdfv234jk", "camera_ids": ["0x0644"]}
