@@ -1,0 +1,1 @@
+{"timestamp": "2018-08-17T15:17:16.408348+00:00", "module_id": "0a26d0fa-b6b6-5d1c-9d46-51676d64daa7_flow", "type_module": "flow", "flow_frame_byte_array": "", "average_flow_magnitude": [0.0029877416727189876], "average_flow_direction": [0.14399187214539358], "camera_ids": ["LEEDS_4"]}

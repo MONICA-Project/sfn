@@ -23,6 +23,7 @@ print(str(socket.gethostname()))
 parser = argparse.ArgumentParser(description='"A simple load testing script to fire messages off to the SFN')
 # parser.add_argument('--sfn_url', default='http://MPCLSGESFN01.monica-cloud.eu:5000/', type=str,
 parser.add_argument('--sfn_url', default='http://0.0.0.0:5000/', type=str,
+# parser.add_argument('--sfn_url', default='http://monappdwp3.monica-cloud.eu:8000/sfn', type=str,
                     help='The URL and port the SFN is currently listening on')
 parser.add_argument('--scral_url', default='http://monappdwp3.monica-cloud.eu:8000/', type=str,
 # parser.add_argument('--scral_url', default='http://0.0.0.0:3389/', type=str,
@@ -37,18 +38,10 @@ if __name__ == '__main__':
     scral_url = _args.scral_url
 
     print('SFN URL:{}. SCRAL URL:{}'.format(url, scral_url))
-    sfn_urls = {'scral_url': scral_url,
-                'crowd_density_url': scral_url + 'sfn/crowd_monitoring',
-                'flow_analysis_url': scral_url + 'sfn/flow_analysis',
-                'object_detection_url': scral_url + 'sfn/object_detection',
-                'fighting_detection_url': scral_url + 'sfn/fight_detection',
-                'action_recognition_url': scral_url + 'sfn/action_recognition',
-                'camera_reg_url': scral_url + 'sfn/camera',
-                }
 
     # sleep_counter = 0.9
     num_algorithms = 2
-    num_cameras = 4
+    num_cameras = 7
     algorithm_process_time = 1
     time_interval = (algorithm_process_time * num_cameras) / (num_algorithms * num_cameras)
     time_interval = 5
@@ -57,12 +50,21 @@ if __name__ == '__main__':
     dataset_folder = _args.dataset_folder
 
 message_locations = [
-    [os.path.join(dataset_folder), 'TIVOLI_25_fight_detection'],
-    [os.path.join(dataset_folder), 'TIVOLI_26_fight_detection'],
-    [os.path.join(dataset_folder), 'TIVOLI_27_fight_detection'],
-    [os.path.join(dataset_folder), 'TIVOLI_28_fight_detection'],
-    [os.path.join(dataset_folder), 'TIVOLI_29_fight_detection'],
-    # [os.path.join(dataset_folder), '0x0644_action_recognition_00000'],
+    [os.path.join(dataset_folder), 'SAMPLE_fight_detection'],
+    [os.path.join(dataset_folder), 'SAMPLE_action_recognition'],
+    [os.path.join(dataset_folder), 'SAMPLE_crowd_density_local'],
+    [os.path.join(dataset_folder), 'SAMPLE_flow'],
+    [os.path.join(dataset_folder), 'SAMPLE_object_detection'],
+]
+
+configs = [
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_25'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_26'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_27'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_28'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_29'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_30'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_31'),
 ]
 
 
@@ -86,10 +88,13 @@ else:
     if resp.ok:
 
         while True:
-            cam = random.randint(0, 4)
-            cam_fd_mess = tools.load_json_txt(message_locations[cam][0], message_locations[cam][1])
-            cam_fd_mess['timestamp'] = str(arrow.utcnow())
-            call_sfn(cam_fd_mess, 1, 'FD')
+            cam = random.randint(0, len(configs))
+
+            for mess_type in message_locations:
+                mess = tools.load_json_txt(mess_type[0], mess_type[1])
+                mess['timestamp'] = str(arrow.utcnow())
+                mess['camera_ids'][0] = configs[cam]
+                call_sfn(mess, 1, mess['module_id'])
 
             # cam_X_ar_mess = tools.load_json_txt(message_locations[-1][0], message_locations[-1][1])
             # cam_X_ar_mess['timestamp'] = str(arrow.utcnow())

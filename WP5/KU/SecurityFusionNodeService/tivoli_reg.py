@@ -18,7 +18,8 @@ print(KU_DIR)
 
 url = 'http://0.0.0.0:5000/'
 # url = 'http://MPCLSGESFN01.monica-cloud.eu:5000/'
-scral_url = 'http://monappdwp3.monica-cloud.eu:8000/'
+scral_url = 'http://192.168.99.142:8000/'
+# scral_url = 'http://monappdwp3.monica-cloud.eu:8000/'
 # scral_url = 'http://0.0.0.0:3389/'
 
 sfn_urls = {'scral_url': scral_url,
@@ -39,7 +40,6 @@ configs = [
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_29'),
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_30'),
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_31'),
-    # tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '1234sdfv234jk_action_recognition_reg', False),
 ]
 
 # HELLO WORLD

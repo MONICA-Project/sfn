@@ -1,0 +1,1 @@
+{"type_module": "fighting_detection", "situation": "fighting_event", "confidence": "0.3", "timestamp": "2017-08-03T17:56:32.372Z", "module_id": "6789pwrl123dc", "camera_ids": ["TIVOLI_25"]}
