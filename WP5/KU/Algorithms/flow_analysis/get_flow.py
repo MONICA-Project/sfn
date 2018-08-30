@@ -39,6 +39,7 @@ class GetFlow(FrameAnalyser):
         self.weights_path = []
 
         # ALGORITHM VARIABLES
+        self.scale = 0.5
         self.model = None
         self.cuda = False
         self.load_settings(str(Path(__file__).absolute().parents[0]), 'settings')
