@@ -117,8 +117,10 @@ class GetFlow(FrameAnalyser):
                 # VISUALIZE THE OPTICAL FLOW AND SAVE IT
                 flow_image = flow_to_image(flow_uv)
                 save_name = incrementer.get_incrementer(self.counter, 7) + '_' + self.cam_id + '_' + self.module_id
-                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame1.jpeg'), frame1)
-                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame2.jpeg'), frame2)
+                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame1.jpeg'),
+                            cv2.resize(frame1, (0, 0), fx=self.scale, fy=self.scale))
+                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame2.jpeg'),
+                            cv2.resize(frame2, (0, 0), fx=self.scale, fy=self.scale))
                 cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_flow.jpeg'), flow_image)
                 try:
                     reg_file = open(os.path.join(os.path.dirname(__file__), save_name + '.txt'), 'w')
