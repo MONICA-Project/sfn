@@ -22,6 +22,7 @@ FONT = cv2.FONT_HERSHEY_SIMPLEX
 class ConfigTools:
     # SET UP THE INITIAL POINTS AND CONTROL VARIABLES
     def __init__(self):
+        self.ratio = 1
 
         # PAGE ONE
         self.camera_id = 'TEMP'
@@ -75,7 +76,7 @@ class ConfigTools:
             warped_image --     The source image now warped and with the size new_image_size
         """
 
-        pts1 = np.float32(self.ref_pt[0:4])
+        pts1 = np.float32(self.ref_pt[0:4]) * self.ratio
         self.transform, mask = cv2.findHomography(pts1, pts2)
 
         self.warped_image = cv2.warpPerspective(image, self.transform, new_image_size)
@@ -116,7 +117,7 @@ class ConfigTools:
             image --            MxN RGB or BW image.
         Returns:
             warped_image --     image with now drawn ref_pt on"""
-        pts = np.array(self.ref_pt)
+        pts = np.array(self.ref_pt) * self.ratio
         if pts.shape[1] == 2:
             q = np.dot(self.transform, np.transpose(np.hstack([pts, np.ones([len(pts), 1])])))
             p = np.array(q[2, :])

@@ -44,6 +44,7 @@ class ConfigApp(Tk):
         self.config_tools = config_tools
         self.cam = cam_stream
         self.ratio, self.stream_w, self.stream_h = self.calculate_frame_size()
+        self.config_tools.ratio = self.ratio
         self.cam_frame = []
         self.current_frame = []
         self.get_frame()
@@ -283,7 +284,7 @@ if __name__ == '__main__':
     # _args.seq_location = '/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_3/'
     # _args.seq_location = '/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_4/'
     # _args.seq_location = '/ocean/datasets/MONICA/YCCC-LR/LEEDS_2018_AUG/CONFIG/LEEDS_4//'
-    # _args.seq_location = '/ocean/datasets/MONICA/TIVOLI/REVIEW_2018/CONFIG/TIVOLI_25//'
+    _args.seq_location = '/ocean/datasets/MONICA/TIVOLI/REVIEW_2018/CONFIG/TIVOLI_25//'
 
     # _args.rtsp = 'rtsp://root:pass@10.144.129.107/axis-media/media.amp'
 
