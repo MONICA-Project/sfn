@@ -58,25 +58,17 @@ class GetFlow(FrameAnalyser):
             self.previous_frames_timestamp[camera_id] = arrow.utcnow()
             message = self.create_obs_message([], [], arrow.utcnow())
             return message, None
-        # DEBUG OPTIONS
-        if debug:
-            self.process_interval = 0
-            self.save_on_count = 0
 
         # USES ONLY THE REGION OF INTEREST DEFINED IN THE SETTINGS
-        time_1 = self.previous_frames_timestamp[camera_id]
-        time_2 = arrow.utcnow()
-        if (time_2 - time_1).seconds >= self.process_interval:
-            frame2 = frame
-            frame1 = self.previous_frames_dictionary[camera_id]
-            self.previous_frames_dictionary[camera_id] = frame2
-            self.previous_frames_timestamp[camera_id] = time_2
+        frame2 = frame
+        frame1 = self.previous_frames_dictionary[camera_id]
+        self.previous_frames_dictionary[camera_id] = frame2
 
-            save_name = incrementer.get_incrementer(self.counter, 7) + '_' + self.cam_id + '_' + self.module_id
-            cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame1.jpeg'),
-                        cv2.resize(frame1, (0, 0), fx=self.scale, fy=self.scale))
-            cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame2.jpeg'),
-                        cv2.resize(frame2, (0, 0), fx=self.scale, fy=self.scale))
+        save_name = incrementer.get_incrementer(self.counter, 7) + '_' + self.cam_id + '_' + self.module_id
+        cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame1.jpeg'),
+                    cv2.resize(frame1, (0, 0), fx=self.scale, fy=self.scale))
+        cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame2.jpeg'),
+                    cv2.resize(frame2, (0, 0), fx=self.scale, fy=self.scale))
 
     def create_obs_message(self, average_flow_mag, average_flow_dir, timestamp):
         """ Function to create the JSON payload containing the observation. Follows the content as defined on the WP5
