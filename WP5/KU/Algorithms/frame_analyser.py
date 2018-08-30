@@ -13,7 +13,7 @@ class FrameAnalyser:
     def __init__(self, module_id):
         # VARIABLES REQUIRED FOR THE FINAL MESSAGE CREATION
         self.module_id = module_id
-        self.module_type = ''
+        self.type_module = ''
         self.state = 'inactive'
         self.previous_frames_timestamp = {}
 

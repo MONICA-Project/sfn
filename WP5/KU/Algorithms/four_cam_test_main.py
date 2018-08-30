@@ -44,16 +44,24 @@ display = True
 
 # LOAD THE SETTINGS AND PASS THEN WHEN PROCESSING A FRAME
 info1 = dataset(19)
-settings1 = load_settings(KU_DIR + '/KUConfigTool/' + '/' + info1[2])
+settings1 = load_settings(KU_DIR + '/KUConfigTool/cam_configs/' + info1[2])
 info2 = dataset(20)
-settings2 = load_settings(KU_DIR + '/KUConfigTool/' + '/' + info2[2])
+settings2 = load_settings(KU_DIR + '/KUConfigTool/cam_configs/' + info2[2])
 info3 = dataset(21)
-settings3 = load_settings(KU_DIR + '/KUConfigTool/' + '/' + info3[2])
+settings3 = load_settings(KU_DIR + '/KUConfigTool/cam_configs/' + info3[2])
 info4 = dataset(22)
-settings4 = load_settings(KU_DIR + '/KUConfigTool/' + '/' + info4[2])
+settings4 = load_settings(KU_DIR + '/KUConfigTool/cam_configs/' + info4[2])
+info5 = dataset(23)
+settings5 = load_settings(KU_DIR + '/KUConfigTool/cam_configs/' + info5[2])
+info6 = dataset(24)
+settings6 = load_settings(KU_DIR + '/KUConfigTool/cam_configs/' + info6[2])
+info7 = dataset(25)
+settings7 = load_settings(KU_DIR + '/KUConfigTool/cam_configs/' + info7[2])
+info8 = dataset(26)
+settings8 = load_settings(KU_DIR + '/KUConfigTool/cam_configs/' + info8[2])
 
-settings = [settings1, settings2, settings3, settings4]
-info = [info1, info2, info3, info4]
+settings = [settings1, settings2, settings3, settings4, settings5, settings6, settings7, settings8]
+info = [info1, info2, info3, info4, info5, info6, info7, info8]
 
 # CREATE AN analyser OBJECT AND CREATE THE REGISTRATION MESSAGE
 # analyser = GetCrowd('001')
@@ -69,10 +77,14 @@ cam1 = ImageSequenceStreamer(info1[0], info1[1], (1080, 768), loop_last=False, r
 cam2 = ImageSequenceStreamer(info2[0], info2[1], (1080, 768), loop_last=False, repeat=True)
 cam3 = ImageSequenceStreamer(info3[0], info3[1], (1080, 768), loop_last=False, repeat=True)
 cam4 = ImageSequenceStreamer(info4[0], info4[1], (1080, 768), loop_last=False, repeat=True)
-cam = [cam1, cam2, cam3, cam4]
+cam5 = ImageSequenceStreamer(info5[0], info5[1], (1080, 768), loop_last=False, repeat=True)
+cam6 = ImageSequenceStreamer(info6[0], info6[1], (1080, 768), loop_last=False, repeat=True)
+cam7 = ImageSequenceStreamer(info7[0], info7[1], (1080, 768), loop_last=False, repeat=True)
+cam8 = ImageSequenceStreamer(info8[0], info8[1], (1080, 768), loop_last=False, repeat=True)
+cam = [cam1, cam2, cam3, cam4, cam5, cam6, cam7, cam8]
 
 count = 0
-while cam1.open() & cam2.open() & cam3.open() & cam4.open():
+while cam1.open() & cam2.open() & cam3.open() & cam4.open() & cam5.open() & cam6.open() & cam7.open() & cam8.open():
 
     # choose random camera
     random_index = randrange(0, len(cam))
@@ -81,11 +93,14 @@ while cam1.open() & cam2.open() & cam3.open() & cam4.open():
     setting = settings[random_index]
 
     if analyser.type_module == 'flow':
-        message, result = analyser.process_frame(frame, setting['camera_id'], setting['frame_roi'], setting['flow_rois'])
+        message, frame = analyser.process_frame(frame, settings['camera_id'], settings['flow_rois'], True)
+    if analyser.type_module == 'object_detection':
+        message, frame = analyser.process_frame(frame, settings['camera_id'])
     elif analyser.type_module == 'crowd_density_local':
-        message, result = analyser.process_frame(frame, setting['camera_id'], setting['frame_roi'],
-                                                 setting['image_2_ground_plane_matrix'],
-                                                 setting['ground_plane_roi'], setting['ground_plane_size'])
+        message, frame = analyser.process_frame(frame, settings['camera_id'], settings['crowd_mask'],
+                                                settings['image_2_ground_plane_matrix'],
+                                                settings['ground_plane_roi'],
+                                                settings['ground_plane_size'], True)
 
     # WRITE FILES FOR USE LATER
     save_folder = str(Path(__file__).absolute().parents[0]) + '/algorithm_output/'
