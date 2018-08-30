@@ -26,9 +26,9 @@ sfn_urls = {'scral_url': scral_url,
             'crowd_density_url': scral_url + 'sfn/camera',
             'crowd_density_global_url': scral_url + 'sfn/crowd_density_global',
             'flow_analysis_url': scral_url + 'sfn/camera',
-            'object_detection_url': scral_url + 'sfn/v',
+            'object_detection_url': scral_url + 'sfn/camera',
             'fighting_detection_url': scral_url + 'sfn/camera',
-            'action_recognition_url': scral_url + 'sfn/action_recognition',
+            'action_recognition_url': scral_url + 'sfn/camera',
             'camera_reg_url': scral_url + 'sfn/camera',
             }
 
