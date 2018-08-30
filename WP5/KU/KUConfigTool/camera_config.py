@@ -23,9 +23,9 @@ __author__ = 'Rob Dupre (KU)'
 
 parser = argparse.ArgumentParser(description='Config Tool to create settings files for each camera '
                                              'and the required algorithms.')
-parser.add_argument('--rtsp', default='rtsp://root:pass@10.144.129.107/axis-media/media.amp',
+parser.add_argument('--rtsp', default=None,
                     type=str, help='The RTSP stream address to allow access to the feed and run the config on.')
-parser.add_argument('--seq_location', default='None',
+parser.add_argument('--seq_location', default=None,
                     type=str, help='Local file location to be used to stream images instead of RTSP')
 parser.add_argument('--x_size', default=None, type=int, help='Desired frame in X for loaded images.')
 parser.add_argument('--y_size', default=None, type=int, help='Desired frame in Y for loaded images.')
@@ -275,24 +275,29 @@ class MainPage(Frame):
 
 
 if __name__ == '__main__':
-    # _args.seq_location = '/ocean/datasets/OXFORD_TOWNCENTRE/TownCentreXVID/'
-    # _args.seq_location = '/ocean/datasets/MONICA/TO/KFF 2017/channel 8/2017-07-08 20-40-00~20-50-00//'
-    # _args.seq_location = '/ocean/datasets/MONICA/TO/KFF 2017/channel 4/2017-07-08 14-00-00~14-10-00/'
-    # _args.seq_location = '/ocean/datasets/MONICA/TO/KFF 2017/channel 2/2017-07-09 19-40-00~19-50-00/'
-    # _args.seq_location = '/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_1/'
-    # _args.seq_location = '/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_2/'
-    # _args.seq_location = '/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_3/'
-    # _args.seq_location = '/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_4/'
-    # _args.seq_location = '/ocean/datasets/MONICA/YCCC-LR/LEEDS_2018_AUG/CONFIG/LEEDS_4//'
-    _args.seq_location = '/ocean/datasets/MONICA/TIVOLI/REVIEW_2018/CONFIG/TIVOLI_25//'
-
-    # _args.rtsp = 'rtsp://root:pass@10.144.129.107/axis-media/media.amp'
-
-    if _args.seq_location is 'None':
+    if _args.rtsp is not None:
         cam = CamVideoStreamer(_args.rtsp)
         cam.start()
-    else:
+
+    elif _args.seq_location is not None:
         cam = ImageSequenceStreamer(_args.seq_location, _args.start_frame, (_args.x_size, _args.y_size))
+    else:
+        # _args.seq_location = '/ocean/datasets/OXFORD_TOWNCENTRE/TownCentreXVID/'
+        # _args.seq_location = '/ocean/datasets/MONICA/TO/KFF 2017/channel 8/2017-07-08 20-40-00~20-50-00//'
+        # _args.seq_location = '/ocean/datasets/MONICA/TO/KFF 2017/channel 4/2017-07-08 14-00-00~14-10-00/'
+        # _args.seq_location = '/ocean/datasets/MONICA/TO/KFF 2017/channel 2/2017-07-09 19-40-00~19-50-00/'
+        # _args.seq_location = '/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_1/'
+        # _args.seq_location = '/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_2/'
+        # _args.seq_location = '/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_3/'
+        # _args.seq_location = '/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_4/'
+        # _args.seq_location = '/ocean/datasets/MONICA/YCCC-LR/LEEDS_2018_AUG/CONFIG/LEEDS_4//'
+        _args.seq_location = '/ocean/datasets/MONICA/TIVOLI/REVIEW_2018/CONFIG/TIVOLI_25//'
+
+        cam = ImageSequenceStreamer(_args.seq_location, _args.start_frame, (_args.x_size, _args.y_size))
+        # _args.rtsp = 'rtsp://root:pass@10.144.129.107/axis-media/media.amp'
+        # cam = CamVideoStreamer(_args.rtsp)
+        # cam.start()
+
     if cam.open():
         print("CAMERA CONNECTION IS ESTABLISHED.")
         config = ConfigTools()
