@@ -49,7 +49,7 @@ class GetFlow(FrameAnalyser):
         # EVALUATION
         self.counter = 0
         self.iterator = 0
-        self.save_on_count = 3200
+        self.save_on_count = 2000
 
     def process_frame(self, frame, camera_id, rois, debug=False):  # rois: region of interests
         # CHECK WHETHER THIS IS THE FIRST FRAME OF THIS CAMERA ID

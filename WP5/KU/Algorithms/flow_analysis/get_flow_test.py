@@ -1,5 +1,6 @@
 # get_flow.py
 import json
+from PIL import Image
 import cv2
 import math
 import arrow
@@ -9,6 +10,7 @@ from torch.autograd import Variable
 from pathlib import Path
 import sys
 import os
+import time
 sys.path.append(str(Path(__file__).absolute().parents[4]))
 import WP5.KU.SharedResources.get_incrementer as incrementer
 from WP5.KU.Algorithms.frame_analyser import FrameAnalyser
@@ -45,6 +47,7 @@ class GetFlow(FrameAnalyser):
         self.load_settings(str(Path(__file__).absolute().parents[0]), 'settings')
         self.scale_height = 384  # TO SCALE THE INPUT IMAGE IF IT IS TOO LARGE FOR FLOWNET
         self.scale_width = 512
+        self.save_image = np.zeros((self.scale_width, self.scale_height * 3, 3), dtype=np.uint8)
 
         # EVALUATION
         self.counter = 0
@@ -52,23 +55,23 @@ class GetFlow(FrameAnalyser):
         self.save_on_count = 3200
 
     def process_frame(self, frame, camera_id, rois, debug=False):  # rois: region of interests
+
+
         # CHECK WHETHER THIS IS THE FIRST FRAME OF THIS CAMERA ID
         if camera_id not in self.previous_frames_dictionary:
-            self.previous_frames_dictionary[camera_id] = frame
-            self.previous_frames_timestamp[camera_id] = arrow.utcnow()
-            message = self.create_obs_message([], [], arrow.utcnow())
-            return message, None
+            self.previous_frames_dictionary[camera_id] = cv2.resize(frame, (self.scale_height, self.scale_width))
+        else:
+            # USES ONLY THE REGION OF INTEREST DEFINED IN THE SETTINGS
+            frame2 = cv2.resize(frame, (self.scale_height, self.scale_width))
 
-        # USES ONLY THE REGION OF INTEREST DEFINED IN THE SETTINGS
-        frame2 = frame
-        frame1 = self.previous_frames_dictionary[camera_id]
-        self.previous_frames_dictionary[camera_id] = frame2
+        
+            self.save_image[:,0:self.scale_height, :] = self.previous_frames_dictionary[camera_id]
+            self.save_image[:, self.scale_height:(self.scale_height*2), :] = frame2
+            self.save_image[:, (self.scale_height*2):, :] = frame2
+            cv2.imwrite(os.path.join(os.path.dirname(__file__), incrementer.get_incrementer(self.counter, 7) + '_' + camera_id + 
+            self.counter = self.counter + 1
 
-        save_name = incrementer.get_incrementer(self.counter, 7) + '_' + self.cam_id + '_' + self.module_id
-        cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame1.jpeg'),
-                    cv2.resize(frame1, (0, 0), fx=self.scale, fy=self.scale))
-        cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame2.jpeg'),
-                    cv2.resize(frame2, (0, 0), fx=self.scale, fy=self.scale))
+        return None, None
 
     def create_obs_message(self, average_flow_mag, average_flow_dir, timestamp):
         """ Function to create the JSON payload containing the observation. Follows the content as defined on the WP5
