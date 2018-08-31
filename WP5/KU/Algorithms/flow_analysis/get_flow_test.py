@@ -56,7 +56,6 @@ class GetFlow(FrameAnalyser):
 
     def process_frame(self, frame, camera_id, rois, debug=False):  # rois: region of interests
 
-
         # CHECK WHETHER THIS IS THE FIRST FRAME OF THIS CAMERA ID
         if camera_id not in self.previous_frames_dictionary:
             self.previous_frames_dictionary[camera_id] = cv2.resize(frame, (self.scale_height, self.scale_width))
@@ -64,11 +63,13 @@ class GetFlow(FrameAnalyser):
             # USES ONLY THE REGION OF INTEREST DEFINED IN THE SETTINGS
             frame2 = cv2.resize(frame, (self.scale_height, self.scale_width))
 
-        
             self.save_image[:,0:self.scale_height, :] = self.previous_frames_dictionary[camera_id]
             self.save_image[:, self.scale_height:(self.scale_height*2), :] = frame2
             self.save_image[:, (self.scale_height*2):, :] = frame2
-            cv2.imwrite(os.path.join(os.path.dirname(__file__), incrementer.get_incrementer(self.counter, 7) + '_' + camera_id + 
+            cv2.imwrite(os.path.join(os.path.dirname(__file__), incrementer.get_incrementer(self.counter, 7)),
+                        self.save_image)
+
+            self.previous_frames_dictionary[camera_id] = frame2
             self.counter = self.counter + 1
 
         return None, None

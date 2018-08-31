@@ -48,7 +48,7 @@ class GetCrowd(FrameAnalyser):
         # EVALUATION
         self.counter = 0
         self.iterator = 0
-        self.save_on_count = 3200
+        self.save_on_count = 2000
 
         self.net = CrowdCounter()
         # TODO: FUTURE WARNING HERE
