@@ -1,6 +1,5 @@
 # get_flow.py
 import json
-from PIL import Image
 import cv2
 import math
 import arrow
@@ -10,7 +9,6 @@ from torch.autograd import Variable
 from pathlib import Path
 import sys
 import os
-import time
 sys.path.append(str(Path(__file__).absolute().parents[4]))
 import WP5.KU.SharedResources.get_incrementer as incrementer
 from WP5.KU.Algorithms.frame_analyser import FrameAnalyser
@@ -47,32 +45,95 @@ class GetFlow(FrameAnalyser):
         self.load_settings(str(Path(__file__).absolute().parents[0]), 'settings')
         self.scale_height = 384  # TO SCALE THE INPUT IMAGE IF IT IS TOO LARGE FOR FLOWNET
         self.scale_width = 512
-        self.save_image = np.zeros((self.scale_width, self.scale_height * 3, 3), dtype=np.uint8)
+        self.save_image = np.zeros((self.scale_width, self.scale_height * 2, 3), dtype=np.uint8)
 
         # EVALUATION
         self.counter = 0
         self.iterator = 0
-        self.save_on_count = 3200
+        self.save_on_count = 2000
 
-    def process_frame(self, frame, camera_id, rois, debug=False):  # rois: region of interests
-
+    def process_frame(self, frame, camera_id, rois,  debug=False):  # rois: region of interests
         # CHECK WHETHER THIS IS THE FIRST FRAME OF THIS CAMERA ID
         if camera_id not in self.previous_frames_dictionary:
             self.previous_frames_dictionary[camera_id] = cv2.resize(frame, (self.scale_height, self.scale_width))
-        else:
-            # USES ONLY THE REGION OF INTEREST DEFINED IN THE SETTINGS
+            self.previous_frames_timestamp[camera_id] = arrow.utcnow()
+            message = self.create_obs_message([], [], arrow.utcnow())
+            return message, None
+        # DEBUG OPTIONS
+        if debug:
+            self.process_interval = 0
+            self.save_on_count = 0
+
+        # USES ONLY THE REGION OF INTEREST DEFINED IN THE SETTINGS
+        time_1 = self.previous_frames_timestamp[camera_id]
+        time_2 = arrow.utcnow()
+        if (time_2 - time_1).seconds >= self.process_interval:
             frame2 = cv2.resize(frame, (self.scale_height, self.scale_width))
 
-            self.save_image[:,0:self.scale_height, :] = self.previous_frames_dictionary[camera_id]
-            self.save_image[:, self.scale_height:(self.scale_height*2), :] = frame2
-            self.save_image[:, (self.scale_height*2):, :] = frame2
-            cv2.imwrite(os.path.join(os.path.dirname(__file__), incrementer.get_incrementer(self.counter, 7)),
-                        self.save_image)
+            height, width = frame.shape[:2]
+
+            ims = np.array([[self.previous_frames_dictionary[camera_id], frame2]]).transpose((0, 4, 1, 2, 3)).astype(np.float32)
+            ims = torch.from_numpy(ims)
+            ims_v = Variable(ims.cuda(), requires_grad=False)
+
+            flownet_2 = self.model
+            flow_uv = flownet_2(ims_v).cpu().data
+            flow_uv = flow_uv[0].numpy().transpose((1, 2, 0))
+
+            # CONVERT BACK TO ORIGINAL SCALE
+            flow_uv = cv2.resize(flow_uv, (width, height))
+
+            ave_flow_mag = []
+            ave_flow_dir = []
+            for i in range(len(rois)):
+                roi_current = rois[i]
+                flow_uv_current = flow_uv[roi_current[1]:roi_current[3], roi_current[0]:roi_current[2], :]
+
+                mean_u = flow_uv_current[:, :, 0].mean()
+                mean_v = flow_uv_current[:, :, 1].mean()
+
+                mag = math.sqrt(math.pow(mean_u, 2) + math.pow(mean_v, 2))
+
+                if mean_v < 0:
+                    uv_angle = 360 + math.degrees(math.atan2(mean_v, mean_u))
+                else:
+                    uv_angle = math.degrees(math.atan2(mean_v, mean_u))
+                direction = uv_angle / 360
+
+                ave_flow_mag.append(mag)
+                ave_flow_dir.append(direction)
+
+            # CREATE THE MESSAGE
+            self.cam_id = camera_id
+            message = self.create_obs_message(ave_flow_mag, ave_flow_dir, arrow.utcnow())
+
+            flow_image = None
+            if self.iterator >= self.save_on_count:
+                # VISUALIZE THE OPTICAL FLOW AND SAVE IT
+                flow_image = flow_to_image(flow_uv)
+                save_name = incrementer.get_incrementer(self.counter, 7) + '_' + self.cam_id
+
+                self.save_image[:, 0:self.scale_height, :] = self.previous_frames_dictionary[camera_id]
+                self.save_image[:, self.scale_height:(self.scale_height * 2), :] = frame2
+                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame2.jpeg'), self.save_image)
+                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_flow.jpeg'), flow_image)
+                try:
+                    reg_file = open(os.path.join(os.path.dirname(__file__), save_name + '.txt'), 'w')
+                except IOError:
+                    print('IoError')
+                else:
+                    reg_file.write(message)
+                    reg_file.close()
+                self.iterator = 0
+                self.counter = self.counter + 1
+            else:
+                self.iterator = self.iterator + 1
 
             self.previous_frames_dictionary[camera_id] = frame2
-            self.counter = self.counter + 1
-
-        return None, None
+            self.previous_frames_timestamp[camera_id] = time_2
+            return message, flow_image
+        else:
+            return None, None
 
     def create_obs_message(self, average_flow_mag, average_flow_dir, timestamp):
         """ Function to create the JSON payload containing the observation. Follows the content as defined on the WP5

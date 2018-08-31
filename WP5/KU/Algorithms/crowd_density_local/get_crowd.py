@@ -128,7 +128,7 @@ class GetCrowd(FrameAnalyser):
             # CONVERT TO IMAGE THAT CAN BE DISPLAYED
             density_map = 255 * density_map / (np.max(density_map) + np.finfo(float).eps)
             if self.iterator >= self.save_on_count:
-                save_name = incrementer.get_incrementer(self.counter, 7) + '_' + self.cam_id + '_' + self.module_id
+                save_name = incrementer.get_incrementer(self.counter, 7) + '_' + self.cam_id
                 cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame.jpeg'),
                             cv2.resize(frame, (0, 0), fx=self.scale, fy=self.scale))
                 cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_density.jpeg'), density_map)

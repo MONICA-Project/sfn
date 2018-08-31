@@ -209,3 +209,4 @@ class GetFlow(FrameAnalyser):
             else:
                 print('RUNNING WITHOUT CUDA SUPPORT')
             self.model = flownet2
+
