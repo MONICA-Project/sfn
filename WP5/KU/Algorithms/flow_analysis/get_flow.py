@@ -122,7 +122,8 @@ class GetFlow(FrameAnalyser):
                             cv2.resize(frame1, (0, 0), fx=self.scale, fy=self.scale))
                 cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame2.jpeg'),
                             cv2.resize(frame2, (0, 0), fx=self.scale, fy=self.scale))
-                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_flow.jpeg'), flow_image)
+                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_flow.jpeg'),
+                            cv2.resize(flow_image, (0, 0), fx=self.scale, fy=self.scale))
                 try:
                     reg_file = open(os.path.join(os.path.dirname(__file__), save_name + '.txt'), 'w')
                 except IOError:

@@ -131,7 +131,8 @@ class GetCrowd(FrameAnalyser):
                 save_name = incrementer.get_incrementer(self.counter, 7) + '_' + self.cam_id
                 cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame.jpeg'),
                             cv2.resize(frame, (0, 0), fx=self.scale, fy=self.scale))
-                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_density.jpeg'), density_map)
+                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_density.jpeg'),
+                            cv2.resize(density_map, (0, 0), fx=self.scale, fy=self.scale))
                 try:
                     reg_file = open(os.path.join(os.path.dirname(__file__), save_name + '.txt'), 'w')
                 except IOError:
