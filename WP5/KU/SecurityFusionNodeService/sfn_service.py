@@ -112,7 +112,7 @@ def add_message():
                 cam_id = message['camera_ids'][0]
                 text, resp_code = object_detection(sfn_module, cam_id, sfn_module.urls['object_detection_url'], message)
             elif wp_module == 'action_recognition':
-                cam_id = message['tag_id']
+                cam_id = message['camera_ids'][0]
                 text, resp_code = action_recognition(sfn_module, cam_id, sfn_module.urls['action_recognition_url'], message)
             # print('Function has taken: {}s'.format(time.time() - start))
             log_text = log_text + text
@@ -196,7 +196,7 @@ def update_configs():
 def hello_linksmart():
     print('REQUEST: HELLO SCRAL')
     try:
-        resp = requests.get(sfn_module.urls['scral_url'] + 'scral/sfn')
+        resp = requests.get(sfn_module.urls['scral_url'] + 'sfn')
     except requests.exceptions.RequestException as e:
         print(e)
         return 'SCRAL Connection Failed: ' + str(e), 502

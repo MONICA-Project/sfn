@@ -1,0 +1,1 @@
+{"type_module": "object_detection", "frame_byte_array": "", "frame_dims": [1440, 2560], "results": [{"bounding_box": {"x2": "1344", "y1": "2", "confidence": "0.902427732944", "x1": "1261", "y2": "66"}, "cls": "car"}], "timestamp": "2017-08-03T17:56:32.372Z", "module_id": "object_detection_1", "camera_ids": ["TIVOLI_25"]}

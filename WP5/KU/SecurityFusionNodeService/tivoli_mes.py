@@ -44,8 +44,8 @@ if __name__ == '__main__':
         [os.path.join(dataset_folder), 'SAMPLE_fight_detection'],
         [os.path.join(dataset_folder), 'SAMPLE_crowd_density_local'],
         [os.path.join(dataset_folder), 'SAMPLE_flow'],
-        # [os.path.join(dataset_folder), 'SAMPLE_action_recognition'],
-        # [os.path.join(dataset_folder), 'SAMPLE_object_detection'],
+        [os.path.join(dataset_folder), 'SAMPLE_action_recognition'],
+        [os.path.join(dataset_folder), 'SAMPLE_object_detection'],
     ]
     num_algorithms = len(message_locations)
     time_interval = (algorithm_process_time * num_cameras) / (num_algorithms * num_cameras)
@@ -99,6 +99,8 @@ else:
                 elif mess['type_module'] == 'flow':
                     mess['timestamp'] = str(arrow.utcnow())
                 elif mess['type_module'] == 'action_recognition':
+                    mess['timestamp'] = str(arrow.utcnow())
+                elif mess['type_module'] == 'object_detection':
                     mess['timestamp'] = str(arrow.utcnow())
 
                 call_sfn(mess, 1, mess['type_module'])
