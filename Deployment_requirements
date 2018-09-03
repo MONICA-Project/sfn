@@ -30,9 +30,8 @@ DOCKER
 1b Install Docker version sudo apt-get install docker-ce=18.03.1~ce-0~ubuntu
 2. build docker SFN image. sudo docker build -f Dockerfile_sfn -t sfn .
 3. Run the Docker Image. sudo docker run --net="host" -t sfn
-4a Test with sfn_http_request.py. Update the SFN settings.txt to ensure SCRAL address is correct.
-4b Test with sfn_http_request.py. python3 monica/WP5/KU/SecurityFusionNodeService/SecurityFusionNode/sfn_http_request.py
-5. Load test with vca_sfn_simulation.py python3 WP5/KU/SecurityFusionNodeService/SecurityFusionNode/vca_sfn_simulation.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder '<LOCATION OF BONN JSON FILES>'
+4. Test with sfn_message_test.py. python3 WP5/KU/SecurityFusionNodeService/sfn_message_test.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder '<MONICA_DIR>/WP5/KU/Algorithms/algorithm_output/' --looping 'False' --threaded 'False'
+5. Load test with sfn_message_test.py. python3 WP5/KU/SecurityFusionNodeService/sfn_message_test.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder '<MONICA_DIR>/WP5/KU/Algorithms/algorithm_output/' --looping 'True' --threaded 'True'
 
 H. Check connection to local SFN. curl http://0.0.0.0:5000/
 H. List docker images running. sudo docker ps

@@ -26,8 +26,8 @@ parser.add_argument('--sfn_url', default='http://0.0.0.0:5000/', type=str,
                     help='The URL and port the SFN is currently listening on')
 parser.add_argument('--scral_url', default='http://monappdwp3.monica-cloud.eu:8000/', type=str,
                     help='The URL and port the SFN is currently listening on')
-parser.add_argument('--looping', default=True, type=bool, help='Loop the message calls indefinitely.')
-parser.add_argument('--threaded', default=False, type=bool, help='sets up messages as separate threads')
+parser.add_argument('--looping', default='False', type=str, help='Loop the message calls indefinitely.')
+parser.add_argument('--threaded', default='False', type=str, help='sets up messages as separate threads')
 parser.add_argument('--dataset_folder', default='/ocean/robdupre/PYTHON_SCRIPTS/MONICA_repo/WP5/KU/Algorithms/algorithm_output/',
                     type=str, help='Location of RiF JSON Files to send to SFN.')
 
@@ -51,9 +51,15 @@ if __name__ == '__main__':
 
     num_cameras = 1
     algorithm_process_time = 1
-    looping = _args.looping
     dataset_folder = _args.dataset_folder
-    threaded = _args.threaded
+    if _args.looping == 'True':
+        looping = True
+    else:
+        looping = False
+    if _args.threaded == 'True':
+        threaded = True
+    else:
+        threaded = False
     sfn_urls = {'scral_url': scral_url}
 
     message_locations = [
