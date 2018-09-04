@@ -47,7 +47,10 @@ H. For Error: 'No module named _tkinter'. sudo apt-get install python3-tk
 RUNNING KU DEPLOYMENT TOOL
 1. Install Requirements (don't upgrade pip3 to v10). sudo pip3 install -r /<MONICA DIR>/WP5/KU/KUConfigTool/requirements.txt
 2. From the root of the project git test the app. python3 WP5/KU/KUConfigTool/camera_config.py --seq_location '/<FULL MONICA DIR> /monica/WP5/KU/Algorithms/sample_sequence/'
-3. Run the Config tool on a camera. python3 WP5/KU/KUConfigTool/camera_config.py --rtsp rtsp://admin:password@10.133.223.178:554/Streaming/Channels/103/'
+3. Run the Config tool on a camera. python3 WP5/KU/KUConfigTool/camera_config.py --rtsp 'rtsp://root:pass@10.144.129.107/axis-media/media.amp'
+4. Add all created configs to git in one add. git add WP5/KU/KUConfigTool/cam_configs/<PILOT_NAME>_*
+5. Commit the files. git commit
+6. Push them to the Repo. git push
 H. For Error: 'No module named _tkinter'. sudo apt-get install python3-tk
 H. Run the Config Tool on a Screenshot. python3 WP5/KU/KUConfigTool/camera_config.py --x_size '704' --y_size '576' --seq_location '/home/monica/monica_repo/monica/WP5/KU/KUConfigTool/175'
 H. Install VLC Media Player. sudo apt-get install vlc

@@ -265,11 +265,10 @@ class SecurityFusionNode:
         return message
 
     def dump_amalgamation_data(self):
-        messages = self.query_db(None)
+        messages = self.query_db(None, None, 'crowd_density_global')
         for message in messages:
-            msg = json.loads(message.msg)
             try:
-                reg_file = open(os.path.join(os.path.dirname(__file__), message.cam_id + '_' +  message.module_id + '_' + message.id), 'w')
+                reg_file = open(os.path.join(os.path.dirname(__file__), message.module_id + '_' + message.id), 'w')
             except IOError:
                 print('IoError')
             else:
@@ -303,8 +302,6 @@ class SecurityFusionNode:
                 'camera_ids': camera_ids,
                 'density_count': int(count),
                 'density_map': heat_map.tolist(),
-                'frame_byte_array': '',
-                'image_dims': '',
                 'ground_plane_position': ground_plane_pos,
                 'timestamp_1': timestamp_oldest,
                 'timestamp_2': timestamp_newest,

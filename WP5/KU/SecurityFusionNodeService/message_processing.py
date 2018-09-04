@@ -219,15 +219,16 @@ def amalgamate_crowd_density_local(sfn_instance, url):
                                                              amalgamation_ground_plane_position)
 
         log_text = log_text + 'crowd_density_global MESSAGE CREATED. '
-        # sfn_module.debug = True
-        if sfn_module.debug:
-            sfn_module.dump_amalgamation_data()
-            log_text = log_text + 'DEBUGGING IS ENABLES SO A DATABASE DUMP HAS BEEN DONE. '
 
         # SEND crowd_density_global MESSAGE TO LINKSMART
         log_text = log_text + sfn_instance.insert_db('GLOBAL', 'crowd_density_global', json.dumps(crowd_density_global))
         text, resp_code = forward_message(crowd_density_global, url)
         log_text = log_text + text
+
+        # sfn_module.debug = True
+        if sfn_module.debug:
+            sfn_module.dump_amalgamation_data()
+            log_text = log_text + 'DEBUGGING IS ENABLES SO A DATABASE DUMP HAS BEEN DONE. '
 
     else:
         print('ERROR: NOT EQUAL CAM MESSAGES AND CONFIGS. ')

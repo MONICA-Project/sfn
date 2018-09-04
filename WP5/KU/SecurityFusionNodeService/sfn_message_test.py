@@ -60,6 +60,8 @@ if __name__ == '__main__':
         threaded = True
     else:
         threaded = False
+
+    looping = True
     sfn_urls = {'scral_url': scral_url}
 
     message_locations = [
@@ -75,7 +77,9 @@ if __name__ == '__main__':
     print('Messages will be sent every {} seconds'.format(time_interval))
 
     configs = [
-        tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'CAMERA_KU'),
+        tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_25'),
+        tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_27'),
+        tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'TIVOLI_31'),
     ]
 
     # CHECK CONNECTION WITH SFN
@@ -103,6 +107,15 @@ if __name__ == '__main__':
         print('WOO THERE, Something went wrong, error:' + str(e))
     else:
         print(resp.text, resp.status_code)
+
+    # SWITCH SFN TO DEBUGGING MODE
+    # print('SWITCH SFN TO DEBUGGING MODE')
+    # try:
+    #     resp = requests.get(url + 'debug')
+    # except requests.exceptions.RequestException as e:
+    #     print('WOO THERE, Something went wrong, error:' + str(e))
+    # else:
+    #     print(resp.text, resp.status_code)
 
     # HELLO SCRAL VIA SFN
     print('CHECKING SFN CAN SEE SCRAL')
