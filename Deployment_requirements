@@ -1,6 +1,7 @@
 DRIVERS
 1. Nvidia Driver. (should be already installed by supplier, https://youtu.be/TvH6CEDs-uI, check with nvidia-smi)
 2. Nvidia CUDA & CuDNN. Follow https://medium.com/@zhanwenchen/install-cuda-and-cudnn-for-tensorflow-gpu-on-ubuntu-79306e4ac04e
+H. Detailed Descriptions of the above two at bottom
 
 MONICA VPN
 1. Connect to Monica VPN. sudo apt-get install network-manager-openconnect network-manager-openconnect-gnome
@@ -62,3 +63,51 @@ H. See status of VCA Core service. systemctl status vca-core
 
 UTILITIES
 1. Fix permissions. sudo chmod -R a+rwx /<MONICA DIR>/
+
+
+DRIVERS & CUDA
+CHECK GRAPHICS CARD AND COMPILERS
+lspci | grep -i nvidia
+uname -m && cat /etc/*release
+gcc --version
+sudo apt-get install linux-headers-$(uname -r)
+
+DOWNLOAD CUDA FILES
+wget https://developer.nvidia.com/compute/cuda/9.0/Prod/local_installers/cuda_9.0.176_384.81_linux-run
+sudo chmod +x /home/<USER>/cuda_9.0.176_384.81_linux-run
+
+TURN OFF nouveau DRIVERS
+lsmod | grep nouveau
+sudo nano /etc/modprobe.d/blacklist-nouveau.conf
+
+blacklist nouveau
+options nouveau modeset=0
+
+sudo update-initramfs -u
+
+REBOOT
+
+INSTALL CUDA
+sudo sh cuda_9.0.176_384.81_linux-run
+DON'T INSTALL DRIVER
+
+INSTALL ppa REPO
+sudo add-apt-repository ppa:graphics-drivers/ppa
+sudo apt-get update
+
+Open SOFTWARE AND UPDATES AND INSTALL NVIDIA DRIVERS THROUGH GUI
+
+REBOOT
+sudo bash -c "echo /usr/local/cuda/lib64/ > /etc/ld.so.conf.d/cuda.conf"
+sudo ldconfig
+
+sudo nano /etc/environment
+ADD TO END: :/usr/local/cuda/bin
+
+REBOOT
+
+cd /usr/local/cuda-9.0/samples
+sudo make
+
+cd /usr/local/cuda/samples/bin/x86_64/linux/release
+./deviceQuery
