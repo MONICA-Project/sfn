@@ -22,11 +22,12 @@ scral_url = 'http://monappdwp3.monica-cloud.eu:8000/'
 # scral_url = 'http://0.0.0.0:3389/'
 
 sfn_urls = {'scral_url': scral_url,
-            'crowd_density_url': scral_url + 'sfn/crowd_monitoring',
-            'flow_analysis_url': scral_url + 'sfn/flow_analysis',
-            'object_detection_url': scral_url + 'sfn/object_detection',
-            'fighting_detection_url': scral_url + 'sfn/fight_detection',
-            'action_recognition_url': scral_url + 'sfn/action_recognition',
+            'crowd_density_url': scral_url + 'sfn/camera',
+            'crowd_density_global_url': scral_url + 'sfn/crowd_density_global',
+            'flow_analysis_url': scral_url + 'sfn/camera',
+            'object_detection_url': scral_url + 'sfn/camera',
+            'fighting_detection_url': scral_url + 'sfn/camera',
+            'action_recognition_url': scral_url + 'sfn/camera',
             'camera_reg_url': scral_url + 'sfn/camera',
             }
 
@@ -35,11 +36,6 @@ configs = [
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'LEEDS_2'),
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'LEEDS_3'),
     tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'LEEDS_4'),
-    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/crowd_density_local/'), '435ae19f-0eab-5561-b11a-9ead485180d6_crowd_density_local_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/flow_analysis/'), '0a26d0fa-b6b6-5d1c-9d46-51676d64daa7_flow_reg', False),
-    # tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6506F977-6868-4E78-B02D-8C516B8469F3_object_detection_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '6789pwrl123dc_fighting_detection_reg', False),
-    tools.load_settings(os.path.join(KU_DIR, 'Algorithms/registration_messages/'), '1234sdfv234jk_action_recognition_reg', False),
 ]
 
 # HELLO WORLD
