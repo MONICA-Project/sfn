@@ -178,7 +178,7 @@ class GetFlow(FrameAnalyser):
         else:
             reg_file.write(message)
             print('{} module reg message saved to: {}'.format(
-                self.module_type, os.path.join(os.path.dirname(__file__), self.module_id + '_reg.txt')))
+                self.type_module, os.path.join(os.path.dirname(__file__), self.module_id + '_reg.txt')))
             reg_file.close()
         return message
 
