@@ -85,6 +85,7 @@ else:
             for mess_type in message_locations:
                 mess = tools.load_json_txt(mess_type[0], mess_type[1])
                 cam_conf = configs[cam]
+                print(mess['type_module'])
                 mess['camera_ids'][0] = cam_conf['camera_id']
 
                 # ADD IF STATEMENTS FOR EACH MODULE TYPE
