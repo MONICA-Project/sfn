@@ -43,6 +43,7 @@ class ConfigTools:
         self.ref_pt = [[50, 50], [300, 50], [50, 300], [300, 300], [100, 100]]
         self.ground_plane_position = [0, 0]
         self.ground_plane_orientation = 0
+        self.gate_orientation = 0
         self.transform = None
         # PAGE FOUR
         # [Xo, Yo, X1, Y1]
@@ -152,6 +153,7 @@ class ConfigTools:
                         'camera_tilt': self.camera_tilt,
                         'ground_plane_position': self.ground_plane_position,
                         'ground_plane_orientation': self.ground_plane_orientation,
+                        'gate_orientation': self.gate_orientation,
                         'image_2_ground_plane_matrix': self.transform,
                         'zone_id': self.zone_id,
                         'module_types': self.module_types,
@@ -237,6 +239,8 @@ class ConfigTools:
             if 'ground_plane_position' in entry:
                 self.ground_plane_position = entry['ground_plane_position']
             self.ground_plane_orientation = entry['ground_plane_orientation']
+            if 'gate_orientation' in entry:
+                self.gate_orientation = entry['gate_orientation']
             if 'heat_map_transform' in entry:
                 self.transform = entry['heat_map_transform']
             if 'image_2_ground_plane_matrix' in entry:

@@ -113,8 +113,10 @@ class ConfigApp(Tk):
             self.frames["CrowdMask"].mask = self.config_tools.crowd_mask
             self.frames["CrowdMask"].draw_rect()
 
+            self.frames["GroundPlane"].e2.delete(0, END)
+            self.frames["GroundPlane"].e2.insert(10, self.config_tools.ground_plane_orientation)
             self.frames["GroundPlane"].e3.delete(0, END)
-            self.frames["GroundPlane"].e3.insert(10, self.config_tools.ground_plane_orientation)
+            self.frames["GroundPlane"].e3.insert(10, self.config_tools.gate_orientation)
             self.frames["GroundPlane"].ref_pt = [
                 [int((self.config_tools.ref_pt[0][0] / 1.25) * self.ratio), int((self.config_tools.ref_pt[0][1] / 1.25) * self.ratio)],
                 [int((self.config_tools.ref_pt[1][0] / 1.25) * self.ratio), int((self.config_tools.ref_pt[1][1] / 1.25) * self.ratio)],

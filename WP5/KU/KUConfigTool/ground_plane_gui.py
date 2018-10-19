@@ -39,14 +39,18 @@ class GroundPlane(Frame):
 
         # CREATE LABELS FOR ENTRY BOXES
         Label(self, text="Ground Plane Points").grid(row=1, column=0, sticky=E)
-        Label(self, text="Compass Orientation (degrees)").grid(row=2, column=0, sticky=E)
+        Label(self, text="Ground Plane Orientation (degrees)").grid(row=2, column=0, sticky=E)
+        Label(self, text="Gate Orientation (degrees)").grid(row=3, column=0, sticky=E)
 
         # ADD ENTRIES FOR THE VARIOUS TEXT BOXES AND LABELS FOR DESCRIPTIONS
         self.l1 = Label(self, text="NONE")
         self.l1.grid(row=1, column=1, columnspan=2)
+        self.e2 = Entry(self, justify='center')
+        self.e2.insert(10, "174")
+        self.e2.grid(row=2, column=1)
         self.e3 = Entry(self, justify='center')
-        self.e3.insert(10, "174")
-        self.e3.grid(row=2, column=1)
+        self.e3.insert(10, "180")
+        self.e3.grid(row=3, column=1)
 
         b1 = Button(self, text='Quit', command=parent.quit)
         b1.grid(row=4, column=0, sticky=W, pady=4)
@@ -89,7 +93,8 @@ class GroundPlane(Frame):
              [int((self.ref_pt[3][0] * 1.25) / ratio), int((self.ref_pt[3][1] * 1.25) / ratio)],
              [int((self.ref_pt[4][0] * 1.25) / ratio), int((self.ref_pt[4][1] * 1.25) / ratio)]]
         self.controller.config_tools.ref_pt = t
-        self.controller.config_tools.ground_plane_orientation = int(self.e3.get())
+        self.controller.config_tools.ground_plane_orientation = int(self.e2.get())
+        self.controller.config_tools.gate_orientation = int(self.e3.get())
 
     def draw_image(self):
         # DELETE EVERYTHING OFF THE CANVAS
