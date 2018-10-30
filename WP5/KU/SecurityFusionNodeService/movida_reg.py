@@ -1,4 +1,4 @@
-# movida_reg.py
+# movida_reg.py.py
 """A script designed to update the registration messages for a set location"""
 import json
 import requests
