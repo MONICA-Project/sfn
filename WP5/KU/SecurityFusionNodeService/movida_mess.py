@@ -53,9 +53,9 @@ if __name__ == '__main__':
     print('Messages will be sent every {} seconds'.format(time_interval))
 
     configs = [
-        tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'MOVIDA_1'),
-        tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'MOVIDA_2'),
-        tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'MOVIDA_3'),
+        tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'MOVIDA_124'),
+        tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'MOVIDA_125'),
+        tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'MOVIDA_126'),
     ]
 
 

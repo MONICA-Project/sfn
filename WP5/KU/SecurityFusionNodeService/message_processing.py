@@ -4,11 +4,11 @@ import json
 import requests
 import time
 
-__version__ = '0.2'
+__version__ = '0.3'
 __author__ = 'RoViT (KU)'
 
 
-def crowd_density_local(sfn_instance, camera_id, url, message, j_id=0):
+def crowd_density_local(sfn_instance, camera_id, url, message):
     """ Message process function to be used when messages of type crowd_density_local are sent to the sfn_service.
         Convert to top down, save in db and forward on message
         Keyword arguments:
@@ -22,7 +22,6 @@ def crowd_density_local(sfn_instance, camera_id, url, message, j_id=0):
             resp_code --        A code which can be used in the SFN_Service response
         """
     log_text = ''
-    resp_code = 0
     # start = time.time()
     # REMOVE THE FRAME AND IMAGE SIZE AS ITS NOT NEEDED
     message['frame_byte_array'] = ''
@@ -37,7 +36,7 @@ def crowd_density_local(sfn_instance, camera_id, url, message, j_id=0):
     return log_text, resp_code
 
 
-def flow_analysis(sfn_instance, camera_id, url, message, j_id=0):
+def flow_analysis(sfn_instance, camera_id, url, message):
     """ Message process function to be used when messages of type flow_analysis are sent to the sfn_service
         Keyword arguments:
             sfn_instance --     The instance of the SFN module, handling all database interactions
@@ -50,7 +49,6 @@ def flow_analysis(sfn_instance, camera_id, url, message, j_id=0):
             resp_code --        A code which can be used in the SFN_Service response
         """
     log_text = ''
-    resp_code = 0
     # start = time.time()
     # FORWARD THE NEW MESSAGE
 
@@ -71,7 +69,7 @@ def flow_analysis(sfn_instance, camera_id, url, message, j_id=0):
     return log_text, resp_code
 
 
-def fighting_detection(sfn_instance, camera_id, url, message, j_id=0):
+def fighting_detection(sfn_instance, camera_id, url, message):
     """ Message process function to be used when messages of type fighting_detection are sent to the sfn_service
         Keyword arguments:
             sfn_instance --     The instance of the SFN module, handling all database interactions
@@ -84,7 +82,6 @@ def fighting_detection(sfn_instance, camera_id, url, message, j_id=0):
             resp_code --        A code which can be used in the SFN_Service response
         """
     log_text = ''
-    resp_code = 0
     # start = time.time()
     # FORWARD THE NEW MESSAGE
     text, resp_code = forward_message(json.dumps(message), url)
@@ -99,7 +96,7 @@ def fighting_detection(sfn_instance, camera_id, url, message, j_id=0):
     return log_text, resp_code
 
 
-def object_detection(sfn_instance, camera_id, url, message, j_id=0):
+def object_detection(sfn_instance, camera_id, url, message):
     """ Message process function to be used when messages of type object_detection are sent to the sfn_service
         Keyword arguments:
             sfn_instance --     The instance of the SFN module, handling all database interactions
@@ -112,7 +109,6 @@ def object_detection(sfn_instance, camera_id, url, message, j_id=0):
             resp_code --        A code which can be used in the SFN_Service response
         """
     log_text = ''
-    resp_code = 0
     # start = time.time()
     # FORWARD THE NEW MESSAGE
     text, resp_code = forward_message(json.dumps(message), url)
@@ -126,7 +122,7 @@ def object_detection(sfn_instance, camera_id, url, message, j_id=0):
     return log_text, resp_code
 
 
-def action_recognition(sfn_instance, camera_id, url, message, j_id=0):
+def action_recognition(sfn_instance, camera_id, url, message):
     """ Message process function to be used when messages of type action_recognition are sent to the sfn_service
         Keyword arguments:
             sfn_instance --     The instance of the SFN module, handling all database interactions
@@ -139,7 +135,6 @@ def action_recognition(sfn_instance, camera_id, url, message, j_id=0):
             resp_code --        A code which can be used in the SFN_Service response
         """
     log_text = ''
-    resp_code = 0
     # start = time.time()
     # FORWARD THE NEW MESSAGE
     text, resp_code = forward_message(json.dumps(message), url)
