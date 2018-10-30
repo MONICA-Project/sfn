@@ -41,7 +41,10 @@ class ImageSequenceStreamer:
         # GET THE FRAME SIZE FROM THE FIRST IMAGE IF NOT SPECIFIED
         if frame_size[0] is None:
             temp_image = cv2.imread(self.file_list[self.image_count])
-            self.size = (temp_image.shape[0], temp_image.shape[1])
+            if temp_image.shape[0] > temp_image.shape[1]:
+                self.size = (temp_image.shape[0], temp_image.shape[1])
+            else:
+                self.size = (temp_image.shape[1], temp_image.shape[0])
         else:
             self.size = (frame_size[0], frame_size[1])
 
