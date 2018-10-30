@@ -43,7 +43,6 @@ if __name__ == '__main__':
     message_locations = [
         [os.path.join(dataset_folder), 'SAMPLE_fight_detection'],
         [os.path.join(dataset_folder), 'SAMPLE_crowd_density_local'],
-        [os.path.join(dataset_folder), 'SAMPLE_crowd_density_global'],
         [os.path.join(dataset_folder), 'SAMPLE_flow'],
         [os.path.join(dataset_folder), 'SAMPLE_action_recognition'],
         [os.path.join(dataset_folder), 'SAMPLE_object_detection'],
