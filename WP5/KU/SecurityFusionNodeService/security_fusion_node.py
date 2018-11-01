@@ -302,7 +302,7 @@ class SecurityFusionNode:
                 'type_module': self.module_type,
                 'camera_ids': camera_ids,
                 'density_count': int(count),
-                'density_map': heat_map,
+                'density_map': heat_map.tolist(),
                 'ground_plane_position': ground_plane_pos,
                 'timestamp_1': timestamp_oldest,
                 'timestamp_2': timestamp_newest,
@@ -394,12 +394,12 @@ class SecurityFusionNode:
         #             cv2.resize(img_amalgamation * 255, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
 
         # CREATE SPARSE REPRESENTATION
-        img_amalgamation = csr_matrix(img_amalgamation)
-        img_amalgamation = {'data': img_amalgamation.data.tolist(),
-                            'inds': img_amalgamation.indices.tolist(),
-                            'indptr': img_amalgamation.indptr.tolist(),
-                            'shape': img_amalgamation.get_shape(),
-                            }
+        # img_amalgamation = csr_matrix(img_amalgamation)
+        # img_amalgamation = {'data': img_amalgamation.data.tolist(),
+        #                     'inds': img_amalgamation.indices.tolist(),
+        #                     'indptr': img_amalgamation.indptr.tolist(),
+        #                     'shape': img_amalgamation.get_shape(),
+        #                     }
 
         # dense = csr_matrix((img_amalgamation['data'], img_amalgamation['inds'], img_amalgamation['indptr']),
         #                    shape=img_amalgamation['shape']).todense()
