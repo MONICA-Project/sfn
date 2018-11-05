@@ -253,6 +253,10 @@ class SecurityFusionNode:
                 'state': self.state,
         }
         message = json.dumps(data)
+        # print('type_module: {}\nmodule_id: {} \nstate: {} \ntimestamp: {}'.format(data['type_module'],
+        #                                                                           data['module_id'],
+        #                                                                           data['state'], data['timestamp']))
+        print(message)
         try:
             reg_file = open(os.path.join(os.path.dirname(__file__), self.module_id + '_reg.txt'), 'w')
         except IOError:
