@@ -18,7 +18,7 @@ print(KU_DIR)
 
 url = 'http://0.0.0.0:5000/'
 # url = 'http://MPCLSGESFN01.monica-cloud.eu:5000/'
-scral_url = 'http://monappdwp3.monica-cloud.eu:8093/'
+scral_url = 'http://monappdwp3.monica-cloud.eu:8000/'
 # scral_url = 'http://0.0.0.0:3389/'
 
 sfn_urls = {'scral_url': scral_url,
