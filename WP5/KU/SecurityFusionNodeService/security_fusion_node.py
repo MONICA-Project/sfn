@@ -302,7 +302,8 @@ class SecurityFusionNode:
                 'type_module': self.module_type,
                 'camera_ids': camera_ids,
                 'density_count': int(count),
-                'density_map': heat_map.tolist(),
+                'density_map': heat_map,
+                # 'density_map': heat_map.tolist(),
                 'ground_plane_position': ground_plane_pos,
                 'timestamp_1': timestamp_oldest,
                 'timestamp_2': timestamp_newest,
@@ -381,12 +382,14 @@ class SecurityFusionNode:
 
         # Generate the amalgamated image
         img_amalgamation = np.zeros(shape=(amalgamation_w, amalgamation_h))
+        img_amalgamation_mask = np.zeros(shape=(amalgamation_w, amalgamation_h))
 
         for i in range(len(all_rotated_images)):
             dis_x = int(convert_to_meter(x[i], 0, amalgamation_latitude, 0))
             dis_y = int(convert_to_meter(0, y[i], 0, amalgamation_longitude))
             img_amalgamation[dis_x:(dis_x + w[i]), dis_y:(dis_y + h[i])] = all_rotated_images[i] + \
                 img_amalgamation[dis_x:(dis_x + w[i]), dis_y:(dis_y + h[i])] * (all_rotated_images[i] == 0)
+            img_amalgamation_mask[dis_x:(dis_x + w[i]), dis_y:(dis_y + h[i])] = 1
 
         # cv2.imshow('img_amalgamation', cv2.resize(img_amalgamation, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
         # cv2.waitKey(0)
@@ -394,15 +397,26 @@ class SecurityFusionNode:
         #             cv2.resize(img_amalgamation * 255, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
 
         # CREATE SPARSE REPRESENTATION
-        # img_amalgamation = csr_matrix(img_amalgamation)
-        # img_amalgamation = {'data': img_amalgamation.data.tolist(),
-        #                     'inds': img_amalgamation.indices.tolist(),
-        #                     'indptr': img_amalgamation.indptr.tolist(),
-        #                     'shape': img_amalgamation.get_shape(),
-        #                     }
-
+        img_amalgamation = csr_matrix(img_amalgamation)
+        img_amalgamation = {'data': img_amalgamation.data.tolist(),
+                            'inds': img_amalgamation.indices.tolist(),
+                            'indptr': img_amalgamation.indptr.tolist(),
+                            'shape': img_amalgamation.get_shape(),
+                            'mask': []
+                            }
+        img_amalgamation_mask = csr_matrix(img_amalgamation_mask)
+        img_amalgamation['mask'] = {'data': img_amalgamation_mask.data.tolist(),
+                                    'inds': img_amalgamation_mask.indices.tolist(),
+                                    'indptr': img_amalgamation_mask.indptr.tolist(),
+                                    'shape': img_amalgamation_mask.get_shape(),
+                                    }
+        # RECONSTRUCT DENSITY MAP AND THE MASK, SHIFT MASK BY -1 TO HIGHLIGHT AREAS WITHOUT OBSERVATION
         # dense = csr_matrix((img_amalgamation['data'], img_amalgamation['inds'], img_amalgamation['indptr']),
         #                    shape=img_amalgamation['shape']).todense()
+        # mask = img_amalgamation['mask']
+        # mask = csr_matrix((mask['data'], mask['inds'], mask['indptr']), shape=mask['shape']).todense() - 1
+        # ADD THE TWO MAPS TOGETHER TO GIVE THE FINAL DENSITY MAP WITH THE NON OBSERVABLE AREAS HIGHLIGHTED
+        # denisty_map = np.array(mask + dense)
 
         # GET THE LAT LONG FOR THE BOTTOM LEFT CORNER OF THE DENSITY MAP
         amalgamation_ground_plane_position = [amalgamation_latitude, amalgamation_longitude]
