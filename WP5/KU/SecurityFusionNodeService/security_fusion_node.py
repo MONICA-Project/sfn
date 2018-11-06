@@ -55,7 +55,8 @@ class Logs(log_base):
 class SecurityFusionNode:
 
     def __init__(self, module_id):
-        self.module_id = module_id + '_crowd_density_global'
+        # self.module_id = module_id + '_crowd_density_global'
+        self.module_id = module_id
         self.module_type = 'crowd_density_global'
         self.last_amalgamation = time.time()
         self.timer = 0
