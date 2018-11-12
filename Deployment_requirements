@@ -18,7 +18,7 @@ GIT
 MYSQL (TODO: THIS SHOULD BE MORE SECURE)
 1. Install mysql, with username root and password root. https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-16-04
 2. Start the service and ensure it starts on boot
-3. Run DB initialisation. mysql -u root -p < monica/WP5/KU/SecurityFusionNodeService/SecurityFusionNode/mysql_setup_db.sql
+3. Run DB initialisation. mysql -u root -p < monica/WP5/KU/SecurityFusionNodeService/mysql_setup_db.sql
 H. Log into mysql bash. sudo mysql -u root -p
 H. Check DBs have been created (after logging into mysql). SHOW DATABASES;
 
@@ -29,10 +29,11 @@ SCRAL CHECK
 DOCKER
 1a Install Docker CE. Follow https://docs.docker.com/install/linux/docker-ce/ubuntu/
 1b Install Docker version sudo apt-get install docker-ce=18.03.1~ce-0~ubuntu
-2. build docker SFN image. sudo docker build -f Dockerfile_sfn -t sfn .
-3. Run the Docker Image. sudo docker run --net="host" -t sfn
-4. Test with sfn_message_test.py. python3 WP5/KU/SecurityFusionNodeService/sfn_message_test.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder '<MONICA_DIR>/WP5/KU/Algorithms/algorithm_output/' --looping 'False' --threaded 'False'
-5. Load test with sfn_message_test.py. python3 WP5/KU/SecurityFusionNodeService/sfn_message_test.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder '<MONICA_DIR>/WP5/KU/Algorithms/algorithm_output/' --looping 'True' --threaded 'True'
+2. Move to the MONICA dir. cd monica
+3. build docker SFN image. sudo docker build -f Dockerfile_sfn -t sfn .
+4. Run the Docker Image. sudo docker run --net="host" -t sfn
+5. Test with sfn_message_test.py. python3 WP5/KU/SecurityFusionNodeService/sfn_message_test.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder '<MONICA_DIR>/WP5/KU/Algorithms/algorithm_output/' --looping 'False' --threaded 'False'
+6. Load test with sfn_message_test.py. python3 WP5/KU/SecurityFusionNodeService/sfn_message_test.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder '<MONICA_DIR>/WP5/KU/Algorithms/algorithm_output/' --looping 'True' --threaded 'True'
 
 H. Check connection to local SFN. curl http://0.0.0.0:5000/
 H. List docker images running. sudo docker ps
@@ -40,21 +41,25 @@ H. Re connect to a docker image that is already running. sudo docker attach $(su
 H. Stop the docker image. sudo docker stop $(sudo docker ps -q --filter ancestor=sfn)
 
 TEST ALGORITHMS WORK ON THE PROCESSING NODE
-1. Install Requirements (don't upgrade pip3 to v10). sudo pip3 install -r /<MONICA DIR>/WP5/KU/Algorithms/requirements.txt
-2. From the root of the project git, test the flow. python3 WP5/KU/Algorithms/main.py --sequence '<MONICA DIR>/WP5/KU/Algorithms/sample_sequence/' --config 'OXFORD' --algorithm 'flow'
-3. From the root of the project git, test the density. python3 WP5/KU/Algorithms/main.py --sequence '<MONICA DIR>/WP5/KU/Algorithms/sample_sequence/' --config 'OXFORD' --algorithm 'density'
+1. Move to the MONICA dir. cd monica
+2. Install Requirements (don't upgrade pip3 to v10). sudo -H pip3 install -r WP5/KU/Algorithms/requirements.txt
+3. From the root of the project git, test the flow. python3 WP5/KU/Algorithms/main.py --sequence 'WP5/KU/Algorithms/sample_sequence/' --config 'OXFORD' --algorithm 'flow'
+4. From the root of the project git, test the density. python3 WP5/KU/Algorithms/main.py --sequence 'WP5/KU/Algorithms/sample_sequence/' --config 'OXFORD' --algorithm 'density'
 H. For Error: 'No module named _tkinter'. sudo apt-get install python3-tk
+H. If pip3 is not installed. sudo apt-get install python3-pip
 
 RUNNING KU DEPLOYMENT TOOL
-1. Install Requirements (don't upgrade pip3 to v10). sudo pip3 install -r /<MONICA DIR>/WP5/KU/KUConfigTool/requirements.txt
-2. From the root of the project git test the app. python3 WP5/KU/KUConfigTool/camera_config.py --seq_location '/<FULL MONICA DIR> /monica/WP5/KU/Algorithms/sample_sequence/'
-3. Run the Config tool on a camera. python3 WP5/KU/KUConfigTool/camera_config.py --rtsp 'rtsp://root:pass@10.144.129.107/axis-media/media.amp'
-4. Add all created configs to git in one add. git add WP5/KU/KUConfigTool/cam_configs/<PILOT_NAME>_*
-5. Commit the files. git commit
-6. Push them to the Repo. git push
+1. Move to the MONICA dir. cd monica
+2. Install Requirements (don't upgrade pip3 to v10). sudo -H pip3 install -r <MONICA DIR>/WP5/KU/KUConfigTool/requirements.txt
+3. From the root of the project git test the app. python3 WP5/KU/KUConfigTool/camera_config.py --seq_location '/<FULL MONICA DIR> /monica/WP5/KU/Algorithms/sample_sequence/'
+4. Run the Config tool on a camera. python3 WP5/KU/KUConfigTool/camera_config.py --rtsp 'rtsp://root:pass@10.144.129.107/axis-media/media.amp'
+5. Add all created configs to git in one add. git add WP5/KU/KUConfigTool/cam_configs/<PILOT_NAME>_*
+6. Commit the files. git commit
+7. Push them to the Repo. git push
 H. For Error: 'No module named _tkinter'. sudo apt-get install python3-tk
 H. Run the Config Tool on a Screenshot. python3 WP5/KU/KUConfigTool/camera_config.py --x_size '704' --y_size '576' --seq_location '/home/monica/monica_repo/monica/WP5/KU/KUConfigTool/175'
 H. Install VLC Media Player. sudo apt-get install vlc
+H. If pip3 is not installed. sudo apt-get install python3-pip
 
 SPINNING UP VCA CORE
 H. Start VCA Core. sudo systemctl start vca-core
@@ -105,6 +110,7 @@ sudo nano /etc/environment
 ADD TO END: :/usr/local/cuda/bin
 
 REBOOT
+sudo reboot
 
 cd /usr/local/cuda-9.0/samples
 sudo make

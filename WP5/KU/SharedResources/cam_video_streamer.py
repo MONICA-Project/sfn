@@ -41,6 +41,7 @@ class CamVideoStreamer:
                 return
 
             self.grabbed, self.current_frame = self.stream.read()
+
             if not self.grabbed:
                 self.stop()
                 return

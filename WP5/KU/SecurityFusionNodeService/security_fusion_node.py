@@ -57,7 +57,7 @@ class SecurityFusionNode:
     def __init__(self, module_id):
         # self.module_id = module_id + '_crowd_density_global'
         self.module_id = module_id
-        self.module_type = 'crowd_density_global'
+        self.type_module = 'crowd_density_global'
         self.last_amalgamation = time.time()
         self.timer = 0
         self.state = 'active'
@@ -249,7 +249,7 @@ class SecurityFusionNode:
     def create_reg_message(self, timestamp):
         data = {
                 'module_id': self.module_id,
-                'type_module': self.module_type,
+                'type_module': self.type_module,
                 'timestamp': str(timestamp),
                 'state': self.state,
         }
@@ -304,7 +304,7 @@ class SecurityFusionNode:
     def create_obs_message(self, camera_ids, count, heat_map, timestamp_oldest, timestamp_newest, ground_plane_pos):
         data = {
                 'module_id': self.module_id,
-                'type_module': self.module_type,
+                'type_module': self.type_module,
                 'camera_ids': camera_ids,
                 'density_count': int(count),
                 'density_map': heat_map,
@@ -314,6 +314,16 @@ class SecurityFusionNode:
                 'timestamp_2': timestamp_newest,
         }
         message = json.dumps(data)
+        # try:
+        #     reg_file = open(os.path.join(os.path.dirname(__file__), self.type_module + '_message.txt'), 'w')
+        # except IOError:
+        #     print('IoError')
+        # else:
+        #     reg_file.write(message)
+        #     reg_file.close()
+        # ADD THE REG MESSAGE TO THE DB
+        self.insert_config_db(self.module_id, message)
+
         return message
 
     def load_settings(self, location, file_name, update_urls=True):
