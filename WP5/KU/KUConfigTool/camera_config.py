@@ -294,7 +294,8 @@ if __name__ == '__main__':
         # _args.seq_location = '/ocean/datasets/MONICA/BONN/Rein in Flammen 2018/20180505_193000_camera_4/'
         # _args.seq_location = '/ocean/datasets/MONICA/YCCC-LR/LEEDS_2018_AUG/CONFIG/LEEDS_4//'
         # _args.seq_location = '/ocean/datasets/MONICA/TIVOLI/REVIEW_2018/CONFIG/TIVOLI_25//'
-        _args.seq_location = '/ocean/datasets/MONICA/TO/MOVIDA_2018/126//'
+        # _args.seq_location = '/ocean/datasets/MONICA/TO/MOVIDA_2018/126//'
+        _args.seq_location = '/ocean/datasets/MONICA/HAW/DOM/CONFIG/DOM_101//'
 
         cam = ImageSequenceStreamer(_args.seq_location, _args.start_frame, (_args.x_size, _args.y_size), repeat=True)
         # _args.rtsp = 'rtsp://root:pass@10.144.129.107/axis-media/media.amp'

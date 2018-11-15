@@ -54,9 +54,8 @@ if __name__ == '__main__':
     print('Messages will be sent every {} seconds'.format(time_interval))
 
     configs = [
-        tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'DOM_103'),
-        tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'DOM_999'),
-        tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'DOM_126'),
+        tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'DOM_101'),
+        tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'DOM_102'),
     ]
 
 

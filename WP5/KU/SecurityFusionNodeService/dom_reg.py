@@ -18,7 +18,7 @@ print(KU_DIR)
 
 url = 'http://0.0.0.0:5000/'
 # url = 'http://MPCLSGESFN01.monica-cloud.eu:5000/'
-scral_url = 'http://monappdwp3.monica-cloud.eu:8000/'
+scral_url = 'http://monappdwp3.monica-cloud.eu:8005/'
 # scral_url = 'http://0.0.0.0:3389/'
 
 sfn_urls = {'scral_url': scral_url,
@@ -32,9 +32,8 @@ sfn_urls = {'scral_url': scral_url,
             }
 
 configs = [
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'DOM_103'),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'DOM_999'),
-    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'DOM_126'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'DOM_101'),
+    tools.load_settings(os.path.join(KU_DIR, 'KUConfigTool/cam_configs/'), 'DOM_102'),
 ]
 
 # HELLO WORLD
