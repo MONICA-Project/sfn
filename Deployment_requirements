@@ -32,8 +32,8 @@ DOCKER
 2. Move to the MONICA dir. cd monica
 3. build docker SFN image. sudo docker build -f Dockerfile_sfn -t sfn .
 4. Run the Docker Image. sudo docker run --net="host" -t sfn
-5. Test with sfn_message_test.py. python3 WP5/KU/SecurityFusionNodeService/sfn_message_test.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder '<MONICA_DIR>/WP5/KU/Algorithms/algorithm_output/' --looping 'False' --threaded 'False'
-6. Load test with sfn_message_test.py. python3 WP5/KU/SecurityFusionNodeService/sfn_message_test.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder '<MONICA_DIR>/WP5/KU/Algorithms/algorithm_output/' --looping 'True' --threaded 'True'
+5. Test with sfn_message_test.py. python3 WP5/KU/SecurityFusionNodeService/sfn_message_test.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder 'WP5/KU/Algorithms/algorithm_output/' --looping 'False' --threaded 'False'
+6. Load test with sfn_message_test.py. python3 WP5/KU/SecurityFusionNodeService/sfn_message_test.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder 'WP5/KU/Algorithms/algorithm_output/' --looping 'True' --threaded 'True'
 
 H. Check connection to local SFN. curl http://0.0.0.0:5000/
 H. List docker images running. sudo docker ps
