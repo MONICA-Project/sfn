@@ -119,7 +119,7 @@ def add_message():
 
             # UNDER AND IF STATEMENT CHECK IF WE WANT TO AMALGAMATE AND CREATE A NEW MESSAGE
             sfn_module.timer = time.time() - sfn_module.last_amalgamation
-            if sfn_module.length_db(module_id='crowd_density_local') > 2 and sfn_module.timer > sfn_module.amal_interval:
+            if sfn_module.length_db(module_id='crowd_density_local') > 1 and sfn_module.timer > sfn_module.amal_interval:
                 sfn_module.last_amalgamation = time.time()
                 text, resp_code = amalgamate_crowd_density_local(sfn_module, sfn_module.urls['crowd_density_global_url'])
             else:
