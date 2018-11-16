@@ -1,1 +1,1 @@
-{"timestamp": "2018-08-17T15:17:16.408348+00:00", "module_id": "gate_count_1", "type_module": "gate_count", "count": "2", "camera_ids": ["LEEDS_4"]}
+{"timestamp": "2018-08-17T15:17:16.408348+00:00", "module_id": "gate_count_1", "type_module": "gate_count", "count": "1", "camera_ids": ["LEEDS_4"]}
