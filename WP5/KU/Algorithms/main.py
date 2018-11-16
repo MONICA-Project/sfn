@@ -86,9 +86,9 @@ if __name__ == '__main__':
     # IF BOTH sequence AND rtsp ARE None THEN WE USE CODED VALUES FOR TESTING
     else:
         # info = dataset(0)
-        info = dataset(1)
-        info.append('flow')
-        # info.append('density')
+        info = dataset(30)
+        # info.append('flow')
+        info.append('density')
         # info.append('object')
         display = True
 
@@ -122,14 +122,14 @@ if __name__ == '__main__':
         message = None
         result = None
         if analyser.type_module == 'flow':
-            message, frame = analyser.process_frame(frame, settings['camera_id'], settings['flow_rois'], True)
+            message, frame = analyser.process_frame(frame, settings['camera_id'], settings['flow_rois'], False)
         if analyser.type_module == 'object_detection':
             message, frame = analyser.process_frame(frame, settings['camera_id'])
         elif analyser.type_module == 'crowd_density_local':
             message, frame = analyser.process_frame(frame, settings['camera_id'], settings['crowd_mask'],
                                                      settings['image_2_ground_plane_matrix'],
                                                      settings['ground_plane_roi'],
-                                                     settings['ground_plane_size'], True)
+                                                     settings['ground_plane_size'], False)
 
         # SEND A HTTP REQUEST OFF
         # sfn_url = 'http://127.0.0.1:5000/message'

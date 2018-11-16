@@ -24,14 +24,8 @@ class FrameAnalyser:
         self.BLUE = (0, 0, 255)
         self.WHITE = (255, 255, 255)
 
-    def process_frame(self, frame, camera_id):
+    def create_reg_message(self, timestamp):
         raise NotImplementedError
 
-    def create_obs_message(self):
-        raise NotImplementedError
-
-    def create_reg_message(self):
-        raise NotImplementedError
-
-    def load_settings(self):
+    def load_settings(self, location, file_name):
         raise NotImplementedError

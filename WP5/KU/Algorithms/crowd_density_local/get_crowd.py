@@ -43,12 +43,13 @@ class GetCrowd(FrameAnalyser):
         self.scale = 0.5
         self.count = 0
         self.model_path = []
-        self.load_settings(str(Path(__file__).absolute().parents[0]), 'settings')
 
         # EVALUATION
-        self.counter = 0
+        self.save_image_flag = True
         self.iterator = 0
         self.save_on_count = 2000
+
+        self.load_settings(str(Path(__file__).absolute().parents[0]), 'settings')
 
         self.net = CrowdCounter()
         # TODO: FUTURE WARNING HERE
@@ -82,6 +83,7 @@ class GetCrowd(FrameAnalyser):
         if debug:
             self.process_interval = 0
             self.save_on_count = 0
+            self.save_image_flag = True
         if (time_2 - time_1).seconds >= self.process_interval:
             self.previous_frames_timestamp[camera_id] = time_2
 
@@ -127,23 +129,23 @@ class GetCrowd(FrameAnalyser):
 
             # CONVERT TO IMAGE THAT CAN BE DISPLAYED
             density_map = 255 * density_map / (np.max(density_map) + np.finfo(float).eps)
-            if self.iterator >= self.save_on_count:
-                save_name = incrementer.get_incrementer(self.counter, 7) + '_' + self.cam_id
-                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame.jpeg'),
-                            cv2.resize(frame, (0, 0), fx=self.scale, fy=self.scale))
-                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_density.jpeg'),
-                            cv2.resize(density_map, (0, 0), fx=self.scale, fy=self.scale))
-                try:
-                    reg_file = open(os.path.join(os.path.dirname(__file__), save_name + '.txt'), 'w')
-                except IOError:
-                    print('IoError')
+            if self.save_image_flag:
+                if self.iterator >= self.save_on_count:
+                    save_name = '{}_{}_{}'.format(arrow.utcnow().to('GMT').timestamp, self.cam_id, self.module_id)
+                    cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame.jpeg'),
+                                cv2.resize(frame, (0, 0), fx=self.scale, fy=self.scale))
+                    cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_density.jpeg'),
+                                cv2.resize(density_map, (0, 0), fx=self.scale, fy=self.scale))
+                    try:
+                        output_message = open(os.path.join(os.path.dirname(__file__), save_name + '.txt'), 'w')
+                    except IOError:
+                        print('IoError')
+                    else:
+                        output_message.write(message)
+                        output_message.close()
+                    self.iterator = 0
                 else:
-                    reg_file.write(message)
-                    reg_file.close()
-                self.iterator = 0
-                self.counter = self.counter + 1
-            else:
-                self.iterator = self.iterator + 1
+                    self.iterator = self.iterator + 1
 
             return message, density_map
         else:
@@ -228,6 +230,10 @@ class GetCrowd(FrameAnalyser):
                 self.scale = settings['scale']
             if 'process_interval' in settings:
                 self.process_interval = settings['process_interval']
+            if 'save_on_count' in settings:
+                self.save_on_count = settings['save_on_count']
+            if 'save_image_flag' in settings:
+                self.save_image_flag = settings['save_image_flag']
         print('SETTINGS LOADED FOR MODULE: ' + self.module_id)
 
     @staticmethod

@@ -1,1 +1,1 @@
-{"model_path": "FlowNet2_src/pretrained/FlowNet2_checkpoint.pth.tar", "process_interval": 4}
+{"model_path": "FlowNet2_src/pretrained/FlowNet2_checkpoint.pth.tar", "process_interval": 4, "save_image_flag": false, "save_on_count": 2000}

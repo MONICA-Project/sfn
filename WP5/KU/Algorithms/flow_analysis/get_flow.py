@@ -42,14 +42,15 @@ class GetFlow(FrameAnalyser):
         self.scale = 0.5
         self.model = None
         self.cuda = False
+
+        # EVALUATION
+        self.save_image_flag = True
+        self.iterator = 0
+        self.save_on_count = 2000
+
         self.load_settings(str(Path(__file__).absolute().parents[0]), 'settings')
         self.scale_height = 384  # TO SCALE THE INPUT IMAGE IF IT IS TOO LARGE FOR FLOWNET
         self.scale_width = 512
-
-        # EVALUATION
-        self.counter = 0
-        self.iterator = 0
-        self.save_on_count = 2000
 
     def process_frame(self, frame, camera_id, rois, debug=False):  # rois: region of interests
         # CHECK WHETHER THIS IS THE FIRST FRAME OF THIS CAMERA ID
@@ -62,6 +63,7 @@ class GetFlow(FrameAnalyser):
         if debug:
             self.process_interval = 0
             self.save_on_count = 0
+            self.save_image_flag = True
 
         # USES ONLY THE REGION OF INTEREST DEFINED IN THE SETTINGS
         time_1 = self.previous_frames_timestamp[camera_id]
@@ -114,27 +116,27 @@ class GetFlow(FrameAnalyser):
             message = self.create_obs_message(ave_flow_mag, ave_flow_dir, arrow.utcnow())
 
             flow_image = None
-            if self.iterator >= self.save_on_count:
-                # VISUALIZE THE OPTICAL FLOW AND SAVE IT
-                flow_image = flow_to_image(flow_uv)
-                save_name = incrementer.get_incrementer(self.counter, 7) + '_' + self.cam_id + '_' + self.module_id
-                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame1.jpeg'),
-                            cv2.resize(frame1, (0, 0), fx=self.scale, fy=self.scale))
-                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame2.jpeg'),
-                            cv2.resize(frame2, (0, 0), fx=self.scale, fy=self.scale))
-                cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_flow.jpeg'),
-                            cv2.resize(flow_image, (0, 0), fx=self.scale, fy=self.scale))
-                try:
-                    reg_file = open(os.path.join(os.path.dirname(__file__), save_name + '.txt'), 'w')
-                except IOError:
-                    print('IoError')
+            if self.save_image_flag:
+                if self.iterator >= self.save_on_count:
+                    # VISUALIZE THE OPTICAL FLOW AND SAVE IT
+                    flow_image = flow_to_image(flow_uv)
+                    save_name = '{}_{}_{}'.format(arrow.utcnow().to('GMT').timestamp, self.cam_id, self.module_id)
+                    cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame1.jpeg'),
+                                cv2.resize(frame1, (0, 0), fx=self.scale, fy=self.scale))
+                    cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame2.jpeg'),
+                                cv2.resize(frame2, (0, 0), fx=self.scale, fy=self.scale))
+                    cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_flow.jpeg'),
+                                cv2.resize(flow_image, (0, 0), fx=self.scale, fy=self.scale))
+                    try:
+                        output_message = open(os.path.join(os.path.dirname(__file__), save_name + '.txt'), 'w')
+                    except IOError:
+                        print('IoError')
+                    else:
+                        output_message.write(message)
+                        output_message.close()
+                    self.iterator = 0
                 else:
-                    reg_file.write(message)
-                    reg_file.close()
-                self.iterator = 0
-                self.counter = self.counter + 1
-            else:
-                self.iterator = self.iterator + 1
+                    self.iterator = self.iterator + 1
 
             return message, flow_image
         else:
@@ -191,23 +193,27 @@ class GetFlow(FrameAnalyser):
             line = json_file.readline()
             settings = json.loads(line)
             json_file.close()
-
             if 'model_path' in settings:
                 path = os.path.join(os.path.dirname(__file__), settings['model_path'])
+                # Build model
+                flownet2 = FlowNet2()
+                pretrained_dict = torch.load(path)['state_dict']
+                model_dict = flownet2.state_dict()
+                pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+                model_dict.update(pretrained_dict)
+                flownet2.load_state_dict(model_dict)
+
+                # CUDA WARNING
+                if flownet2.cuda_available():
+                    flownet2.cuda()
+                else:
+                    print('RUNNING WITHOUT CUDA SUPPORT')
+                self.model = flownet2
+            else:
+                print('NO PATH FOUND')
             if 'process_interval' in settings:
                 self.process_interval = settings['process_interval']
-            # Build model
-            flownet2 = FlowNet2()
-            pretrained_dict = torch.load(path)['state_dict']
-            model_dict = flownet2.state_dict()
-            pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
-            model_dict.update(pretrained_dict)
-            flownet2.load_state_dict(model_dict)
-
-            # CUDA WARNING
-            if flownet2.cuda_available():
-                flownet2.cuda()
-            else:
-                print('RUNNING WITHOUT CUDA SUPPORT')
-            self.model = flownet2
-
+            if 'save_on_count' in settings:
+                self.save_on_count = settings['save_on_count']
+            if 'save_image_flag' in settings:
+                self.save_image_flag = settings['save_image_flag']
