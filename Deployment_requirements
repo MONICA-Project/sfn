@@ -17,7 +17,7 @@ MONICA VPN
 6. Enable VPN_reconnect service to start on boot. sudo systemctl enable VPN_reconnect.service
 7. Start VPN_reconnect service to connect to VPN. sudo systemctl start VPN_reconnect.service
 2. Install ssh on Server. sudo apt-get install openssh-server
-H. Logging to the ssh of the processsing node. ssh <USERNAME>@192.168.99.XXX
+H. Logging to the ssh of the processing node. ssh <USERNAME>@192.168.99.XXX
 H. SFTP, Connect to Server (Files): sftp://<USERNAME>@192.168.99.XXX
 H. Check status of VPN_reconnect service. systemctl status VPN_reconnect.service
 
