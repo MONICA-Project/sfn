@@ -3,17 +3,23 @@ DRIVERS
 2. Nvidia CUDA & CuDNN. Follow https://medium.com/@zhanwenchen/install-cuda-and-cudnn-for-tensorflow-gpu-on-ubuntu-79306e4ac04e
 H. Detailed Descriptions of the above two at bottom
 
-MONICA VPN
-1. Connect to Monica VPN. sudo apt-get install network-manager-openconnect network-manager-openconnect-gnome
-2. vpn.monica-cloud.eu
-2. Install ssh on Server. sudo apt-get install openssh-server
-H. Logging to the ssh of the processsing node. ssh <USERNAME>@192.168.99.XXX
-H. SFTP, Connect to Server (Files): sftp://<USERNAME>@192.168.99.XXX
-
 GIT
 1. Install git. sudo apt-get install git
 2. Move to Home Dir. cd
 3. Clone the FIT repo, KU_dev Branch. git clone -b KU_dev https://scm.fit.fraunhofer.de/scm/git/monica
+
+MONICA VPN
+1. Connect to Monica VPN. sudo apt-get install network-manager-openconnect network-manager-openconnect-gnome
+2. Check line 8 of the VPN_reconnect.service (held in the root of the Git Repo) points to the VPN_reconnect.sh.
+3. Move to the MONICA dir. cd monica
+4. make VPN_reconnect.sh is executable. chmod +x VPN_reconnect.sh
+5. Install VPN reconnect Service. sudo cp VPN_reconnect.service /etc/systemd/system/
+6. Enable VPN_reconnect service to start on boot. sudo systemctl enable VPN_reconnect.service
+7. Start VPN_reconnect service to connect to VPN. sudo systemctl start VPN_reconnect.service
+2. Install ssh on Server. sudo apt-get install openssh-server
+H. Logging to the ssh of the processsing node. ssh <USERNAME>@192.168.99.XXX
+H. SFTP, Connect to Server (Files): sftp://<USERNAME>@192.168.99.XXX
+H. Check status of VPN_reconnect service. systemctl status VPN_reconnect.service
 
 MYSQL (TODO: THIS SHOULD BE MORE SECURE)
 1. Install mysql, with username root and password root. https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-16-04

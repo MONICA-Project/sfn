@@ -1,6 +1,6 @@
 [Unit]
 Description=My Miscellaneous Service
-After=network.target
+After=network-online.target
 
 [Service]
 Type=simple
@@ -8,6 +8,9 @@ Type=simple
 ExecStart=/home/monica/monica/VPN_reconnect.sh
 Restart=on-failure
 # Other Restart options: or always, on-abort, etc
+RestartSec=20
+
+
 
 [Install]
 WantedBy=multi-user.target
