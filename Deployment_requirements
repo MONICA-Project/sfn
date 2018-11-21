@@ -10,16 +10,18 @@ GIT
 
 MONICA VPN
 1. Connect to Monica VPN. sudo apt-get install network-manager-openconnect network-manager-openconnect-gnome
+5. Install VPN reconnect Service. sudo cp VPN_reconnect.service /etc/systemd/system/
 2. Check line 8 of the VPN_reconnect.service (held in the root of the Git Repo) points to the VPN_reconnect.sh.
 3. Move to the MONICA dir. cd monica
 4. make VPN_reconnect.sh is executable. chmod +x VPN_reconnect.sh
-5. Install VPN reconnect Service. sudo cp VPN_reconnect.service /etc/systemd/system/
 6. Enable VPN_reconnect service to start on boot. sudo systemctl enable VPN_reconnect.service
 7. Start VPN_reconnect service to connect to VPN. sudo systemctl start VPN_reconnect.service
 2. Install ssh on Server. sudo apt-get install openssh-server
 H. Logging to the ssh of the processing node. ssh <USERNAME>@192.168.99.XXX
 H. SFTP, Connect to Server (Files): sftp://<USERNAME>@192.168.99.XXX
 H. Check status of VPN_reconnect service. systemctl status VPN_reconnect.service
+H. Check VPN connection is active. nmcli con
+
 
 MYSQL (TODO: THIS SHOULD BE MORE SECURE)
 1. Install mysql, with username root and password root. https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-16-04
@@ -38,8 +40,9 @@ DOCKER
 2. Move to the MONICA dir. cd monica
 3. build docker SFN image. sudo docker build -f Dockerfile_sfn -t sfn .
 4. Run the Docker Image. sudo docker run --net="host" -t sfn
-5. Test with sfn_message_test.py. python3 WP5/KU/SecurityFusionNodeService/sfn_message_test.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder 'WP5/KU/Algorithms/algorithm_output/' --looping 'False' --threaded 'False'
-6. Load test with sfn_message_test.py. python3 WP5/KU/SecurityFusionNodeService/sfn_message_test.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder 'WP5/KU/Algorithms/algorithm_output/' --looping 'True' --threaded 'True'
+5. Move to the MONICA dir. cd monica
+6. Test with sfn_message_test.py. python3 WP5/KU/SecurityFusionNodeService/sfn_message_test.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder 'WP5/KU/Algorithms/algorithm_output/' --looping 'False' --threaded 'False'
+7. Load test with sfn_message_test.py. python3 WP5/KU/SecurityFusionNodeService/sfn_message_test.py --sfn_url 'http://0.0.0.0:5000/' --scral_url 'http://monappdwp3.monica-cloud.eu:8000/' --dataset_folder 'WP5/KU/Algorithms/algorithm_output/' --looping 'True' --threaded 'True'
 
 H. Check connection to local SFN. curl http://0.0.0.0:5000/
 H. List docker images running. sudo docker ps

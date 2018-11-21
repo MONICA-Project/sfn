@@ -2,7 +2,7 @@
 
 username="r.dupre"
 password="wahphai9Oh"
-connection_name="vpn_auto"
+connection_name="tun_vpn"
 while true; do
 tunActive=`ifconfig | grep $connection_name | wc -l`
 echo "Checking the VPN Connection"
