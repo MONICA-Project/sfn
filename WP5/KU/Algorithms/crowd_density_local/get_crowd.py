@@ -19,6 +19,10 @@ from WP5.KU.Algorithms.frame_analyser import FrameAnalyser
 from WP5.KU.Algorithms.crowd_density_local.C_CNN.src.crowd_count import CrowdCounter
 import WP5.KU.Algorithms.crowd_density_local.C_CNN.src.network as nw
 
+
+from WP5.KU.SharedResources.convert_to_meter import convert_to_meter
+from WP5.KU.SharedResources.rotate_image import rotate_image
+
 __version__ = '0.1'
 __author__ = 'Rob Dupre (KU)'
 
@@ -61,7 +65,9 @@ class GetCrowd(FrameAnalyser):
             print('RUNNING WITHOUT CUDA SUPPORT')
         self.net.eval()
 
-    def process_frame(self, frame, camera_id, mask, image_2_ground_plane_matrix, ground_plane_roi, ground_plane_size,
+
+
+    def process_frame(self, frame,camera_bearing, camera_position, camera_id, mask, image_2_ground_plane_matrix, ground_plane_roi, ground_plane_size,
                       debug=False):
         """ Process a given frame using the crowd density analysis algorithm.
         Keyword arguments:
@@ -112,9 +118,17 @@ class GetCrowd(FrameAnalyser):
             # CONVERT BACK TO ORIGINAL SCALE
             density_map = cv2.resize(density_map, (width, height))
 
+
+
+
             # CREATE THE MESSAGE
             self.cam_id = camera_id
+            self.cam_bearing = camera_bearing
+            self.cam_pos = camera_position
             timestamp = arrow.utcnow()
+
+
+
 
             # CONVERT TO TOP DOWN
             top_down_density_map, heat_image = heat_map_gen.generate_heat_map(density_map,
@@ -124,6 +138,40 @@ class GetCrowd(FrameAnalyser):
                                                                               # timestamp=timestamp,
                                                                               # frame=frame,
                                                                               )
+
+
+
+
+            # rotate the density map based on bearing
+            top_down_density_map = np.array(top_down_density_map)
+            # print('density map size before topdown = ', density_map.shape)
+            # print('size before change = ',top_down_density_map.shape)
+            top_down_density_map = rotate_image(top_down_density_map, self.cam_bearing)
+            # print((type(top_down_density_map)))
+            # print('size after rotate change = ',top_down_density_map.shape)
+            # print('actual count = ',count  )
+            # print('sum numpy = ',np.sum(top_down_density_map))
+            top_down_density_map = (count/np.sum(top_down_density_map)) * top_down_density_map
+            # print('normalized sum numpy = ', np.sum(top_down_density_map))
+
+
+            top_down_density_map = np.around(top_down_density_map + 0.15)
+
+            # print('rounded normalized sum numpy = ', np.sum(top_down_density_map))
+
+
+            top_down_density_map = top_down_density_map.tolist()
+            # print((type(top_down_density_map)))
+
+
+
+
+
+
+
+
+
+
             message = self.create_obs_message(count, top_down_density_map, timestamp)
             # message = self.create_obs_message(count, top_down_density_map, timestamp, frame=frame)
 
@@ -165,6 +213,8 @@ class GetCrowd(FrameAnalyser):
                 'module_id': self.module_id,
                 'type_module': self.type_module,
                 'camera_ids': [self.cam_id],
+                'camera_position':[self.cam_pos],
+                'camera_bearing':[self.cam_bearing],
                 'density_count': int(count),
                 'density_map': density_map,
                 'frame_byte_array': '',
@@ -173,6 +223,7 @@ class GetCrowd(FrameAnalyser):
                 'timestamp_1': str(timestamp),
                 'timestamp_2': str(timestamp),
         }
+
         if frame is not None:
             # RESIZE THE IMAGE AND MAKE IT BLACK AND WHITE
             # frame = cv2.cvtColor(cv2.resize(frame, (0, 0), fx=0.25, fy=0.25), cv2.COLOR_RGB2GRAY)
