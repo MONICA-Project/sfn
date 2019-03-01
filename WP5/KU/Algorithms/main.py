@@ -17,7 +17,7 @@ from WP5.KU.SharedResources.frame_streamer import ImageSequenceStreamer
 import WP5.KU.SharedResources.get_incrementer as inc
 import WP5.KU.SharedResources.loader_tools as loader
 from WP5.KU.Algorithms.crowd_density_local.get_crowd import GetCrowd
-from WP5.KU.Algorithms.flow_analysis.get_flow import GetFlow
+# from WP5.KU.Algorithms.flow_analysis.get_flow import GetFlow
 from WP5.KU.Algorithms.object_detection.get_objects import GetObjects
 
 __version__ = '0.4'
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     # IF BOTH sequence AND rtsp ARE None THEN WE USE CODED VALUES FOR TESTING
     else:
         # info = dataset(0)
-        info = dataset(30)
+        info = dataset(1)
         # info.append('flow')
         info.append('density')
         # info.append('object')
@@ -104,6 +104,7 @@ if __name__ == '__main__':
 
     # LOAD THE SETTINGS AND PASS THEN WHEN PROCESSING A FRAME
     settings = loader.load_settings(KU_DIR + '/KUConfigTool/cam_configs/' + '/', info[2])
+
 
     if info[1] == 'Live':
         cam = CamVideoStreamer(info[0])
@@ -126,7 +127,7 @@ if __name__ == '__main__':
         if analyser.type_module == 'object_detection':
             message, frame = analyser.process_frame(frame, settings['camera_id'])
         elif analyser.type_module == 'crowd_density_local':
-            message, frame = analyser.process_frame(frame, settings['camera_id'], settings['crowd_mask'],
+            message, frame = analyser.process_frame(frame,settings['camera_bearing'],settings['camera_position'], settings['camera_id'], settings['crowd_mask'],
                                                      settings['image_2_ground_plane_matrix'],
                                                      settings['ground_plane_roi'],
                                                      settings['ground_plane_size'], False)
