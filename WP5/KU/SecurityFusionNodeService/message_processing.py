@@ -215,7 +215,11 @@ def amalgamate_crowd_density_local(sfn_instance, url):
 
         log_text = log_text + 'crowd_density_global MESSAGE CREATED. '
 
+        ########################################################################################
+        ########################################################################################
+
         # SEND crowd_density_global MESSAGE TO LINKSMART
+
         log_text = log_text + sfn_instance.insert_db('GLOBAL', 'crowd_density_global', json.dumps(crowd_density_global))
         text, resp_code = forward_message(crowd_density_global, url)
         log_text = log_text + text
