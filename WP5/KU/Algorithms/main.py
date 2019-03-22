@@ -32,7 +32,7 @@ def dataset(index):
         # [Address, Stream, Settings File]
         0: ['rtsp://root:pass@10.144.129.107/axis-media/media.amp', 'Live', 'CAMERA_KU'],
         # [Location, Start Frame, Settings File]
-        1: [(KU_DIR + '/Algorithms/sample_sequence/'), 0, 'OXFORD'],
+        1: [(KU_DIR + '/Algorithms/sample_sequence/'), 0, 'Testing'],
         2: [(dataset_folder + 'Mall_Dataset/frames/'), 0],
         3: [(dataset_folder + 'EWAP_Dataset/seq_eth/'), 0],
         4: [(dataset_folder + 'EWAP_Dataset/seq_hotel/'), 0],
