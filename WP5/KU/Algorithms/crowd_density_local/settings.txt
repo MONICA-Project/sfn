@@ -1,1 +1,1 @@
-{"model_path": "C_CNN/final_models/cmtl_shtechB_768.h5", "process_interval": 4, "scale": 0.5, "save_image_flag": false, "save_on_count": 2000}
+{"model_path1": "C_CNN/final_models/old.h5", "model_path2": "C_CNN/final_models/new.h5", "process_interval": 4, "scale": 0.5, "save_image_flag": true, "mqtt":true, "save_on_count": 2000}
