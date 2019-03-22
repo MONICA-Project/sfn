@@ -30,6 +30,7 @@ class ImageSequenceStreamer:
         self.working = False
         self.loop_last = loop_last
         self.repeat = repeat
+        self.current_image_name = []
 
         # GET LIST OF IMAGES AT FILE LOCATION
         valid_images = ('.jpg', '.png', '.tga', '.tif', '.jpeg')
@@ -66,11 +67,17 @@ class ImageSequenceStreamer:
         # LOAD THE NEXT IMAGE AS LONG AS THERE ARE STILL ENTRIES IN THE file_list,
         if self.image_count < len(self.file_list) - 1:
             self.current_image = cv2.resize(cv2.imread(self.file_list[self.image_count]), self.size)
+            self.current_image_name = os.path.basename(self.file_list[self.image_count])
+            self.current_image_name = os.path.splitext(self.current_image_name)[0]
+
             # self.current_image = self.images[self.image_count]
             self.image_count = self.image_count + 1
         # THIS IS NOW THE LAST IMAGE IN THE LIST
         elif self.image_count == len(self.file_list) - 1:
             self.current_image = cv2.resize(cv2.imread(self.file_list[self.image_count]), self.size)
+            self.current_image_name = os.path.basename(self.file_list[self.image_count])
+            self.current_image_name = os.path.splitext(self.current_image_name)[0]
+
             if self.repeat:
                 self.image_count = self.start_frame
             else:
@@ -80,7 +87,7 @@ class ImageSequenceStreamer:
                 self.working = False
         # NOW IN INFINITE LOOP AS current_image WILL ONLY EVER HOLD THE LAST IMAGE.
 
-        return self.current_image
+        return self.current_image, self.current_image_name
 
     def save(self, filename):
         print('Screen shot Saved')
