@@ -3,6 +3,10 @@
 High-level Prior and Density Estimation for Crowd Counting
 This module is intended for use within the VCA framework within PyVCA interface
 """
+import time
+import paho.mqtt.client as mqtt
+
+
 import os
 import numpy as np
 import base64
@@ -46,24 +50,41 @@ class GetCrowd(FrameAnalyser):
         # ALGORITHM VARIABLES
         self.scale = 0.5
         self.count = 0
-        self.model_path = []
+        self.model_path1 = []
+        self.model_path2 = []
 
         # EVALUATION
         self.save_image_flag = True
+        self.mqtt = True
         self.iterator = 0
         self.save_on_count = 2000
 
         self.load_settings(str(Path(__file__).absolute().parents[0]), 'settings')
 
-        self.net = CrowdCounter()
+        self.net1 = CrowdCounter()
+        self.net2 = CrowdCounter()
+
         # TODO: FUTURE WARNING HERE
-        nw.load_net(os.path.join(self.model_path), self.net)
+        nw.load_net(os.path.join(self.model_path1), self.net1)
+        nw.load_net(os.path.join(self.model_path2), self.net2)
+
+
         # CUDA WARNING
-        if self.net.cuda_available():
-            self.net.cuda()
+        if self.net1.cuda_available():
+            self.net1.cuda()
+
+        if self.net2.cuda_available():
+            self.net2.cuda()
+
+
+
+
+
         else:
             print('RUNNING WITHOUT CUDA SUPPORT')
-        self.net.eval()
+        self.net1.eval()
+        self.net2.eval()
+
 
 
 
@@ -105,18 +126,36 @@ class GetCrowd(FrameAnalyser):
             x = x.astype(np.float32, copy=False)
             x = np.expand_dims(x, axis=0)
             x = np.expand_dims(x, axis=0)
-            density_map = self.net(x)
+
+            density_map = self.net1(x)
             density_map = density_map.data.cpu().numpy()[0][0]
+
+            density_map2 = self.net2(x)
+            density_map2 = density_map2.data.cpu().numpy()[0][0]
 
             # EXTRACT THE ROI FROM THE FRAME AND COUNT WITHIN THAT AREA
             # count = np.sum(density_map)
             # count = np.sum(density_map[roi[1]:roi[3], roi[0]:roi[2]])
+
+
             mask = cv2.resize(np.array(mask), (density_map.shape[1], density_map.shape[0]))
             density_map[mask < 1] = 0
-            count = np.sum(density_map)
+            count1 = np.sum(density_map)
 
             # CONVERT BACK TO ORIGINAL SCALE
             density_map = cv2.resize(density_map, (width, height))
+
+
+
+            mask = cv2.resize(np.array(mask), (density_map2.shape[1], density_map2.shape[0]))
+            density_map2[mask < 1] = 0
+            count2 = np.sum(density_map2)
+
+            # CONVERT BACK TO ORIGINAL SCALE
+            density_map2 = cv2.resize(density_map2, (width, height))
+
+
+
 
 
 
@@ -131,7 +170,7 @@ class GetCrowd(FrameAnalyser):
 
 
             # CONVERT TO TOP DOWN
-            top_down_density_map, heat_image = heat_map_gen.generate_heat_map(density_map,
+            top_down_density_map, heat_image = heat_map_gen.generate_heat_map(density_map2,
                                                                               image_2_ground_plane_matrix,
                                                                               ground_plane_roi,
                                                                               ground_plane_size,
@@ -143,8 +182,18 @@ class GetCrowd(FrameAnalyser):
 
 
             # rotate the density map based on bearing
+
+            # print('old count :',count1)
+            # print('new count :', count2)
+            count = (count1+count2)/2
+            # print('average count :', count)
+
+
+
+
+
             top_down_density_map = np.array(top_down_density_map)
-            # print('density map size before topdown = ', density_map.shape)
+            # print('density map size before topdown = ', density_map2.shape)
             # print('size before change = ',top_down_density_map.shape)
             top_down_density_map = rotate_image(top_down_density_map, self.cam_bearing)
             # print((type(top_down_density_map)))
@@ -159,9 +208,11 @@ class GetCrowd(FrameAnalyser):
 
             # print('rounded normalized sum numpy = ', np.sum(top_down_density_map))
 
+            # print('---------------------------------------------')
+
 
             top_down_density_map = top_down_density_map.tolist()
-            # print((type(top_down_density_map)))
+
 
 
 
@@ -173,17 +224,35 @@ class GetCrowd(FrameAnalyser):
 
 
             message = self.create_obs_message(count, top_down_density_map, timestamp)
-            # message = self.create_obs_message(count, top_down_density_map, timestamp, frame=frame)
+
+
+            # mqtt initialization
+
+
+            # mqtt
+            if self.mqtt:
+                client = mqtt.Client()
+                client.on_connect = self.on_connect
+                client.on_message = self.on_message
+                client.username_pw_set("worndjww", "ZVs1osFZSGTU")
+                client.connect("m16.cloudmqtt.com", 13596, 5)
+                client.loop_start()
+                client.publish("crowd", message)
+                client.loop_stop()
+                client.disconnect()
+
+
+
 
             # CONVERT TO IMAGE THAT CAN BE DISPLAYED
-            density_map = 255 * density_map / (np.max(density_map) + np.finfo(float).eps)
+            density_map2 = 255 * density_map2 / (np.max(density_map2) + np.finfo(float).eps)
             if self.save_image_flag:
                 if self.iterator >= self.save_on_count:
                     save_name = '{}_{}_{}'.format(arrow.utcnow().to('GMT').timestamp, self.cam_id, self.type_module)
                     cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame.jpeg'),
                                 cv2.resize(frame, (0, 0), fx=self.scale, fy=self.scale))
                     cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_density.jpeg'),
-                                cv2.resize(density_map, (0, 0), fx=self.scale, fy=self.scale))
+                                cv2.resize(density_map2, (0, 0), fx=self.scale, fy=self.scale))
                     try:
                         output_message = open(os.path.join(os.path.dirname(__file__), save_name + '.txt'), 'w')
                     except IOError:
@@ -195,11 +264,27 @@ class GetCrowd(FrameAnalyser):
                 else:
                     self.iterator = self.iterator + 1
 
-            return message, density_map
+            return message, density_map2
         else:
             return None, None
 
-    def create_obs_message(self, count, density_map, timestamp, frame=None):
+
+
+    # mqtt connection function
+
+    def on_connect(client, userdata, flags, rc):
+        print("Connected with Code :" + str(rc))
+        # Subscribe Topic from here
+        client.subscribe("Test/#")
+
+    # mqtt meg function
+
+    def on_message(client, userdata, msg):
+        # print the message received from the subscribed topic
+        print(str(msg.payload))
+
+
+    def create_obs_message(self, count, density_map2, timestamp, frame=None):
         """ Function to create the JSON payload containing the observation. Follows the content as defined on the WP5
         Confluence (6. JSON Message Format):
             count --        Double defining the total number of people in the frame's roi
@@ -216,7 +301,7 @@ class GetCrowd(FrameAnalyser):
                 'camera_position':[self.cam_pos],
                 'camera_bearing':[self.cam_bearing],
                 'density_count': int(count),
-                'density_map': density_map,
+                'density_map': density_map2,
                 'frame_byte_array': '',
                 'image_dims': '',
                 'ground_plane_position': '',
@@ -275,14 +360,18 @@ class GetCrowd(FrameAnalyser):
             settings = json.loads(line)
             json_file.close()
 
-            if 'model_path' in settings:
-                self.model_path = os.path.join(os.path.dirname(__file__), settings['model_path'])
+            if 'model_path1' in settings:
+                self.model_path1 = os.path.join(os.path.dirname(__file__), settings['model_path1'])
+            if 'model_path2' in settings:
+                self.model_path2 = os.path.join(os.path.dirname(__file__), settings['model_path2'])
             if 'scale' in settings:
                 self.scale = settings['scale']
             if 'process_interval' in settings:
                 self.process_interval = settings['process_interval']
             if 'save_on_count' in settings:
                 self.save_on_count = settings['save_on_count']
+            if 'mqtt' in settings:
+                self.mqtt = settings['mqtt']
             if 'save_image_flag' in settings:
                 self.save_image_flag = settings['save_image_flag']
         print('SETTINGS LOADED FOR MODULE: ' + self.module_id)
