@@ -1,6 +1,9 @@
 __pycache__ 
 /WP5/KU/Algorithms/algorithm_output/000*
 /WP5/KU/Algorithms/crowd_density_local/000*
+/WP5/KU/Algorithms/crowd_density_local/*_frame.jpeg
+/WP5/KU/Algorithms/crowd_density_local/*_density.jpeg
+/WP5/KU/Algorithms/crowd_density_local/*_local.txt
 /WP5/KU/Algorithms/flow_analysis/000*
 /WP5/KU/KUConfigTool/*_reg.txt
 *.png
