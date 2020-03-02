@@ -1,0 +1,15 @@
+[Unit]
+Description=SFN
+Requires=docker.service
+After=vca-cored.service
+
+[Service]
+Restart=no
+User=root
+Group=root
+ExecStart=/home/tivoli/monica/sfn.sh create
+ExecStop=/home/tivoli/monica/sfn.sh stop
+
+
+[Install]
+WantedBy=multi-user.target

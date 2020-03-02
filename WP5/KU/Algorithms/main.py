@@ -17,12 +17,13 @@ from WP5.KU.SharedResources.frame_streamer import ImageSequenceStreamer
 import WP5.KU.SharedResources.get_incrementer as inc
 import WP5.KU.SharedResources.loader_tools as loader
 from WP5.KU.Algorithms.crowd_density_local.get_crowd import GetCrowd
-# from WP5.KU.Algorithms.flow_analysis.get_flow import GetFlow
+from WP5.KU.Algorithms.flow_analysis.get_flow import GetFlow
 from WP5.KU.Algorithms.object_detection.get_objects import GetObjects
 
 __version__ = '0.4'
 __author__ = 'Rob Dupre (KU)'
 
+# print(torch.__version__)
 
 def dataset(index):
     # dataset_folder = 'C:/Users/Rob/Desktop/CROWD_DATASETS/'
@@ -120,9 +121,11 @@ if __name__ == '__main__':
     count = 0
     while cam.open():
         frame = cam.read()
+        if info[1] != 'Live':
+            frame = frame[0]
         message = None
         result = None
-        if analyser.type_module == 'flow':
+        if analyser.type_module == 'flow_analysis':
             message, frame = analyser.process_frame(frame, settings['camera_id'], settings['flow_rois'], False)
         if analyser.type_module == 'object_detection':
             message, frame = analyser.process_frame(frame, settings['camera_id'])

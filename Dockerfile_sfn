@@ -1,6 +1,9 @@
 FROM tiangolo/uwsgi-nginx-flask:python3.6
 MAINTAINER R Dupre "r.dupre@kingston.ac.uk"
+RUN apt-get update
 RUN apt-get install python3
+RUN apt-get -y install vim
+RUN apt-get -y install mc
 RUN curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 RUN python get-pip.py
 COPY ./WP5/KU/SecurityFusionNodeService/ /app/WP5/KU/SecurityFusionNodeService/
@@ -8,7 +11,8 @@ COPY ./WP5/KU/SecurityFusionNodeService/requirements.txt /app/WP5/KU/SecurityFus
 COPY ./WP5/KU/SharedResources/ /app/WP5/KU/SharedResources/
 COPY ./WP5/KU/definitions.py /app/WP5/KU/definitions.py
 WORKDIR /app/WP5/KU/SecurityFusionNodeService/
-RUN pip3 install -r requirements.txt
+RUN pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+
 COPY ./app /app
 EXPOSE 5000
 EXPOSE 3606

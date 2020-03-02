@@ -12,12 +12,16 @@ import os
 sys.path.append(str(Path(__file__).absolute().parents[4]))
 import WP5.KU.SharedResources.get_incrementer as incrementer
 from WP5.KU.Algorithms.frame_analyser import FrameAnalyser
-from WP5.KU.Algorithms.flow_analysis.FlowNet2_src import flow_to_image
-from WP5.KU.Algorithms.flow_analysis.FlowNet2_src import FlowNet2
+#from WP5.KU.Algorithms.flow_analysis.FlowNet2_src import flow_to_image
+#from WP5.KU.Algorithms.flow_analysis.FlowNet2_src import FlowNet2
+from WP5.KU.Algorithms.flow_analysis.flownet2_pytorch.flowlib import flow_to_image
+from WP5.KU.Algorithms.flow_analysis.flownet2_pytorch.models import FlowNet2
 
 __version__ = '0.1'
 __author__ = 'Hajar Sadeghi (KU)'
 
+class Args:
+	pass
 
 class GetFlow(FrameAnalyser):
     def __init__(self, module_id):  # def __init__(self, module_id, settings_location):
@@ -28,7 +32,7 @@ class GetFlow(FrameAnalyser):
         """
         FrameAnalyser.__init__(self, module_id)
         self.module_id = module_id + '_flow'
-        self.type_module = 'flow'
+        self.type_module = 'flow_analysis'
         self.state = True
         self.previous_frames_dictionary = {}  # a dictionary of (camera_id,frame) pair
         self.previous_frames_timestamp = {}
@@ -196,7 +200,10 @@ class GetFlow(FrameAnalyser):
             if 'model_path' in settings:
                 path = os.path.join(os.path.dirname(__file__), settings['model_path'])
                 # Build model
-                flownet2 = FlowNet2()
+                args = Args()
+                args.fp16 = False
+                args.rgb_max = 255.0
+                flownet2 = FlowNet2(args)
                 pretrained_dict = torch.load(path)['state_dict']
                 model_dict = flownet2.state_dict()
                 pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
@@ -204,10 +211,12 @@ class GetFlow(FrameAnalyser):
                 flownet2.load_state_dict(model_dict)
 
                 # CUDA WARNING
-                if flownet2.cuda_available():
+                #if flownet2.cuda_available():
+                if 1:
                     flownet2.cuda()
                 else:
                     print('RUNNING WITHOUT CUDA SUPPORT')
+
                 self.model = flownet2
             else:
                 print('NO PATH FOUND')

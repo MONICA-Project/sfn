@@ -18,6 +18,8 @@ from WP5.KU.SecurityFusionNodeService.security_fusion_node import SecurityFusion
 from WP5.KU.SecurityFusionNodeService.message_processing import crowd_density_local, flow_analysis,\
     amalgamate_crowd_density_local, fighting_detection, object_detection, action_recognition
 
+# from WP5.KU.SecurityFusionNodeService.sfn_ctrl import *
+
 __version__ = '0.2'
 __author__ = 'RoViT (KU)'
 
@@ -26,6 +28,12 @@ print('SFN STARTING. MODULE ID: {}'.format(uuid.uuid5(uuid.NAMESPACE_DNS, 'SFN')
 sfn_module = SecurityFusionNode(str(uuid.uuid5(uuid.NAMESPACE_DNS, 'SFN')))
 
 headers = {'content-Type': 'application/json'}
+
+
+@app.before_first_request
+def activate_job():
+    print("Calling on_server_start()")
+#    on_server_start()
 
 
 @app.route("/")

@@ -1,0 +1,15 @@
+[Unit]
+Description=VEHICLE_DETECTION
+Requires=docker.service
+After=vca-cored.service
+
+[Service]
+Restart=no
+User=root
+Group=root
+ExecStart=/home/tivoli/monica/vehicle_detection.sh start
+ExecStop=/home/tivoli/monica/vehicle_detection.sh stop
+
+
+[Install]
+WantedBy=multi-user.target

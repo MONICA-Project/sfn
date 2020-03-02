@@ -205,7 +205,7 @@ def amalgamate_crowd_density_local(sfn_instance, url):
     # RUN THE AMALGAMATION
     if len(recent_cam_messages) == len(config_for_amalgamation):
         amalgamated_top_down_map, amalgamation_ground_plane_position = sfn_module.generate_amalgamated_top_down_map(
-            top_down_maps, config_for_amalgamation, amalgamation_density_count)
+            top_down_maps, config_for_amalgamation)
         log_text = log_text + 'CURRENTLY HELD MESSAGES HAVE BEEN AMALGAMATED INTO THE crowd_density_global VIEW. '
         # Create new message
         crowd_density_global = sfn_module.create_obs_message(amalgamation_cam_ids, amalgamation_density_count,

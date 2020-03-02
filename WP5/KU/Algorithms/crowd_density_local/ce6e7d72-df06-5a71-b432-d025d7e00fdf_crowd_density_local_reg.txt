@@ -1,1 +1,1 @@
-{"zone_id": "N/A", "state": "active", "timestamp": "2018-08-24T14:53:29.907416+00:00", "type_module": "crowd_density_local", "module_id": "ce6e7d72-df06-5a71-b432-d025d7e00fdf_crowd_density_local"}
+{"zone_id": "N/A", "timestamp": "2019-04-15T11:55:00.162680+00:00", "state": "active", "module_id": "ce6e7d72-df06-5a71-b432-d025d7e00fdf_crowd_density_local", "type_module": "crowd_density_local"}

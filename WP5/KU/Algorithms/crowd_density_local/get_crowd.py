@@ -88,7 +88,7 @@ class GetCrowd(FrameAnalyser):
 
 
 
-    def process_frame(self, frame,camera_bearing, camera_position, camera_id, mask, image_2_ground_plane_matrix, ground_plane_roi, ground_plane_size,
+    def process_frame(self, frame, camera_bearing, camera_position, camera_id, mask, image_2_ground_plane_matrix, ground_plane_roi, ground_plane_size,
                       debug=False):
         """ Process a given frame using the crowd density analysis algorithm.
         Keyword arguments:
@@ -192,6 +192,7 @@ class GetCrowd(FrameAnalyser):
 
 
 
+
             top_down_density_map = np.array(top_down_density_map)
             # print('density map size before topdown = ', density_map2.shape)
             # print('size before change = ',top_down_density_map.shape)
@@ -202,7 +203,6 @@ class GetCrowd(FrameAnalyser):
             # print('sum numpy = ',np.sum(top_down_density_map))
             top_down_density_map = (count/np.sum(top_down_density_map)) * top_down_density_map
             # print('normalized sum numpy = ', np.sum(top_down_density_map))
-
 
             top_down_density_map = np.around(top_down_density_map + 0.15)
 
@@ -230,29 +230,21 @@ class GetCrowd(FrameAnalyser):
 
 
             # mqtt
-            if self.mqtt:
-                client = mqtt.Client()
-                client.on_connect = self.on_connect
-                client.on_message = self.on_message
-                client.username_pw_set("worndjww", "ZVs1osFZSGTU")
-                client.connect("m16.cloudmqtt.com", 13596, 5)
-                client.loop_start()
-                client.publish("crowd", message)
-                client.loop_stop()
-                client.disconnect()
+
 
 
 
 
             # CONVERT TO IMAGE THAT CAN BE DISPLAYED
             density_map2 = 255 * density_map2 / (np.max(density_map2) + np.finfo(float).eps)
+            density_map = 255 * density_map / (np.max(density_map) + np.finfo(float).eps)
             if self.save_image_flag:
                 if self.iterator >= self.save_on_count:
                     save_name = '{}_{}_{}'.format(arrow.utcnow().to('GMT').timestamp, self.cam_id, self.type_module)
                     cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_frame.jpeg'),
                                 cv2.resize(frame, (0, 0), fx=self.scale, fy=self.scale))
                     cv2.imwrite(os.path.join(os.path.dirname(__file__), save_name + '_density.jpeg'),
-                                cv2.resize(density_map2, (0, 0), fx=self.scale, fy=self.scale))
+                                cv2.resize(density_map, (0, 0), fx=self.scale, fy=self.scale))
                     try:
                         output_message = open(os.path.join(os.path.dirname(__file__), save_name + '.txt'), 'w')
                     except IOError:

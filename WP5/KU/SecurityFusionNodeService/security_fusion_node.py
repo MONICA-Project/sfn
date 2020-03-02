@@ -366,7 +366,7 @@ class SecurityFusionNode:
                 self.action_save = settings['action_save']
 
     @staticmethod
-    def generate_amalgamated_top_down_map(top_down_maps, config_for_amalgamation, amalgamation_density_count):
+    def generate_amalgamated_top_down_map(top_down_maps, config_for_amalgamation):
         """
         Amalgamate N color images from a list of image paths.
         """
@@ -411,7 +411,7 @@ class SecurityFusionNode:
         # cv2.imwrite('Global_density.png',
         #             cv2.resize(img_amalgamation * 255, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC))
 
-        img_amalgamation = (amalgamation_density_count / np.sum(img_amalgamation)) * img_amalgamation
+        #img_amalgamation = (amalgamation_density_count / np.sum(img_amalgamation)) * img_amalgamation
 
         # CREATE SPARSE REPRESENTATION
         img_amalgamation = csr_matrix(img_amalgamation)
