@@ -1,4 +1,4 @@
-Pillow==4.3.0
+Pillow==6.2.0
 cffi==1.11.5
 matplotlib==2.1.0
 numpy==1.14.0
