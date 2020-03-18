@@ -4,6 +4,7 @@
 Security Fusion Node (SFN) is a platform to calibrate the camera stream and setup datastream flow to the various algorithms and direct the algorithm outputs to different ports.
 
 The document outlines software requirements, camera calibration process and activation of the SFN to manage the datastreams.
+SFN typically receives data from VCA core. Please reffer to the [VCA Installation tutorial](VCAcore_Installation.md) for more details. 
 
 ## Software Requirements
 * Linux 16.04
@@ -72,7 +73,7 @@ The ```docker run``` command starts the SFN docker image. For the SFN to send al
 
 Keep the SFN run terminal and in a separate terminal at ```cd monica``` location run the camera registration python file (```xxx.py```) using the command: ```python3 WP5/KU/SecurityFusionNodeService/xxx.py```.
 
-Refer to the ```camera calibration tutorial``` document for calibrating the camera and preparing the camera registration file.
+Refer to the [camera calibration](Camera_Calibration.md) document for calibrating the camera and preparing the camera registration file.
 
 ## Camera registration
 
