@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>MONICA Crowd Density ROI</title>
+    <style>
+      html, body {
+        height: 370px;
+        padding: 0;
+        margin: 0;
+        }
+      #map {
+       height: 800px;
+       width: 800px;
+       overflow: hidden;
+       float: left;
+       border: thin solid #333;
+       }
+    </style>
+
+<script>
+
+var map;
+var kmlpoly = null; 
+
+function fileChanged(event) 
+{
+	var input = event.target;
+	var reader = new FileReader();
+	reader.onload = function(){
+		var text = reader.result;
+		result = extractGoogleCoords(text);
+		for (i=0; i<result['names'].length; i++){
+		  name = result['names'][i]
+		  addRadioButton(name, result['polygons'][i]);
+		}
+	};
+	reader.readAsText(input.files[0]);
+};
+      
+// ===============		
+
+  function extractGoogleCoords(plainText)
+  {
+    let parser = new DOMParser()
+    let xmlDoc = parser.parseFromString(plainText, "text/xml")
+    let googlePolygons = []
+    let googleMarkers = []
+    let googleNames = []
+
+    if (xmlDoc.documentElement.nodeName == "kml") {
+
+      for (const item of xmlDoc.getElementsByTagName('Placemark')) {
+        let placeMarkName = item.getElementsByTagName('name')[0].childNodes[0].nodeValue.trim()
+        let polygons = item.getElementsByTagName('Polygon')
+        let markers = item.getElementsByTagName('Point')
+
+        /** POLYGONS PARSE **/        
+        for (const polygon of polygons) {
+          let coords = polygon.getElementsByTagName('coordinates')[0].childNodes[0].nodeValue.trim()
+          let points = coords.split(" ")
+
+          let googlePolygonsPaths = []
+          for (const point of points) {
+            let coord = point.split(",")
+            googlePolygonsPaths.push({ lat: +coord[1], lng: +coord[0] })
+          }
+          googlePolygons.push(googlePolygonsPaths)
+	  googleNames.push(placeMarkName)
+        }
+
+        /** MARKER PARSE **/    
+        for (const marker of markers) {
+          var coords = marker.getElementsByTagName('coordinates')[0].childNodes[0].nodeValue.trim()
+          let coord = coords.split(",")
+          googleMarkers.push({ lat: +coord[1], lng: +coord[0] })
+        }
+      }
+    } else {
+      throw "error while parsing"
+    }
+
+    return { markers: googleMarkers, polygons: googlePolygons, names: googleNames }
+  }
+  
+  //===============================		
+
+function initMap() {
+	map = new google.maps.Map(document.getElementById('map'), {
+	  center: {lat: 0, lng: -180},
+	  zoom: 10,
+	  mapTypeId: 'terrain'
+	});
+}
+
+function attachPolygonInfoWindow(polygon, name) {
+    var infoWindow = new google.maps.InfoWindow();
+    google.maps.event.addListener(polygon, 'mouseover', function (e) {
+        infoWindow.setContent(name);
+        var latLng = e.latLng;
+        infoWindow.setPosition(latLng);
+        infoWindow.open(map);
+    });
+}
+      
+
+function add_polygon(polygon, name)
+{
+	cords = polygon
+	center = cords[0]
+	map.panTo(center);
+	map.setZoom(20);
+
+	if (kmlpoly != null){
+		kmlpoly.setMap(null);
+	}
+
+	  // Construct the polygon.
+	  kmlpoly = new google.maps.Polygon({
+		paths: cords,
+		strokeColor: '#FF0000',
+		strokeOpacity: 0.8,
+		strokeWeight: 2,
+		fillColor: '#FF0000',
+		fillOpacity: 0.35
+	  });
+	  kmlpoly.setMap(map); 		 
+	  
+	  attachPolygonInfoWindow(kmlpoly, name)
+}
+      
+
+function get_poly_rotated(lat, lng, width, height, angle) 
+{
+
+        var origin = new google.maps.LatLng(lat, lng);
+
+        var north = google.maps.geometry.spherical.computeOffset(origin, height, angle); 
+        var east = google.maps.geometry.spherical.computeOffset(origin, width, angle+90);
+        
+        var north_east = google.maps.geometry.spherical.computeOffset(north, width, angle+90);
+
+        north = {lat: north.lat(), lng: north.lng()} 
+        east = {lat: east.lat(), lng: east.lng()}  
+        north_east = {lat: north_east.lat(), lng: north_east.lng()}  
+        
+        var corners = [origin,  north, north_east, east];     
+        return corners;        
+}      
+
+
+function normalIcon() {
+  return { url: 'http://www.communitywalk.com/images/blue/dot.png' };
+}
+
+function redIcon() {
+  return { url: 'http://www.communitywalk.com/images/red/dot.png' };
+} 
+				
+
+     function show_ground_plane(){
+/*	
+	// Tivoli 25
+	origin = {lat: 55.67474, lng: 12.56539};	// Old
+	origin = {lat: 55.674819, lng: 12.565383};	// New 
+//		rows, cols, angle = [13, 40, 55]
+	rows = 13
+	cols = 30 
+	angle = 55
+
+	// Tivoli 26
+	origin = {lat: 55.674759, lng: 12.565726};	// New 
+	rows = 12
+	cols = 42 
+	angle = 237
+*/
+	var lat = parseFloat(document.getElementById("txtLat").value)
+	var lng = parseFloat(document.getElementById("txtLng").value)
+	var angle = parseFloat(document.getElementById("txtOrientation").value)
+	var rows = parseFloat(document.getElementById("txtRows").value)
+	var cols = parseFloat(document.getElementById("txtCols").value)
+	
+	origin = {lat: lat, lng: lng}
+	
+	map.panTo(origin);
+	map.setZoom(20);
+	
+	cords = get_poly_rotated( origin['lat'], origin['lng'], rows, cols, angle);
+
+	var marker = new google.maps.Marker({
+		position: origin,
+		title: 'origin',
+//            zIndex: sites[3],
+//            html: sites[4]
+		icon: redIcon(),
+		map, map
+	});
+	marker.setVisible(true)
+	
+	  // Construct the polygon.
+	  var poly = new google.maps.Polygon({
+		paths: cords,
+		strokeColor: '#00FF00',
+		strokeOpacity: 0.8,
+		strokeWeight: 2,
+		fillColor: '#00FF00',
+		fillOpacity: 0.35
+	  });
+	  poly.setMap(map); 		 
+}
+	 
+function selectKML(button)
+{
+        add_polygon(button.mapid, button.mapname)
+}
+
+function createRadioElement( name, checked ) 
+{
+   var radioInput;
+   try {
+	var radioHtml = '<input type="radio" name="' + name + '"';
+	if ( checked ) {
+		radioHtml += ' checked="checked"';
+	}
+	radioHtml += '/>';
+	radioInput = document.createElement(radioHtml);
+    } catch( err ) {
+	radioInput = document.createElement('input');
+	radioInput.setAttribute('type', 'radio');
+	radioInput.setAttribute('name', name);
+	radioInput.setAttribute('onclick', 'selectKML(this)');
+	if ( checked ) {
+		radioInput.setAttribute('checked', 'checked');
+        }
+    }
+    return radioInput;
+}
+    
+function addRadioButton(name, mapid)
+{
+	var lbl = document.createElement("label");
+	lbl.innerHTML = name
+	divel = document.getElementById("buttons")
+	button = createRadioElement('maps', true);
+	button.mapid = mapid;
+	button.mapname = name
+	divel.appendChild(lbl);
+	divel.appendChild(button);
+	divel.appendChild(document.createElement("BR"));
+}
+</script>
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA51eN2J8zMdVd31_pvSwrOZ2hJyJ96Q8Y&callback=initMap&libraries=geometry">
+</script>
+</head>
+
+<body>
+    <div id="map"></div>
+    <div id="capture"></div> <br>
+
+    Open KML File <input type='file' accept=".kml,.kmz" onchange="fileChanged(event)"><br>
+    <div id="buttons" ></div> <br>
+    Origin Lat, Long: <input type="text" id="txtLat" value="55.674819"> <input type="text" id="txtLng" value="12.565383"><br>
+    Orientation: <input type="text" id="txtOrientation" value="55"><br>
+    Rows, Cols: <input type="text" id="txtRows" value="13"> <input type="text" id="txtCols" value="30"><br>
+    <input type='button'  value='Show Crowd Density ROI' onClick="show_ground_plane()"><br>
+    
+  </body>
+</html>
+
