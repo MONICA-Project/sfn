@@ -17,7 +17,7 @@ SFN typically receives data from VCA core. Please reffer to the [VCA Installatio
 
 1. At the home directory, if not installed, then download WP5 Repo
 
-> git clone -b KU_dev https://scm.fit.fraunhofer.de/scm/git/monica
+> git clone https://github.com/MONICA-Project/sfn.git
 
 2. Install MySQL. Refer this [link](https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-16-04) for detailed instructions on MySQL setup. Keep the username "root" and password "root".
 
