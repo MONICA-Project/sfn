@@ -6,6 +6,6 @@ opencv-contrib-python==3.4.0.12
 torch==0.3.1
 torchvision==0.2.0
 pypng==0.0.18
-arrow==0.12.1
+arrow==0.15.1
 h5py==2.8.0
 
